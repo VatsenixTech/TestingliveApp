@@ -1,4 +1,8 @@
+sshkeys
+sshkeys.pub
+backend/uploads/
 node_modules/
 .env
 dist/
 build/
+*.code-workspace
