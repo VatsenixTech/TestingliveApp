@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./index.css";
 
+const API_URL = import.meta.env.VITE_API_URL;
 
 
-const API_URL = "http://localhost:5000/api/candidates";
 function LandingPage() {
   return (
     <div className="np-home-page">
@@ -436,41 +436,60 @@ function RecruiterRegister() {
     </div>
   );
 }
+const API_URL = import.meta.env.VITE_API_URL;
+
 function JobsPage() {
   const [jobs, setJobs] = useState([]);
-  const user = JSON.parse(localStorage.getItem("user"));
+
+  const user = JSON.parse(
+    localStorage.getItem("user")
+  );
 
   useEffect(() => {
     const loadJobs = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/jobs");
+        const res = await axios.get(
+          `${API_URL}/api/jobs`
+        );
+
         setJobs(res.data);
+
       } catch (err) {
-        console.log(err.response?.data || err.message);
+        console.log(
+          err.response?.data || err.message
+        );
       }
     };
 
     loadJobs();
+
   }, []);
 
   const applyJob = async (jobId) => {
     if (!user?.candidateId) {
       alert("Please login as candidate");
-      window.location.href = "/candidate-login";
+
+      window.location.href =
+        "/candidate-login";
+
       return;
     }
 
     try {
       await axios.post(
-        `http://localhost:5000/api/jobs/${jobId}/apply/${user.candidateId}`
+        `${API_URL}/api/jobs/${jobId}/apply/${user.candidateId}`
       );
 
       alert("Applied successfully");
+
     } catch (err) {
+      console.log(
+        err.response?.data || err.message
+      );
+
       alert("Apply failed");
     }
   };
-
   return (
     <>
       <Navbar />
@@ -936,6 +955,8 @@ function Navbar() {
     </div>
   </div>
 );}
+const API_URL = import.meta.env.VITE_API_URL;
+
 function CandidateUpload() {
   const [form, setForm] = useState({
     name: "",
@@ -1025,22 +1046,32 @@ function CandidateUpload() {
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const updateArray = (setter, array, index, e) => {
     const updated = [...array];
-    updated[index][e.target.name] = e.target.value;
+
+    updated[index][e.target.name] =
+      e.target.value;
+
     setter(updated);
   };
 
   const handleFileChange = (e) => {
-    setFiles({ ...files, [e.target.name]: e.target.files[0] });
+    setFiles({
+      ...files,
+      [e.target.name]: e.target.files[0],
+    });
   };
 
   const submitForm = async (e) => {
     e.preventDefault();
-        if (!form.name.trim()) {
+
+    if (!form.name.trim()) {
       alert("Please enter your name");
       return;
     }
@@ -1052,42 +1083,14 @@ function CandidateUpload() {
 
     const data = new FormData();
 
-    Object.keys(form).forEach((key) => data.append(key, form[key]));
+    Object.keys(form).forEach((key) => {
+      data.append(key, form[key]);
+    });
 
-   const loginCandidate = async () => {
-  const loginValue = email.trim().toLowerCase();
-
-  if (!loginValue || !password) {
-    alert("Please enter email/mobile and password");
-    return;
-  }
-
-  try {
-    const res = await axios.post(
-      "http://localhost:5000/api/auth/candidate-login",
-      {
-        login: loginValue,
-        password,
-      }
-    );
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email: res.data.candidate.email || "",
-          phone: res.data.candidate.phone || "",
-          name: res.data.candidate.name || "",
-          role: "candidate",
-          candidateId: res.data.candidate._id,
-        })
-      );
-
-      window.location.href = `/dashboard/${res.data.candidate._id}`;
-    } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert(err.response?.data?.message || "Login failed");
-    }
-  };
+    data.append("skills", JSON.stringify(skills));
+    data.append("employment", JSON.stringify(employment));
+    data.append("education", JSON.stringify(education));
+    data.append("projects", JSON.stringify(projects));
 
     data.append(
       "languages",
@@ -1110,19 +1113,31 @@ function CandidateUpload() {
     );
 
     Object.keys(files).forEach((key) => {
-      if (files[key]) data.append(key, files[key]);
+      if (files[key]) {
+        data.append(key, files[key]);
+      }
     });
 
     try {
-      const res = await axios.post(API_URL, data);
+      const res = await axios.post(
+        `${API_URL}/api/candidates`,
+        data
+      );
+
       alert("Candidate uploaded successfully");
-      window.location.href = `/dashboard/${res.data.candidate._id}`;
+
+      window.location.href =
+        `/dashboard/${res.data.candidate._id}`;
+
     } catch (err) {
       console.log(err.response?.data || err.message);
-      alert(err.response?.data?.error || "Upload failed");
+
+      alert(
+        err.response?.data?.error ||
+        "Upload failed"
+      );
     }
   };
-
   return (
     <>
       <Navbar />
@@ -2105,6 +2120,8 @@ function CandidateProfile() {
           )}
         </>
       );}
+const API_URL = import.meta.env.VITE_API_URL;
+
 function CandidateDashboard() {
   const [candidate, setCandidate] = useState(null);
   const [jobs, setJobs] = useState([]);
@@ -2115,49 +2132,66 @@ function CandidateDashboard() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const candidateRes = await axios.get(`${API_URL}/${candidateId}`);
+        const candidateRes = await axios.get(
+          `${API_URL}/api/candidates/${candidateId}`
+        );
+
         setCandidate(candidateRes.data);
 
         const jobsRes = await axios.get(
-          `http://localhost:5000/api/jobs/recommended/${candidateId}`
+          `${API_URL}/api/jobs/recommended/${candidateId}`
         );
 
         setJobs(jobsRes.data);
+
       } catch (err) {
         console.log(err.response?.data || err.message);
       }
     };
 
     if (candidateId) loadDashboard();
+
   }, [candidateId]);
 
   const applyJob = async (jobId) => {
     try {
       await axios.post(
-        `http://localhost:5000/api/jobs/${jobId}/apply/${candidateId}`
+        `${API_URL}/api/jobs/${jobId}/apply/${candidateId}`
       );
+
       alert("Applied Successfully");
-    } catch {
+
+    } catch (err) {
+      console.log(err.response?.data || err.message);
       alert("Apply failed");
     }
   };
 
   const autoApply = async () => {
     try {
-      if (!window.confirm("Auto apply matching jobs?")) return;
+      if (!window.confirm("Auto apply matching jobs?"))
+        return;
 
       const res = await axios.post(
-        `http://localhost:5000/api/jobs/auto-apply/${candidateId}`
+        `${API_URL}/api/jobs/auto-apply/${candidateId}`
       );
 
-      alert(`Applied ${res.data.appliedCount} jobs`);
-    } catch {
+      alert(
+        `Applied ${res.data.appliedCount} jobs`
+      );
+
+    } catch (err) {
+      console.log(err.response?.data || err.message);
       alert("Auto apply failed");
     }
   };
 
   if (!candidate) {
-    return <div className="loading">Loading Dashboard...</div>;
+    return (
+      <div className="loading">
+        Loading Dashboard...
+      </div>
+    );
   }
 
   const score =
@@ -2178,7 +2212,9 @@ function CandidateDashboard() {
             company: job.company,
             location: job.location,
             workMode: job.workMode,
-            openings: jobs.filter((j) => j.company === job.company).length,
+            openings: jobs.filter(
+              (j) => j.company === job.company
+            ).length,
             skills: job.skills || [],
           },
         ])
@@ -2512,6 +2548,8 @@ function TalentInsightPanel({ candidate, score }) {
     </aside>
   );
 }
+const API_URL = import.meta.env.VITE_API_URL;
+
 function JobPostForm() {
   const [job, setJob] = useState({
     title: "",
@@ -2534,24 +2572,46 @@ function JobPostForm() {
   });
 
   const handleChange = (e) => {
-    setJob({ ...job, [e.target.name]: e.target.value });
+    setJob({
+      ...job,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const postJob = async (e) => {
     e.preventDefault();
 
-    if (!job.title || !job.company || !job.location || !job.skills) {
-      alert("Please fill Job Title, Company, Location and Skills");
+    if (
+      !job.title ||
+      !job.company ||
+      !job.location ||
+      !job.skills
+    ) {
+      alert(
+        "Please fill Job Title, Company, Location and Skills"
+      );
       return;
     }
 
     try {
-      await axios.post("http://localhost:5000/api/jobs", {
-        ...job,
-        skills: job.skills.split(",").map((s) => s.trim()).filter(Boolean),
-        experienceMin: Number(job.experienceMin || 0),
-        experienceMax: Number(job.experienceMax || 0),
-      });
+      await axios.post(
+        `${API_URL}/api/jobs`,
+        {
+          ...job,
+          skills: job.skills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+
+          experienceMin: Number(
+            job.experienceMin || 0
+          ),
+
+          experienceMax: Number(
+            job.experienceMax || 0
+          ),
+        }
+      );
 
       alert("Job posted successfully");
 
@@ -2574,12 +2634,18 @@ function JobPostForm() {
         education: "",
         postedBy: "recruiter",
       });
+
     } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert(err.response?.data?.error || "Job posting failed");
+      console.log(
+        err.response?.data || err.message
+      );
+
+      alert(
+        err.response?.data?.error ||
+        "Job posting failed"
+      );
     }
   };
-
   return (
     <form className="clean-job-form" onSubmit={postJob}>
       <section className="clean-form-card big-card">
@@ -2842,10 +2908,12 @@ function RecruiterDashboard() {
     loadDashboard();
   }, []);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const loadDashboard = async () => {
     try {
-      const candidatesRes = await axios.get("http://localhost:5000/api/candidates");
-      const jobsRes = await axios.get("http://localhost:5000/api/jobs");
+      const candidatesRes = await axios.get(`${API_URL}/api/candidates`);
+      const jobsRes = await axios.get(`${API_URL}/api/jobs`);
 
       const candidates = candidatesRes.data || [];
       const jobList = jobsRes.data || [];
@@ -3350,21 +3418,22 @@ function RecruiterShortlistedPage() {
     loadShortlistedCandidates();
   }, []);
 
-  const loadShortlistedCandidates = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/candidates");
+      const API_URL = import.meta.env.VITE_API_URL;
 
-      const shortlistedOnly = res.data.filter(
-        (candidate) => candidate.shortlisted === true
-      );
+    const loadShortlistedCandidates = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/candidates`);
 
-      setCandidates(shortlistedOnly);
-    } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert("Failed to load shortlisted candidates");
-    }
-  };
+        const shortlistedOnly = res.data.filter(
+          (candidate) => candidate.shortlisted === true
+        );
 
+        setCandidates(shortlistedOnly);
+      } catch (err) {
+        console.log(err.response?.data || err.message);
+        alert("Failed to load shortlisted candidates");
+      }
+    };
   const filtered =
     activeTab === "All"
       ? candidates
@@ -3544,21 +3613,22 @@ function RecruiterApplicationsPage() {
     loadApplications();
   }, []);
 
-  const loadApplications = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/candidates");
+    const API_URL = import.meta.env.VITE_API_URL;
 
-      const appliedCandidates = res.data.filter(
-        (candidate) => candidate.applied === true
-      );
+    const loadApplications = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/candidates`);
 
-      setApplications(appliedCandidates);
-    } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert("Failed to load applications");
-    }
-  };
+        const appliedCandidates = res.data.filter(
+          (candidate) => candidate.applied === true
+        );
 
+        setApplications(appliedCandidates);
+      } catch (err) {
+        console.log(err.response?.data || err.message);
+        alert("Failed to load applications");
+      }
+    };
   const filtered =
     activeTab === "All"
       ? applications
@@ -3570,11 +3640,12 @@ function RecruiterApplicationsPage() {
   const openProfile = (candidate) => {
     window.location.href = `/recruiter-candidate-profile/${candidate._id}`;
   };
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const shortlistCandidate = async (candidate) => {
     try {
       await axios.patch(
-        `http://localhost:5000/api/candidates/${candidate._id}`,
+        `${API_URL}/api/candidates/${candidate._id}`,
         { shortlisted: true }
       );
 
@@ -3586,35 +3657,39 @@ function RecruiterApplicationsPage() {
     }
   };
 
-  const moveInterview = async (candidate) => {
-    try {
-      await axios.patch(
-        `http://localhost:5000/api/candidates/${candidate._id}`,
-        { status: "Interview" }
-      );
+      const API_URL = import.meta.env.VITE_API_URL;
 
-      alert("Moved to interview");
-      loadApplications();
-    } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert("Update failed");
-    }
-  };
+    const moveInterview = async (candidate) => {
+      try {
+        await axios.patch(
+          `${API_URL}/api/candidates/${candidate._id}`,
+          { status: "Interview" }
+        );
 
-  const rejectApplication = async (candidate) => {
-    try {
-      await axios.patch(
-        `http://localhost:5000/api/candidates/${candidate._id}`,
-        { status: "Rejected" }
-      );
+        alert("Moved to interview");
+        loadApplications();
+      } catch (err) {
+        console.log(err.response?.data || err.message);
+        alert("Update failed");
+      }
+    };
 
-      alert("Application rejected");
-      loadApplications();
-    } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert("Reject failed");
-    }
-  };
+      const API_URL = import.meta.env.VITE_API_URL;
+
+    const rejectApplication = async (candidate) => {
+      try {
+        await axios.patch(
+          `${API_URL}/api/candidates/${candidate._id}`,
+          { status: "Rejected" }
+        );
+
+        alert("Application rejected");
+        loadApplications();
+      } catch (err) {
+        console.log(err.response?.data || err.message);
+        alert("Reject failed");
+      }
+    };
 
   return (
     <>
@@ -4141,23 +4216,25 @@ function RecruiterNotificationsPage() {
     </>
   );
 }
-function RecruiterJobDetailsPage() {
-  const [job, setJob] = useState(null);
-  const id = window.location.pathname.split("/").pop();
+    const API_URL = import.meta.env.VITE_API_URL;
 
-  useEffect(() => {
-    const loadJob = async () => {
-      try {
-        const res = await axios.get(`http://localhost:5000/api/jobs/${id}`);
-        setJob(res.data);
-      } catch (err) {
-        console.log(err.response?.data || err.message);
-        alert("Job details loading failed");
-      }
-    };
+    function RecruiterJobDetailsPage() {
+      const [job, setJob] = useState(null);
+      const id = window.location.pathname.split("/").pop();
 
-    loadJob();
-  }, [id]);
+      useEffect(() => {
+        const loadJob = async () => {
+          try {
+            const res = await axios.get(`${API_URL}/api/jobs/${id}`);
+            setJob(res.data);
+          } catch (err) {
+            console.log(err.response?.data || err.message);
+            alert("Job details loading failed");
+          }
+        };
+
+        loadJob();
+      }, [id]);
 
   if (!job) {
     return <div className="loading">Loading job details...</div>;
@@ -4660,6 +4737,7 @@ function RecruiterBillingPage() {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
+
     document.body.appendChild(script);
 
     return () => {
@@ -4715,6 +4793,8 @@ function RecruiterBillingPage() {
     },
   ];
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const startPayment = async (plan) => {
     try {
       if (plan.amount === 0) {
@@ -4730,7 +4810,7 @@ function RecruiterBillingPage() {
       }
 
       const res = await axios.post(
-        "http://localhost:5000/api/payments/create-order",
+        `${API_URL}/api/payments/create-order`,
         {
           amount: plan.amount,
           planName: plan.name,
@@ -4746,33 +4826,48 @@ function RecruiterBillingPage() {
         order_id: res.data.order.id,
 
         handler: async function (response) {
-          const verifyRes = await axios.post(
-            "http://localhost:5000/api/payments/verify",
-            {
-              ...response,
-              planName: plan.name,
-            }
-          );
-
-          if (verifyRes.data.success) {
-            localStorage.setItem("recruiterPlan", plan.name);
-            localStorage.setItem(
-              "paymentId",
-              verifyRes.data.paymentId
+          try {
+            const verifyRes = await axios.post(
+              `${API_URL}/api/payments/verify`,
+              {
+                ...response,
+                planName: plan.name,
+              }
             );
 
-            setActivePlan(plan.name);
+            if (verifyRes.data.success) {
+              localStorage.setItem(
+                "recruiterPlan",
+                plan.name
+              );
 
-            alert("Payment successful. Plan activated.");
-          } else {
-            alert("Payment verification failed");
+              localStorage.setItem(
+                "paymentId",
+                verifyRes.data.paymentId
+              );
+
+              setActivePlan(plan.name);
+
+              alert(
+                "Payment successful. Plan activated."
+              );
+            } else {
+              alert("Payment verification failed");
+            }
+          } catch (err) {
+            console.log(
+              err.response?.data || err.message
+            );
+            alert("Verification failed");
           }
         },
 
         prefill: {
           name: "Recruiter",
           email:
-            JSON.parse(localStorage.getItem("user"))?.email ||
+            JSON.parse(
+              localStorage.getItem("user")
+            )?.email ||
             "recruiter@example.com",
         },
 
@@ -4781,14 +4876,18 @@ function RecruiterBillingPage() {
         },
       };
 
-      const razorpay = new window.Razorpay(options);
+      const razorpay =
+        new window.Razorpay(options);
+
       razorpay.open();
+
     } catch (err) {
-      console.log(err.response?.data || err.message);
+      console.log(
+        err.response?.data || err.message
+      );
       alert("Payment failed");
     }
   };
-
   const paymentId = localStorage.getItem("paymentId");
 
   return (
@@ -4926,39 +5025,104 @@ function RecruiterBillingPage() {
     </>
   );
 }
-function CompaniesPage() {
-  const [jobs, setJobs] = useState([]);
+const API_URL = import.meta.env.VITE_API_URL;
 
-  useEffect(() => {
-    const loadCompanies = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/jobs");
-        setJobs(res.data);
-      } catch (err) {
-        console.log(err.response?.data || err.message);
-      }
-    };
+function JobPostForm() {
+  const [job, setJob] = useState({
+    title: "",
+    company: "",
+    location: "",
+    workMode: "",
+    employmentType: "",
+    department: "",
+    experienceMin: "",
+    experienceMax: "",
+    salary: "",
+    currency: "INR",
+    skills: "",
+    description: "",
+    noticePeriod: "",
+    preferredLocations: "",
+    genderPreference: "No Preference",
+    education: "",
+    postedBy: "recruiter",
+  });
 
-    loadCompanies();
-  }, []);
+  const handleChange = (e) => {
+    setJob({
+      ...job,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-  const companies = [
-    ...new Map(
-      jobs
-        .filter((job) => job.company)
-        .map((job) => [
-          job.company,
-          {
-            company: job.company,
-            location: job.location,
-            workMode: job.workMode,
-            openings: jobs.filter((j) => j.company === job.company).length,
-            skills: job.skills || [],
-          },
-        ])
-    ).values(),
-  ];
+  const postJob = async (e) => {
+    e.preventDefault();
 
+    if (
+      !job.title ||
+      !job.company ||
+      !job.location ||
+      !job.skills
+    ) {
+      alert(
+        "Please fill Job Title, Company, Location and Skills"
+      );
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${API_URL}/api/jobs`,
+        {
+          ...job,
+          skills: job.skills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+
+          experienceMin: Number(
+            job.experienceMin || 0
+          ),
+
+          experienceMax: Number(
+            job.experienceMax || 0
+          ),
+        }
+      );
+
+      alert("Job posted successfully");
+
+      setJob({
+        title: "",
+        company: "",
+        location: "",
+        workMode: "",
+        employmentType: "",
+        department: "",
+        experienceMin: "",
+        experienceMax: "",
+        salary: "",
+        currency: "INR",
+        skills: "",
+        description: "",
+        noticePeriod: "",
+        preferredLocations: "",
+        genderPreference: "No Preference",
+        education: "",
+        postedBy: "recruiter",
+      });
+
+    } catch (err) {
+      console.log(
+        err.response?.data || err.message
+      );
+
+      alert(
+        err.response?.data?.error ||
+        "Job posting failed"
+      );
+    }
+  };
   return (
     <>
       <Navbar />
