@@ -11,38 +11,67 @@ const paymentRoutes = require("./routes/payments");
 
 const app = express();
 
+// ✅ Allowed Frontend URLs
 const allowedOrigins = [
   "http://localhost:5173",
+
+  // Old Vercel URLs
   "https://venkatesh-ten.vercel.app",
   "https://venkatesh-bazmu555j-venkateshisbm01-afks-projects.vercel.app",
+
+  // Current Vercel URL
+  "https://nopromptjobs-r90ttvgrt-venkateshisbm01-afks-projects.vercel.app",
+
+  // Custom Domains
+  "https://nopromptjobs.com",
+  "https://www.nopromptjobs.com",
 ];
 
+// ✅ CORS Configuration
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+      // Allow requests without origin (Postman/mobile apps)
+      if (!origin) {
+        return callback(null, true);
       }
+
+      // Allow listed origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Block other origins
+      return callback(new Error(`CORS blocked for: ${origin}`));
     },
-    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
+
     credentials: true,
   })
 );
 
+// ✅ Body Parser
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
+// ✅ Test Route
 app.get("/", (req, res) => {
   res.send("🚀 NoProxy Talent API Running");
 });
 
+// ✅ API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/candidates", candidateRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/payments", paymentRoutes);
 
+// ✅ Environment Check
 console.log("ENV Check:", {
   mongo_loaded: !!process.env.MONGO_URI,
   jwt_loaded: !!process.env.JWT_SECRET,
@@ -50,6 +79,7 @@ console.log("ENV Check:", {
   port: process.env.PORT || 5000,
 });
 
+// ✅ MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
