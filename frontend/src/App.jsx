@@ -273,10 +273,9 @@ function CandidateLogin() {
     }
 
     try {
-      const profileRes = await axios.get(
-        `${API_URL}/by-email/${encodeURIComponent(loginEmail)}`
+          const profileRes = await axios.get(
+        `${API_URL}/api/candidates/by-email/${encodeURIComponent(loginEmail)}`
       );
-
       if (profileRes.data?._id) {
         localStorage.setItem(
           "user",
@@ -1411,8 +1410,13 @@ function CandidateProfile() {
 
   const loadCandidate = async () => {
     try {
-      await axios.patch(`${API_URL}/${id}/view`);
-      const res = await axios.get(`${API_URL}/${id}`);
+          await axios.patch(
+        `${API_URL}/api/candidates/${id}/view`
+      );
+
+      const res = await axios.get(
+        `${API_URL}/api/candidates/${id}`
+      );
       setCandidate(res.data);
     } catch (err) {
       console.log(err.response?.data || err.message);
