@@ -11,87 +11,84 @@ const paymentRoutes = require("./routes/payments");
 
 const app = express();
 
+
 // ✅ Allowed Frontend URLs
 const allowedOrigins = [
   "http://localhost:5173",
-
-  // Old Vercel URLs
-  "https://venkatesh-ten.vercel.app",
-  "https://venkatesh-bazmu555j-venkateshisbm01-afks-projects.vercel.app",
-
-  // Current Vercel URL
-  "https://nopromptjobs-r90ttvgrt-venkateshisbm01-afks-projects.vercel.app",
-
-  // Custom Domains
   "https://nopromptjobs.com",
   "https://www.nopromptjobs.com",
 ];
+
 
 // ✅ CORS Configuration
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests without origin (Postman/mobile apps)
+
+      // Allow requests without origin
+      // (Postman, mobile apps, curl)
       if (!origin) {
         return callback(null, true);
       }
 
-      // Allow listed origins
+      // Allow exact domains
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      // Block other origins
-      return callback(new Error(`CORS blocked for: ${origin}`));
+      // Allow all Vercel preview deployments
+      if (origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
     },
 
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "PATCH",
+      "OPTIONS",
     ],
 
     credentials: true,
   })
 );
 
-// ✅ Body Parser
-app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
-// ✅ Test Route
-app.get("/", (req, res) => {
-  res.send("🚀 NoProxy Talent API Running");
-});
+// ✅ Middleware
+app.use(express.json());
+
 
 // ✅ API Routes
-app.use("/api/auth", authRoutes);
 app.use("/api/candidates", candidateRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/payments", paymentRoutes);
 
-// ✅ Environment Check
-console.log("ENV Check:", {
-  mongo_loaded: !!process.env.MONGO_URI,
-  jwt_loaded: !!process.env.JWT_SECRET,
-  razorpay_loaded: !!process.env.RAZORPAY_KEY_ID,
-  port: process.env.PORT || 5000,
+
+// ✅ Test Route
+app.get("/", (req, res) => {
+  res.send("Backend Running Successfully");
 });
+
 
 // ✅ MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("✅ MongoDB Connected");
-
-    const PORT = process.env.PORT || 5000;
-
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-    });
+    console.log("MongoDB Connected");
   })
   .catch((err) => {
-    console.log("❌ MongoDB connection failed:", err.message);
-    process.exit(1);
+    console.log(err);
   });
+
+
+// ✅ Start Server
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
