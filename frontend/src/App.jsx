@@ -436,7 +436,7 @@ function RecruiterRegister() {
     </div>
   );
 }
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function JobsPage() {
   const [jobs, setJobs] = useState([]);
@@ -955,7 +955,7 @@ function Navbar() {
     </div>
   </div>
 );}
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function CandidateUpload() {
   const [form, setForm] = useState({
@@ -2120,7 +2120,7 @@ function CandidateProfile() {
           )}
         </>
       );}
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function CandidateDashboard() {
   const [candidate, setCandidate] = useState(null);
@@ -2548,7 +2548,7 @@ function TalentInsightPanel({ candidate, score }) {
     </aside>
   );
 }
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function JobPostForm() {
   const [job, setJob] = useState({
@@ -2908,7 +2908,7 @@ function RecruiterDashboard() {
     loadDashboard();
   }, []);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  
 
   const loadDashboard = async () => {
     try {
@@ -3418,7 +3418,7 @@ function RecruiterShortlistedPage() {
     loadShortlistedCandidates();
   }, []);
 
-      const API_URL = import.meta.env.VITE_API_URL;
+    
 
     const loadShortlistedCandidates = async () => {
       try {
@@ -3613,7 +3613,7 @@ function RecruiterApplicationsPage() {
     loadApplications();
   }, []);
 
-    const API_URL = import.meta.env.VITE_API_URL;
+    
 
     const loadApplications = async () => {
       try {
@@ -3640,7 +3640,7 @@ function RecruiterApplicationsPage() {
   const openProfile = (candidate) => {
     window.location.href = `/recruiter-candidate-profile/${candidate._id}`;
   };
-  const API_URL = import.meta.env.VITE_API_URL;
+  
 
   const shortlistCandidate = async (candidate) => {
     try {
@@ -3657,7 +3657,7 @@ function RecruiterApplicationsPage() {
     }
   };
 
-      const API_URL = import.meta.env.VITE_API_URL;
+    
 
     const moveInterview = async (candidate) => {
       try {
@@ -3674,8 +3674,7 @@ function RecruiterApplicationsPage() {
       }
     };
 
-      const API_URL = import.meta.env.VITE_API_URL;
-
+      
     const rejectApplication = async (candidate) => {
       try {
         await axios.patch(
@@ -4216,7 +4215,7 @@ function RecruiterNotificationsPage() {
     </>
   );
 }
-    const API_URL = import.meta.env.VITE_API_URL;
+    
 
     function RecruiterJobDetailsPage() {
       const [job, setJob] = useState(null);
@@ -4793,7 +4792,7 @@ function RecruiterBillingPage() {
     },
   ];
 
-  const API_URL = import.meta.env.VITE_API_URL;
+
 
   const startPayment = async (plan) => {
     try {
@@ -5025,7 +5024,7 @@ function RecruiterBillingPage() {
     </>
   );
 }
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function JobPostForm() {
   const [job, setJob] = useState({
