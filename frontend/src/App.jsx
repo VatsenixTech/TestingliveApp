@@ -5028,7 +5028,98 @@ function RecruiterBillingPage() {
     </>
   );
 }
+function CompaniesPage() {
+  const [companies, setCompanies] = useState([]);
 
+  useEffect(() => {
+    const loadCompanies = async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/companies`
+        );
+
+        setCompanies(res.data);
+
+      } catch (err) {
+        console.log(
+          err.response?.data || err.message
+        );
+      }
+    };
+
+    loadCompanies();
+  }, []);
+
+  return (
+    <>
+      <Navbar />
+
+      <div className="companies-page">
+        <section className="companies-hero">
+          <div>
+            <h1>Companies Hiring Now</h1>
+
+            <p>
+              Explore companies with active job postings matched to NoProxy Talent candidates.
+            </p>
+          </div>
+
+          <div className="company-count-box">
+            <h2>{companies.length}</h2>
+            <span>Companies</span>
+          </div>
+        </section>
+
+        {companies.length > 0 ? (
+          <div className="all-company-grid">
+            {companies.map((company, index) => (
+              <div
+                className="all-company-card"
+                key={index}
+              >
+                <div className="company-logo-big">
+                  {company.company?.charAt(0) || "C"}
+                </div>
+
+                <h2>{company.company}</h2>
+
+                <p>
+                  {company.openings || 0} active jobs
+                </p>
+
+                <span>
+                  {company.location || "Location not added"} •{" "}
+                  {company.workMode || "Work mode not added"}
+                </span>
+
+                <div className="job-tags">
+                  {company.skills
+                    ?.slice(0,4)
+                    .map((skill,i)=>(
+                      <span key={i}>
+                        {skill}
+                      </span>
+                    ))}
+                </div>
+
+                <a
+                  href="/jobs"
+                  className="view-company-jobs"
+                >
+                  View Jobs
+                </a>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-premium-box">
+            No companies found.
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
 function JobPostForm() {
   const [job, setJob] = useState({
