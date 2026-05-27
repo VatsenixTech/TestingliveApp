@@ -436,7 +436,7 @@ function RecruiterRegister() {
     </div>
   );
 }
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function JobsPage() {
   const [jobs, setJobs] = useState([]);
@@ -955,7 +955,7 @@ function Navbar() {
     </div>
   </div>
 );}
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function CandidateUpload() {
   const [form, setForm] = useState({
@@ -2120,7 +2120,7 @@ function CandidateProfile() {
           )}
         </>
       );}
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function CandidateDashboard() {
   const [candidate, setCandidate] = useState(null);
@@ -2548,7 +2548,7 @@ function TalentInsightPanel({ candidate, score }) {
     </aside>
   );
 }
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 function JobPostForm() {
   const [job, setJob] = useState({
@@ -2572,223 +2572,40 @@ function JobPostForm() {
   });
 
   const handleChange = (e) => {
-    setJob({
-      ...job,
-      [e.target.name]: e.target.value,
-    });
+    setJob({ ...job, [e.target.name]: e.target.value });
   };
 
   const postJob = async (e) => {
     e.preventDefault();
 
-    if (
-      !job.title ||
-      !job.company ||
-      !job.location ||
-      !job.skills
-    ) {
-      alert(
-        "Please fill Job Title, Company, Location and Skills"
-      );
+    if (!job.title || !job.company || !job.location || !job.skills) {
+      alert("Please fill Job Title, Company, Location and Skills");
       return;
     }
 
     try {
-      await axios.post(
-        `${API_URL}/api/jobs`,
-        {
-          ...job,
-          skills: job.skills
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-
-          experienceMin: Number(
-            job.experienceMin || 0
-          ),
-
-          experienceMax: Number(
-            job.experienceMax || 0
-          ),
-        }
-      );
-
-      alert("Job posted successfully");
-
-      setJob({
-        title: "",
-        company: "",
-        location: "",
-        workMode: "",
-        employmentType: "",
-        department: "",
-        experienceMin: "",
-        experienceMax: "",
-        salary: "",
-        currency: "INR",
-        skills: "",
-        description: "",
-        noticePeriod: "",
-        preferredLocations: "",
-        genderPreference: "No Preference",
-        education: "",
-        postedBy: "recruiter",
+      await axios.post(`${API_URL}/api/jobs`, {
+        ...job,
+        skills: job.skills.split(",").map((s) => s.trim()).filter(Boolean),
+        experienceMin: Number(job.experienceMin || 0),
+        experienceMax: Number(job.experienceMax || 0),
       });
 
+      alert("Job posted successfully");
     } catch (err) {
-      console.log(
-        err.response?.data || err.message
-      );
-
-      alert(
-        err.response?.data?.error ||
-        "Job posting failed"
-      );
+      console.log(err.response?.data || err.message);
+      alert(err.response?.data?.error || "Job posting failed");
     }
   };
+
   return (
     <form className="clean-job-form" onSubmit={postJob}>
-      <section className="clean-form-card big-card">
-        <h3>💼 Basic Job Details</h3>
-
-        <div className="clean-grid-3">
-          <input name="title" value={job.title} placeholder="Job Title" onChange={handleChange} />
-          <input name="company" value={job.company} placeholder="Company Name" onChange={handleChange} />
-
-          <select name="department" value={job.department} onChange={handleChange}>
-            <option value="">Select Department</option>
-            <option>Engineering</option>
-            <option>Data</option>
-            <option>Product</option>
-            <option>Sales</option>
-            <option>HR</option>
-          </select>
-
-          <input name="location" value={job.location} placeholder="Location" onChange={handleChange} />
-
-          <select name="workMode" value={job.workMode} onChange={handleChange}>
-            <option value="">Select Work Type</option>
-            <option>Remote</option>
-            <option>Hybrid</option>
-            <option>Onsite</option>
-          </select>
-
-          <select name="employmentType" value={job.employmentType} onChange={handleChange}>
-            <option value="">Select Employment Type</option>
-            <option>Full Time</option>
-            <option>Part Time</option>
-            <option>Contract</option>
-            <option>Internship</option>
-          </select>
-        </div>
-      </section>
-
-      <section className="clean-form-card">
-        <h3>📊 Experience & Salary</h3>
-
-        <div className="clean-grid-2">
-          <input name="experienceMin" type="number" value={job.experienceMin} placeholder="Min Experience" onChange={handleChange} />
-          <input name="experienceMax" type="number" value={job.experienceMax} placeholder="Max Experience" onChange={handleChange} />
-          <input name="salary" value={job.salary} placeholder="Salary Range e.g. 6 - 10 LPA" onChange={handleChange} />
-
-          <select name="currency" value={job.currency} onChange={handleChange}>
-            <option>INR</option>
-            <option>USD</option>
-          </select>
-        </div>
-      </section>
-
-      <section className="clean-form-card full-card">
-        <h3>🧠 Required Skills</h3>
-
-        <input
-          name="skills"
-          value={job.skills}
-          placeholder="Add skills e.g. Python, React, Node.js"
-          onChange={handleChange}
-        />
-
-        <div className="skill-preview">
-          {job.skills
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .map((skill, i) => (
-              <span key={i}>{skill} ×</span>
-            ))}
-        </div>
-      </section>
-
-      <section className="clean-form-card full-card">
-        <h3>📝 Job Description</h3>
-
-        <textarea
-          name="description"
-          value={job.description}
-          placeholder="Write job description, responsibilities and requirements..."
-          onChange={handleChange}
-        />
-      </section>
-
-      <section className="clean-form-card">
-        <h3>👥 Candidate Preferences</h3>
-
-        <div className="clean-grid-1">
-          <select name="noticePeriod" value={job.noticePeriod} onChange={handleChange}>
-            <option value="">Select Notice Period</option>
-            <option>Immediate</option>
-            <option>15 Days</option>
-            <option>30 Days</option>
-            <option>60 Days</option>
-          </select>
-
-          <input
-            name="preferredLocations"
-            value={job.preferredLocations}
-            placeholder="Preferred Locations"
-            onChange={handleChange}
-          />
-
-          <select name="genderPreference" value={job.genderPreference} onChange={handleChange}>
-            <option>No Preference</option>
-            <option>Male</option>
-            <option>Female</option>
-          </select>
-
-          <input
-            name="education"
-            value={job.education}
-            placeholder="Minimum Education"
-            onChange={handleChange}
-          />
-        </div>
-      </section>
-
-      <section className="clean-form-card full-card posting-options-card">
-        <h3>⚙️ Posting Options</h3>
-
-        <label>
-          <input type="checkbox" /> Make this job confidential
-        </label>
-
-        <label>
-          <input type="checkbox" defaultChecked /> Send email notifications to matching candidates
-        </label>
-
-        <label>
-          <input type="checkbox" /> Share on social media
-        </label>
-
-        <div className="clean-post-actions">
-          <button type="button" className="draft-btn" onClick={() => alert("Saved as draft")}>
-            Save as Draft
-          </button>
-
-          <button type="submit">
-            Post Job
-          </button>
-        </div>
-      </section>
+      <input name="title" value={job.title} placeholder="Job Title" onChange={handleChange} />
+      <input name="company" value={job.company} placeholder="Company Name" onChange={handleChange} />
+      <input name="location" value={job.location} placeholder="Location" onChange={handleChange} />
+      <input name="skills" value={job.skills} placeholder="Skills e.g. React, Node" onChange={handleChange} />
+      <textarea name="description" value={job.description} placeholder="Job Description" onChange={handleChange} />
+      <button type="submit">Post Job</button>
     </form>
   );
 }
@@ -2908,7 +2725,7 @@ function RecruiterDashboard() {
     loadDashboard();
   }, []);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  
 
   const loadDashboard = async () => {
     try {
@@ -3418,7 +3235,7 @@ function RecruiterShortlistedPage() {
     loadShortlistedCandidates();
   }, []);
 
-      const API_URL = import.meta.env.VITE_API_URL;
+    
 
     const loadShortlistedCandidates = async () => {
       try {
@@ -3613,7 +3430,7 @@ function RecruiterApplicationsPage() {
     loadApplications();
   }, []);
 
-    const API_URL = import.meta.env.VITE_API_URL;
+    
 
     const loadApplications = async () => {
       try {
@@ -3640,7 +3457,7 @@ function RecruiterApplicationsPage() {
   const openProfile = (candidate) => {
     window.location.href = `/recruiter-candidate-profile/${candidate._id}`;
   };
-  const API_URL = import.meta.env.VITE_API_URL;
+  
 
   const shortlistCandidate = async (candidate) => {
     try {
@@ -3657,7 +3474,7 @@ function RecruiterApplicationsPage() {
     }
   };
 
-      const API_URL = import.meta.env.VITE_API_URL;
+    
 
     const moveInterview = async (candidate) => {
       try {
@@ -3674,7 +3491,7 @@ function RecruiterApplicationsPage() {
       }
     };
 
-      const API_URL = import.meta.env.VITE_API_URL;
+      
 
     const rejectApplication = async (candidate) => {
       try {
@@ -4216,7 +4033,7 @@ function RecruiterNotificationsPage() {
     </>
   );
 }
-    const API_URL = import.meta.env.VITE_API_URL;
+  
 
     function RecruiterJobDetailsPage() {
       const [job, setJob] = useState(null);
@@ -4793,7 +4610,7 @@ function RecruiterBillingPage() {
     },
   ];
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  
 
   const startPayment = async (plan) => {
     try {
@@ -5025,166 +4842,55 @@ function RecruiterBillingPage() {
     </>
   );
 }
-const API_URL = import.meta.env.VITE_API_URL;
+function CompaniesPage() {
+  const [companies, setCompanies] = useState([]);
 
-function JobPostForm() {
-  const [job, setJob] = useState({
-    title: "",
-    company: "",
-    location: "",
-    workMode: "",
-    employmentType: "",
-    department: "",
-    experienceMin: "",
-    experienceMax: "",
-    salary: "",
-    currency: "INR",
-    skills: "",
-    description: "",
-    noticePeriod: "",
-    preferredLocations: "",
-    genderPreference: "No Preference",
-    education: "",
-    postedBy: "recruiter",
-  });
+  useEffect(() => {
+    const loadCompanies = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/companies`);
+        setCompanies(res.data);
+      } catch (err) {
+        console.log(err.response?.data || err.message);
+      }
+    };
 
-  const handleChange = (e) => {
-    setJob({
-      ...job,
-      [e.target.name]: e.target.value,
-    });
-  };
+    loadCompanies();
+  }, []);
 
-  const postJob = async (e) => {
-    e.preventDefault();
-
-    if (
-      !job.title ||
-      !job.company ||
-      !job.location ||
-      !job.skills
-    ) {
-      alert(
-        "Please fill Job Title, Company, Location and Skills"
-      );
-      return;
-    }
-
-    try {
-      await axios.post(
-        `${API_URL}/api/jobs`,
-        {
-          ...job,
-          skills: job.skills
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-
-          experienceMin: Number(
-            job.experienceMin || 0
-          ),
-
-          experienceMax: Number(
-            job.experienceMax || 0
-          ),
-        }
-      );
-
-      alert("Job posted successfully");
-
-      setJob({
-        title: "",
-        company: "",
-        location: "",
-        workMode: "",
-        employmentType: "",
-        department: "",
-        experienceMin: "",
-        experienceMax: "",
-        salary: "",
-        currency: "INR",
-        skills: "",
-        description: "",
-        noticePeriod: "",
-        preferredLocations: "",
-        genderPreference: "No Preference",
-        education: "",
-        postedBy: "recruiter",
-      });
-
-    } catch (err) {
-      console.log(
-        err.response?.data || err.message
-      );
-
-      alert(
-        err.response?.data?.error ||
-        "Job posting failed"
-      );
-    }
-  };
   return (
     <>
       <Navbar />
 
       <div className="companies-page">
         <section className="companies-hero">
-          <div>
-            <h1>Companies Hiring Now</h1>
-            <p>
-              Explore companies with active job postings matched to NoProxy
-              Talent candidates.
-            </p>
-          </div>
-
-          <div className="company-count-box">
-            <h2>{companies.length}</h2>
-            <span>Companies</span>
-          </div>
+          <h1>Companies Hiring Now</h1>
+          <p>Explore companies with active job postings.</p>
+          <h2>{companies.length}</h2>
         </section>
 
         {companies.length > 0 ? (
           <div className="all-company-grid">
             {companies.map((company, index) => (
               <div className="all-company-card" key={index}>
-                <div className="company-logo-big">
-                  {company.company?.charAt(0) || "C"}
-                </div>
-
                 <h2>{company.company}</h2>
-
-                <p>
-                  {company.openings} active job
-                  {company.openings > 1 ? "s" : ""}
-                </p>
-
-                <span>
-                  {company.location || "Location not added"} •{" "}
-                  {company.workMode || "Work mode not added"}
-                </span>
-
-                <div className="job-tags">
-                  {company.skills?.slice(0, 4).map((skill, i) => (
-                    <span key={i}>{skill}</span>
-                  ))}
-                </div>
-
-                <a href="/jobs" className="view-company-jobs">
-                  View Jobs
-                </a>
+                <p>{company.openings || 0} active jobs</p>
+                <span>{company.location || "Location not added"}</span>
+                <a href="/jobs">View Jobs</a>
               </div>
             ))}
           </div>
         ) : (
           <div className="empty-premium-box">
-            No companies found. Companies will appear after recruiters post
-            jobs.
+            No companies found. Companies will appear after recruiters post jobs.
           </div>
         )}
       </div>
     </>
   );
 }
+
+
 function RecruiterSearch() {
   const [filters, setFilters] = useState({
     keyword: "",
