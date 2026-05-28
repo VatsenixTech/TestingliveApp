@@ -7,18 +7,10 @@ const bcrypt = require("bcryptjs");
 const Candidate = require("../models/Candidate");
 
 const router = express.Router();
-router.post("/send-otp", async (req, res) => {
-  res.json({
-    success: true,
-    message: "Send OTP route working",
-  });
-});
 
 const upload = multer({
   dest: "uploads/",
-  limits: {
-    fileSize: 100 * 1024 * 1024,
-  },
+  limits: { fileSize: 100 * 1024 * 1024 },
 });
 
 cloudinary.config({
@@ -39,9 +31,7 @@ const transporter = nodemailer.createTransport({
 
 const deleteLocalFile = (filePath) => {
   try {
-    if (filePath && fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+    if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
   } catch (err) {
     console.log("Local file delete error:", err.message);
   }
@@ -77,51 +67,64 @@ const safeJsonParse = (value, fallback) => {
 // SEND OTP
 router.post("/send-otp", async (req, res) => {
   try {
-    const email = req.body.email?.toLowerCase().trim();
+    const contact = req.body.contact?.toLowerCase().trim();
 
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
+    if (!contact) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
     }
 
-    const existingCandidate = await Candidate.findOne({ email });
+    if (!contact.includes("@")) {
+      return res.status(400).json({
+        message: "Please enter valid email",
+      });
+    }
+
+    const existingCandidate = await Candidate.findOne({ email: contact });
 
     if (existingCandidate) {
       return res.status(400).json({
-        message: "Candidate already exists. Please login.",
+        message: "Candidate already registered. Please login.",
+      });
+    }
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      return res.status(500).json({
+        message: "Email service not configured",
       });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    global.candidateOtpStore[email] = {
-      otp,
-      verified: false,
-      password: "",
-      expiresAt: Date.now() + 10 * 60 * 1000,
-    };
-
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "NoProxy Talent OTP Verification",
+      from: `"NoPromptJobs" <${process.env.EMAIL_USER}>`,
+      to: contact,
+      subject: "Verify your NoPromptJobs account",
       html: `
-        <div style="font-family:sans-serif;padding:20px">
-          <h2>NoProxy Talent</h2>
-          <p>Your OTP for candidate registration is:</p>
+        <div style="font-family:Arial;padding:20px">
+          <h2>NoPromptJobs Verification</h2>
+          <p>Your OTP is:</p>
           <h1>${otp}</h1>
           <p>This OTP is valid for 10 minutes.</p>
         </div>
       `,
     });
 
+    global.candidateOtpStore[contact] = {
+      otp,
+      verified: false,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    };
+
     res.json({
       success: true,
-      message: "OTP sent successfully",
+      message: "OTP sent to your email",
     });
   } catch (error) {
     console.log("SEND OTP ERROR:", error);
     res.status(500).json({
-      message: "Failed to send OTP",
+      message: "OTP email failed. Please check email configuration.",
       error: error.message,
     });
   }
@@ -130,10 +133,10 @@ router.post("/send-otp", async (req, res) => {
 // VERIFY OTP
 router.post("/verify-otp", async (req, res) => {
   try {
-    const email = req.body.email?.toLowerCase().trim();
-    const { otp } = req.body;
+    const contact = req.body.contact?.toLowerCase().trim();
+    const otp = req.body.otp?.trim();
 
-    const savedOtp = global.candidateOtpStore[email];
+    const savedOtp = global.candidateOtpStore[contact];
 
     if (!savedOtp) {
       return res.status(400).json({ message: "OTP not found" });
@@ -161,42 +164,6 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-// SET PASSWORD
-router.post("/set-password", async (req, res) => {
-  try {
-    const email = req.body.email?.toLowerCase().trim();
-    const { password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        message: "Email and password are required",
-      });
-    }
-
-    const savedOtp = global.candidateOtpStore[email];
-
-    if (!savedOtp?.verified) {
-      return res.status(400).json({
-        message: "Please verify OTP first",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    global.candidateOtpStore[email].password = hashedPassword;
-
-    res.json({
-      success: true,
-      message: "Password set successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Password setup failed",
-      error: error.message,
-    });
-  }
-});
-
 // LOGIN
 router.post("/login", async (req, res) => {
   try {
@@ -211,11 +178,32 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const passwordMatch = await bcrypt.compare(password, candidate.password || "");
+    console.log("LOGIN EMAIL:", email);
+    console.log("ENTERED PASSWORD:", password);
+    console.log("DB PASSWORD:", candidate.password);
+
+    // OLD ACCOUNT SUPPORT
+    if (!candidate.password) {
+      candidate.password = await bcrypt.hash(password, 10);
+
+      await candidate.save();
+
+      return res.json({
+        success: true,
+        message: "Password created for old account",
+        candidate,
+      });
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      password,
+      candidate.password
+    );
 
     if (!passwordMatch) {
       return res.status(401).json({
         message: "Invalid password",
+        reason: "Password does not match saved password",
       });
     }
 
@@ -230,7 +218,6 @@ router.post("/login", async (req, res) => {
     });
   }
 });
-
 // CREATE CANDIDATE
 router.post(
   "/",
@@ -244,12 +231,19 @@ router.post(
     try {
       const files = req.files || {};
       const email = req.body.email?.toLowerCase().trim();
+      const password = req.body.password;
+
+      if (!email || !password) {
+        return res.status(400).json({
+          message: "Email and password are required",
+        });
+      }
 
       const otpData = global.candidateOtpStore[email];
 
-      if (!otpData?.verified || !otpData?.password) {
+      if (!otpData?.verified) {
         return res.status(400).json({
-          message: "Please verify OTP and set password before registration",
+          message: "Please verify OTP before registration",
         });
       }
 
@@ -257,14 +251,16 @@ router.post(
 
       if (existingCandidate) {
         return res.status(400).json({
-          message: "Candidate already exists. Please login.",
+          message: "Candidate already registered. Please login.",
         });
       }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       const candidateData = {
         name: req.body.name,
         email,
-        password: otpData.password,
+        password: hashedPassword,
         phone: req.body.phone,
         location: req.body.location,
 
@@ -289,18 +285,12 @@ router.post(
         dateOfBirth: req.body.dateOfBirth,
         maritalStatus: req.body.maritalStatus,
         address: req.body.address,
-        languages: safeJsonParse(req.body.languages, []),
 
+        languages: safeJsonParse(req.body.languages, []),
         skills: safeJsonParse(req.body.skills, []),
         employment: safeJsonParse(req.body.employment, []),
         education: safeJsonParse(req.body.education, []),
         projects: safeJsonParse(req.body.projects, []),
-
-        projectTitle: req.body.projectTitle,
-        projectDomain: req.body.projectDomain,
-        projectTools: req.body.projectTools,
-        projectExplanation: req.body.projectExplanation,
-        projectLink: req.body.projectLink,
 
         linkedinUrl: req.body.linkedinUrl,
         githubUrl: req.body.githubUrl,
@@ -329,359 +319,18 @@ router.post(
       delete global.candidateOtpStore[email];
 
       res.status(201).json({
-        message: "Candidate uploaded successfully",
+        success: true,
+        message: "Candidate registered successfully",
         candidate,
       });
     } catch (error) {
       console.log("UPLOAD ERROR:", error);
       res.status(500).json({
-        message: "Upload failed",
+        message: "Candidate registration failed",
         error: error.message,
       });
     }
   }
 );
-
-// GET ALL CANDIDATES
-router.get("/", async (req, res) => {
-  try {
-    const candidates = await Candidate.find().sort({ createdAt: -1 });
-    res.json(candidates);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// RECRUITER SEARCH
-router.get("/search/filter", async (req, res) => {
-  try {
-    const {
-      keyword,
-      skill,
-      minExp,
-      maxExp,
-      location,
-      role,
-      company,
-      workMode,
-      noticePeriod,
-      jobType,
-      shortlisted,
-    } = req.query;
-
-    const query = {};
-
-    if (skill) query["skills.name"] = { $regex: skill, $options: "i" };
-
-    if (minExp || maxExp) {
-      query.experienceYears = {};
-      if (minExp) query.experienceYears.$gte = Number(minExp);
-      if (maxExp) query.experienceYears.$lte = Number(maxExp);
-    }
-
-    if (location) query.location = { $regex: location, $options: "i" };
-    if (role) query.currentRole = { $regex: role, $options: "i" };
-    if (company) query.currentCompany = { $regex: company, $options: "i" };
-    if (workMode) query.workMode = { $regex: workMode, $options: "i" };
-    if (noticePeriod) query.noticePeriod = { $regex: noticePeriod, $options: "i" };
-    if (jobType) query.jobType = { $regex: jobType, $options: "i" };
-    if (shortlisted === "true") query.shortlisted = true;
-
-    if (keyword) {
-      query.$or = [
-        { name: { $regex: keyword, $options: "i" } },
-        { email: { $regex: keyword, $options: "i" } },
-        { location: { $regex: keyword, $options: "i" } },
-        { currentRole: { $regex: keyword, $options: "i" } },
-        { currentCompany: { $regex: keyword, $options: "i" } },
-        { profileHeadline: { $regex: keyword, $options: "i" } },
-        { profileSummary: { $regex: keyword, $options: "i" } },
-        { selfIntro: { $regex: keyword, $options: "i" } },
-        { projectTitle: { $regex: keyword, $options: "i" } },
-        { projectExplanation: { $regex: keyword, $options: "i" } },
-        { projectTools: { $regex: keyword, $options: "i" } },
-        { "skills.name": { $regex: keyword, $options: "i" } },
-        { "employment.jobTitle": { $regex: keyword, $options: "i" } },
-        { "employment.company": { $regex: keyword, $options: "i" } },
-        { "projects.title": { $regex: keyword, $options: "i" } },
-        { "projects.tools": { $regex: keyword, $options: "i" } },
-      ];
-    }
-
-    const candidates = await Candidate.find(query).sort({ createdAt: -1 });
-    res.json(candidates);
-  } catch (error) {
-    console.log("SEARCH ERROR:", error);
-    res.status(500).json({
-      message: "Search failed",
-      error: error.message,
-    });
-  }
-});
-
-// BY EMAIL
-router.get("/by-email/:email", async (req, res) => {
-  try {
-    const email = req.params.email.toLowerCase().trim();
-
-    const candidate = await Candidate.findOne({
-      email: { $regex: `^${email}$`, $options: "i" },
-    });
-
-    if (!candidate) {
-      return res.status(404).json({
-        message: "Candidate profile not found",
-      });
-    }
-
-    res.json(candidate);
-  } catch (error) {
-    res.status(500).json({
-      message: "Search failed",
-      error: error.message,
-    });
-  }
-});
-
-// REMOVE PROFILE IMAGE
-router.patch("/:id/remove-profile-image", async (req, res) => {
-  try {
-    const candidate = await Candidate.findByIdAndUpdate(
-      req.params.id,
-      { profileImageUrl: "" },
-      { new: true }
-    );
-
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    res.json({
-      message: "Profile image removed",
-      candidate,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Remove failed",
-      error: error.message,
-    });
-  }
-});
-
-// UPDATE PROFILE IMAGE
-router.patch("/:id/profile-image", upload.single("profileImage"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No image uploaded" });
-    }
-
-    const imageUrl = await uploadFile(req.file, "image");
-
-    const candidate = await Candidate.findByIdAndUpdate(
-      req.params.id,
-      { profileImageUrl: imageUrl },
-      { new: true }
-    );
-
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    res.json({
-      message: "Profile image updated",
-      candidate,
-    });
-  } catch (error) {
-    console.log("PROFILE IMAGE ERROR:", error);
-    res.status(500).json({
-      message: "Image upload failed",
-      error: error.message,
-    });
-  }
-});
-
-// UPLOAD / UPDATE RESUME
-router.patch("/:id/resume", upload.single("resume"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No resume uploaded" });
-    }
-
-    const resumeUrl = await uploadFile(req.file, "raw");
-
-    const candidate = await Candidate.findByIdAndUpdate(
-      req.params.id,
-      { resumeUrl },
-      { new: true }
-    );
-
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    res.json({
-      message: "Resume uploaded/updated",
-      candidate,
-    });
-  } catch (error) {
-    console.log("RESUME UPLOAD ERROR:", error);
-    res.status(500).json({
-      message: "Resume upload failed",
-      error: error.message,
-    });
-  }
-});
-
-// UPDATE VIDEOS
-router.patch(
-  "/:id/videos",
-  upload.fields([
-    { name: "selfIntroVideo", maxCount: 1 },
-    { name: "projectVideo", maxCount: 1 },
-  ]),
-  async (req, res) => {
-    try {
-      const updateData = {};
-
-      if (req.files?.selfIntroVideo?.[0]) {
-        updateData.selfIntroVideoUrl = await uploadFile(req.files.selfIntroVideo[0], "video");
-      }
-
-      if (req.files?.projectVideo?.[0]) {
-        updateData.projectVideoUrl = await uploadFile(req.files.projectVideo[0], "video");
-      }
-
-      const candidate = await Candidate.findByIdAndUpdate(
-        req.params.id,
-        updateData,
-        { new: true }
-      );
-
-      if (!candidate) {
-        return res.status(404).json({ message: "Candidate not found" });
-      }
-
-      res.json({
-        message: "Videos updated",
-        candidate,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: "Video upload failed",
-        error: error.message,
-      });
-    }
-  }
-);
-
-// SHORTLIST / UNSHORTLIST
-router.patch("/:id/shortlist", async (req, res) => {
-  try {
-    const candidate = await Candidate.findById(req.params.id);
-
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    candidate.shortlisted = !candidate.shortlisted;
-    await candidate.save();
-
-    res.json({
-      message: candidate.shortlisted
-        ? "Candidate shortlisted"
-        : "Candidate removed from shortlist",
-      candidate,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ADD RECRUITER NOTE
-router.post("/:id/notes", async (req, res) => {
-  try {
-    const candidate = await Candidate.findByIdAndUpdate(
-      req.params.id,
-      {
-        $push: {
-          recruiterNotes: {
-            note: req.body.note,
-          },
-        },
-      },
-      { new: true }
-    );
-
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    res.json({
-      message: "Note added",
-      candidate,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// INCREASE PROFILE VIEW
-router.patch("/:id/view", async (req, res) => {
-  try {
-    const candidate = await Candidate.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { profileViews: 1 } },
-      { new: true }
-    );
-
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    res.json(candidate);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// UPDATE CANDIDATE
-router.patch("/:id", async (req, res) => {
-  try {
-    const candidate = await Candidate.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    res.json({
-      message: "Profile updated",
-      candidate,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Update failed",
-      error: error.message,
-    });
-  }
-});
-
-// GET SINGLE CANDIDATE
-router.get("/:id", async (req, res) => {
-  try {
-    const candidate = await Candidate.findById(req.params.id);
-
-    if (!candidate) {
-      return res.status(404).json({ message: "Candidate not found" });
-    }
-
-    res.json(candidate);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 module.exports = router;

@@ -2866,11 +2866,11 @@ function RecruiterAdvancedSidebar() {
 
         <img
           src="/logo.png"
-          alt="NoProxiesJobs.com"
+          alt="NoPromptjobs.com"
           className="advanced-company-logo"
         />
 
-        <h2>NOPROXYJOBS.COM</h2>
+        <h2>NopromptJobs</h2>
 
         <p>Smart Solutions. Real Results.</p>
 
