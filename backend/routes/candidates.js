@@ -64,21 +64,17 @@ const safeJsonParse = (value, fallback) => {
   }
 };
 
-// SEND OTP
+/* SEND OTP */
 router.post("/send-otp", async (req, res) => {
   try {
     const contact = req.body.contact?.toLowerCase().trim();
 
     if (!contact) {
-      return res.status(400).json({
-        message: "Email is required",
-      });
+      return res.status(400).json({ message: "Email is required" });
     }
 
     if (!contact.includes("@")) {
-      return res.status(400).json({
-        message: "Please enter valid email",
-      });
+      return res.status(400).json({ message: "Please enter valid email" });
     }
 
     const existingCandidate = await Candidate.findOne({ email: contact });
@@ -130,7 +126,7 @@ router.post("/send-otp", async (req, res) => {
   }
 });
 
-// VERIFY OTP
+/* VERIFY OTP */
 router.post("/verify-otp", async (req, res) => {
   try {
     const contact = req.body.contact?.toLowerCase().trim();
@@ -164,13 +160,21 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-// LOGIN
+/* LOGIN */
 router.post("/login", async (req, res) => {
   try {
     const email = req.body.email?.toLowerCase().trim();
-    const { password } = req.body;
+    const password = req.body.password;
 
-    const candidate = await Candidate.findOne({ email });
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required",
+      });
+    }
+
+    const candidate = await Candidate.findOne({
+      email: { $regex: `^${email}$`, $options: "i" },
+    });
 
     if (!candidate) {
       return res.status(404).json({
@@ -178,47 +182,36 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    console.log("LOGIN EMAIL:", email);
-    console.log("ENTERED PASSWORD:", password);
-    console.log("DB PASSWORD:", candidate.password);
-
-    // OLD ACCOUNT SUPPORT
     if (!candidate.password) {
-      candidate.password = await bcrypt.hash(password, 10);
-
-      await candidate.save();
-
-      return res.json({
-        success: true,
-        message: "Password created for old account",
-        candidate,
+      return res.status(400).json({
+        message:
+          "This candidate profile has no password. Please register/reset password.",
       });
     }
 
-    const passwordMatch = await bcrypt.compare(
-      password,
-      candidate.password
-    );
+    const passwordMatch = await bcrypt.compare(password, candidate.password);
 
     if (!passwordMatch) {
       return res.status(401).json({
         message: "Invalid password",
-        reason: "Password does not match saved password",
       });
     }
 
     res.json({
       success: true,
+      message: "Login successful",
       candidate,
     });
   } catch (error) {
+    console.log("LOGIN ERROR:", error);
     res.status(500).json({
       message: "Login failed",
       error: error.message,
     });
   }
 });
-// CREATE CANDIDATE
+
+/* CREATE CANDIDATE */
 router.post(
   "/",
   upload.fields([
@@ -299,7 +292,10 @@ router.post(
       };
 
       if (files.profileImage?.[0]) {
-        candidateData.profileImageUrl = await uploadFile(files.profileImage[0], "image");
+        candidateData.profileImageUrl = await uploadFile(
+          files.profileImage[0],
+          "image"
+        );
       }
 
       if (files.resume?.[0]) {
@@ -307,11 +303,17 @@ router.post(
       }
 
       if (files.selfIntroVideo?.[0]) {
-        candidateData.selfIntroVideoUrl = await uploadFile(files.selfIntroVideo[0], "video");
+        candidateData.selfIntroVideoUrl = await uploadFile(
+          files.selfIntroVideo[0],
+          "video"
+        );
       }
 
       if (files.projectVideo?.[0]) {
-        candidateData.projectVideoUrl = await uploadFile(files.projectVideo[0], "video");
+        candidateData.projectVideoUrl = await uploadFile(
+          files.projectVideo[0],
+          "video"
+        );
       }
 
       const candidate = await Candidate.create(candidateData);
@@ -332,5 +334,49 @@ router.post(
     }
   }
 );
+
+/* GET CANDIDATE BY EMAIL */
+router.get("/by-email/:email", async (req, res) => {
+  try {
+    const email = req.params.email?.toLowerCase().trim();
+
+    const candidate = await Candidate.findOne({
+      email: { $regex: `^${email}$`, $options: "i" },
+    });
+
+    if (!candidate) {
+      return res.status(404).json({
+        message: "Candidate profile not found",
+      });
+    }
+
+    res.json(candidate);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch candidate",
+      error: error.message,
+    });
+  }
+});
+
+/* GET CANDIDATE BY ID */
+router.get("/:id", async (req, res) => {
+  try {
+    const candidate = await Candidate.findById(req.params.id);
+
+    if (!candidate) {
+      return res.status(404).json({
+        message: "Candidate not found",
+      });
+    }
+
+    res.json(candidate);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch candidate",
+      error: error.message,
+    });
+  }
+});
 
 module.exports = router;
