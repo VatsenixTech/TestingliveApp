@@ -48,7 +48,7 @@ function LandingPage() {
           </p>
 
           <div className="np-hero-actions">
-            <button onClick={() => (window.location.href = "/candidate-register")}>
+            <button onClick={() => (window.location.href = "/candidate-email-verify")}>
               Get Started Now →
             </button>
 
@@ -169,7 +169,7 @@ function LandingPage() {
 
             <div className="np-role-actions">
               <a href="/candidate-login">Candidate Login</a>
-              <a href="/candidate-register">Create Candidate Account</a>
+              <a href="/candidate-email-verify">Create Candidate Account</a>
             </div>
           </div>
         </div>
@@ -273,29 +273,33 @@ function CandidateLogin() {
     }
 
     try {
-      const profileRes = await axios.get(
-        `${API_URL}/by-email/${encodeURIComponent(loginEmail)}`
+      const res = await axios.post(`${API_URL}/api/candidates/login`, {
+        email: loginEmail,
+        password,
+      });
+
+      const candidate = res.data.candidate || res.data.data || res.data;
+
+      if (!candidate?._id) {
+        alert("Candidate profile not found. Please create profile.");
+        window.location.href = "/candidate-email-verify";
+        return;
+      }
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          name: candidate.name || "",
+          email: candidate.email || loginEmail,
+          role: "candidate",
+          candidateId: candidate._id,
+        })
       );
 
-      if (profileRes.data?._id) {
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            email: loginEmail,
-            role: "candidate",
-            candidateId: profileRes.data._id,
-          })
-        );
-
-        window.location.href = `/dashboard/${profileRes.data._id}`;
-      } else {
-        alert("Candidate profile not found. Please create profile.");
-        window.location.href = "/candidate";
-      }
+      window.location.href = `/dashboard/${candidate._id}`;
     } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert("Candidate profile not found. Please create profile.");
-      window.location.href = "/candidate";
+      console.log("Candidate Login Error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Login failed. Please check email and password.");
     }
   };
 
@@ -321,11 +325,187 @@ function CandidateLogin() {
 
           <button onClick={loginCandidate}>Login as Candidate</button>
 
-          <a href="/candidate-register">Create Candidate Account</a>
+          <a href="/candidate-email-verify">Create Candidate Account</a>
           <a href="/">Back to Home</a>
         </div>
       </div>
     </>
+  );
+}
+
+function CandidateEmailVerify() {
+  const [email, setEmail] = useState(localStorage.getItem("candidateSignupEmail") || "");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const sendOtp = async () => {
+    const signupEmail = email.trim().toLowerCase();
+
+    if (!signupEmail) {
+      alert("Please enter your Gmail/email");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await axios.post(`${API_URL}/api/candidates/send-otp`, {
+        email: signupEmail,
+      });
+
+      localStorage.setItem("candidateSignupEmail", signupEmail);
+      setOtpSent(true);
+      alert("OTP sent to your email");
+    } catch (err) {
+      console.log("Send OTP Error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    const signupEmail = email.trim().toLowerCase();
+
+    if (!signupEmail || !otp.trim()) {
+      alert("Please enter email and OTP");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await axios.post(`${API_URL}/api/candidates/verify-otp`, {
+        email: signupEmail,
+        otp: otp.trim(),
+      });
+
+      localStorage.setItem("candidateSignupEmail", signupEmail);
+      localStorage.setItem("candidateOtpVerified", "true");
+
+      alert("Email verified successfully");
+      window.location.href = "/candidate-set-password";
+    } catch (err) {
+      console.log("Verify OTP Error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1>Verify Candidate Email</h1>
+        <p>Enter your email. We will send an OTP before profile registration.</p>
+
+        <input
+          placeholder="Candidate Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={otpSent}
+        />
+
+        {!otpSent ? (
+          <button onClick={sendOtp} disabled={loading}>
+            {loading ? "Sending OTP..." : "Send OTP"}
+          </button>
+        ) : (
+          <>
+            <input
+              placeholder="Enter OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+            />
+
+            <button onClick={verifyOtp} disabled={loading}>
+              {loading ? "Verifying..." : "Verify OTP"}
+            </button>
+
+            <button type="button" onClick={() => setOtpSent(false)}>
+              Change Email
+            </button>
+          </>
+        )}
+
+        <a href="/candidate-login">Already have account? Login</a>
+        <a href="/">Back to Home</a>
+      </div>
+    </div>
+  );
+}
+
+function CandidateSetPassword() {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const email = localStorage.getItem("candidateSignupEmail");
+  const otpVerified = localStorage.getItem("candidateOtpVerified") === "true";
+
+  useEffect(() => {
+    if (!email || !otpVerified) {
+      alert("Please verify your email first");
+      window.location.href = "/candidate-email-verify";
+    }
+  }, [email, otpVerified]);
+
+  const savePassword = async () => {
+    if (!password || !confirmPassword) {
+      alert("Please enter password and confirm password");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    try {
+      await axios.post(`${API_URL}/api/candidates/set-password`, {
+        email,
+        password,
+      });
+
+      localStorage.setItem("candidatePasswordSet", "true");
+
+      alert("Password set successfully. Now complete your candidate profile.");
+      window.location.href = "/candidate-register";
+    } catch (err) {
+      console.log("Set Password Error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to set password");
+    }
+  };
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1>Set Candidate Password</h1>
+        <p>Your verified email: {email}</p>
+
+        <input
+          type="password"
+          placeholder="Create Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
+
+        <button onClick={savePassword}>Save Password</button>
+        <a href="/candidate-email-verify">Back to Email Verification</a>
+      </div>
+    </div>
   );
 }
 
@@ -381,6 +561,21 @@ function RecruiterLogin() {
 }
 
 function CandidateRegister() {
+  const email = localStorage.getItem("candidateSignupEmail");
+  const otpVerified = localStorage.getItem("candidateOtpVerified") === "true";
+  const passwordSet = localStorage.getItem("candidatePasswordSet") === "true";
+
+  useEffect(() => {
+    if (!email || !otpVerified || !passwordSet) {
+      alert("Please verify your email and set password first");
+      window.location.href = "/candidate-email-verify";
+    }
+  }, [email, otpVerified, passwordSet]);
+
+  if (!email || !otpVerified || !passwordSet) {
+    return <div className="loading">Checking verification...</div>;
+  }
+
   return <CandidateUpload />;
 }
 
@@ -491,55 +686,71 @@ function JobsPage() {
     }
   };
   return (
-    <>
-      <Navbar />
+  <>
+    <Navbar />
 
-      <div className="jobs-page">
-        <section className="jobs-hero">
-          <div>
-            <h1>Jobs Matching Your Talent</h1>
-            <p>Explore real jobs posted by recruiters on NoProxy Talent.</p>
-          </div>
+    <div className="jobs-page">
+      <section className="jobs-hero">
+        <div>
+          <h1>Jobs Matching Your Talent</h1>
+          <p>Explore real jobs posted by recruiters on NoProxy Talent.</p>
+        </div>
 
-          <div className="jobs-count-box">
-            <h2>{jobs.length}</h2>
-            <span>Live Jobs</span>
-          </div>
-        </section>
+        <div className="jobs-count-box">
+          <h2>{jobs.length}</h2>
+          <span>Live Jobs</span>
+        </div>
+      </section>
 
-        {jobs.length > 0 ? (
-          <div className="all-jobs-grid">
-            {jobs.map((job) => (
-              <div className="all-job-card" key={job._id}>
-                <div className="job-top">
-                  <h3>{job.title}</h3>
-                  <span>Verified</span>
-                </div>
-
-                <p className="job-company">{job.company}</p>
-                <p>{job.location || "Location not added"} • {job.workMode || "Work mode not added"}</p>
-                <h4>{job.salary || "Salary not disclosed"}</h4>
-
-                <div className="job-tags">
-                  {job.skills?.slice(0, 5).map((skill, i) => (
-                    <span key={i}>{skill}</span>
-                  ))}
-                </div>
-
-                <button onClick={() => applyJob(job._id)}>Apply Now</button>
+      {jobs.length > 0 ? (
+        <div className="all-jobs-grid">
+          {jobs.map((job) => (
+            <div className="all-job-card" key={job._id}>
+              <div className="job-top">
+                <h3>{job.title || "Job title not added"}</h3>
+                <span>Verified</span>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-premium-box">
-            No jobs available yet. Jobs will appear after recruiters post them.
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
 
+              <p className="job-company">
+                {job.company || "Company not added"}
+              </p>
+
+              <p>
+                {job.location || "Location not added"} •{" "}
+                {job.workMode || "Work mode not added"}
+              </p>
+
+              <h4>{job.salary || "Salary not disclosed"}</h4>
+
+              <div className="job-tags">
+                {Array.isArray(job.skills) && job.skills.length > 0 ? (
+                  job.skills.slice(0, 5).map((skill, i) => (
+                    <span key={skill._id || i}>
+                      {typeof skill === "string"
+                        ? skill
+                        : skill?.name || "Skill"}
+                    </span>
+                  ))
+                ) : (
+                  <span>No skills added</span>
+                )}
+              </div>
+
+              <button onClick={() => applyJob(job._id)}>
+                Apply Now
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-premium-box">
+          No jobs available yet. Jobs will appear after recruiters post them.
+        </div>
+      )}
+    </div>
+  </>
+);
+}
 function ServicesPage() {
   const [showProDetails, setShowProDetails] = useState(false);
 
@@ -693,6 +904,8 @@ function App() {
   if (path === "/register") return <LandingPage />;
 
   if (path === "/candidate-login") return <CandidateLogin />;
+  if (path === "/candidate-email-verify") return <CandidateEmailVerify />;
+  if (path === "/candidate-set-password") return <CandidateSetPassword />;
   if (path === "/recruiter-login") return <RecruiterLogin />;
 
   if (path === "/candidate-register") return <CandidateRegister />;
@@ -960,7 +1173,7 @@ function Navbar() {
 function CandidateUpload() {
   const [form, setForm] = useState({
     name: "",
-    email: "",
+    email: localStorage.getItem("candidateSignupEmail") || "",
     phone: "",
     location: "",
 
@@ -1124,10 +1337,26 @@ function CandidateUpload() {
         data
       );
 
-      alert("Candidate uploaded successfully");
+      const candidate = res.data.candidate || res.data.data || res.data;
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          name: candidate.name || form.name,
+          email: candidate.email || form.email,
+          role: "candidate",
+          candidateId: candidate._id,
+        })
+      );
+
+      localStorage.removeItem("candidateSignupEmail");
+      localStorage.removeItem("candidateOtpVerified");
+      localStorage.removeItem("candidatePasswordSet");
+
+      alert("Candidate profile created successfully");
 
       window.location.href =
-        `/dashboard/${res.data.candidate._id}`;
+        `/dashboard/${candidate._id}`;
 
     } catch (err) {
       console.log(err.response?.data || err.message);
@@ -1172,7 +1401,12 @@ function CandidateUpload() {
             <h2 className="full">Basic Details</h2>
 
             <input name="name" placeholder="Full Name" onChange={handleChange} />
-            <input name="email" placeholder="Email" onChange={handleChange} />
+            <input
+              name="email"
+              placeholder="Email"
+              value={form.email}
+              readOnly
+            />
             <input name="phone" placeholder="Phone" onChange={handleChange} />
             <input name="location" placeholder="Current Location" onChange={handleChange} />
 
@@ -1411,9 +1645,9 @@ function CandidateProfile() {
 
   const loadCandidate = async () => {
     try {
-      await axios.patch(`${API_URL}/${id}/view`);
-      const res = await axios.get(`${API_URL}/${id}`);
-      setCandidate(res.data);
+      await axios.patch(`${API_URL}/api/candidates/${id}/view`);
+      const res = await axios.get(`${API_URL}/api/candidates/${id}`)
+      setCandidate(res.data.candidate || res.data.data || res.data);
     } catch (err) {
       console.log(err.response?.data || err.message);
     }
@@ -1428,7 +1662,7 @@ function CandidateProfile() {
   }
 
   const updateCandidate = async (payload) => {
-    const res = await axios.patch(`${API_URL}/${id}`, payload);
+    const res = await axios.patch(`${API_URL}/api/candidates/${id}`, payload)
     setCandidate(res.data.candidate);
   };
 
@@ -1475,7 +1709,7 @@ function CandidateProfile() {
           }
 
           const res = await axios.patch(
-            `${API_URL}/${id}/videos`,
+            `${API_URL}/api/candidates/${id}/videos`,
             data
           );
 
@@ -1596,7 +1830,7 @@ function CandidateProfile() {
     data.append("profileImage", file);
 
     const res = await axios.patch(
-      `${API_URL}/${id}/profile-image`,
+      `${API_URL}/api/candidates/${id}/profile-image`,
       data
     );
 
@@ -1611,7 +1845,7 @@ function CandidateProfile() {
     data.append("resume", file);
 
     const res = await axios.patch(
-      `${API_URL}/${id}/resume`,
+      `${API_URL}/api/candidates/${id}/resume`,
       data
     );
 
@@ -1770,11 +2004,15 @@ function CandidateProfile() {
             })
           }
         >
-          <div className="premium-chip-wrap">
-            {candidate.skills?.length ? (
-              candidate.skills.map((skill, i) => (
-                <span key={i}>{skill.name || skill}</span>
-              ))
+                <div className="premium-chip-wrap">
+          {Array.isArray(candidate.skills) && candidate.skills.length > 0 ? (
+            candidate.skills.map((skill, i) => (
+              <span key={skill?._id || i}>
+                {typeof skill === "string"
+                  ? skill
+                  : skill?.name || "Skill"}
+              </span>
+            ))
             ) : (
               <p>No skills added</p>
             )}
@@ -2136,7 +2374,7 @@ function CandidateDashboard() {
           `${API_URL}/api/candidates/${candidateId}`
         );
 
-        setCandidate(candidateRes.data);
+        setCandidate(candidateRes.data.candidate || candidateRes.data.data || candidateRes.data);
 
         const jobsRes = await axios.get(
           `${API_URL}/api/jobs/recommended/${candidateId}`
@@ -2345,12 +2583,19 @@ return (
 
                   <h4>{job.salary || "Salary not disclosed"}</h4>
 
-                  <div className="job-tags">
-                    {job.skills?.slice(0, 4).map((skill, i) => (
-                      <span key={i}>{skill}</span>
-                    ))}
-                  </div>
-
+                 <div className="job-tags">
+                  {Array.isArray(job.skills) && job.skills.length > 0 ? (
+                    job.skills.slice(0, 4).map((skill, i) => (
+                      <span key={skill._id || i}>
+                        {typeof skill === "string"
+                          ? skill
+                          : skill?.name || "Skill"}
+                      </span>
+                    ))
+                  ) : (
+                    <span>No skills added</span>
+                  )}
+                </div>
                   <button onClick={() => applyJob(job._id)}>Apply Now</button>
                 </div>
               ))}
@@ -2990,14 +3235,14 @@ function RecruiterPostJobPage() {
   };
 
   const shortlist = async (id) => {
-    await axios.patch(`${API_URL}/${id}/shortlist`);
+    await axios.patch(`${API_URL}/api/candidates/${id}/shortlist`);
     search();
   };
 
   const addNote = async (id) => {
     if (!note.trim()) return alert("Enter note");
 
-    await axios.post(`${API_URL}/${id}/notes`, { note });
+    await axios.post(`${API_URL}/api/candidates/${id}/notes`, { note });
     setNote("");
     alert("Note added");
   };
@@ -4920,14 +5165,14 @@ function RecruiterSearch() {
   };
 
   const shortlist = async (id) => {
-    await axios.patch(`${API_URL}/${id}/shortlist`);
+    await axios.patch(`${API_URL}/api/candidates/${id}/shortlist`);
     search();
   };
 
   const addNote = async (id) => {
     if (!note.trim()) return alert("Enter note");
 
-    await axios.post(`${API_URL}/${id}/notes`, { note });
+    await axios.post(`${API_URL}/api/candidates/${id}/notes`, { note });
     setNote("");
     alert("Note added");
   };

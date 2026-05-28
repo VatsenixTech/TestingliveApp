@@ -45,54 +45,212 @@ const recruiterNoteSchema = new mongoose.Schema({
 
 const candidateSchema = new mongoose.Schema(
   {
-    name: String,
-    email: String,
-    phone: String,
-    location: String,
+    name: {
+      type: String,
+      default: "",
+    },
 
-    profileHeadline: String,
-    profileSummary: String,
-    selfIntro: String,
+    email: {
+      type: String,
+      default: "",
+      lowercase: true,
+      trim: true,
+    },
 
-    currentRole: String,
-    currentCompany: String,
-    experienceYears: Number,
-    experienceMonths: Number,
+    password: {
+      type: String,
+      default: "",
+    },
 
-    expectedSalary: String,
-    currentSalary: String,
-    noticePeriod: String,
-    preferredLocation: String,
-    workMode: String,
-    jobType: String,
-    employmentType: String,
+    phone: {
+      type: String,
+      default: "",
+    },
 
-    gender: String,
-    dateOfBirth: String,
-    maritalStatus: String,
-    address: String,
-    languages: [String],
+    location: {
+      type: String,
+      default: "",
+    },
 
-    skills: [skillSchema],
-    employment: [employmentSchema],
-    education: [educationSchema],
-    projects: [projectSchema],
+    profileHeadline: {
+      type: String,
+      default: "",
+    },
 
-    projectTitle: String,
-    projectDomain: String,
-    projectTools: String,
-    projectExplanation: String,
-    projectLink: String,
+    profileSummary: {
+      type: String,
+      default: "",
+    },
 
-    linkedinUrl: String,
-    githubUrl: String,
-    portfolioUrl: String,
-    certifications: [String],
+    selfIntro: {
+      type: String,
+      default: "",
+    },
 
-    profileImageUrl: String,
-    resumeUrl: String,
-    selfIntroVideoUrl: String,
-    projectVideoUrl: String,
+    currentRole: {
+      type: String,
+      default: "",
+    },
+
+    currentCompany: {
+      type: String,
+      default: "",
+    },
+
+    experienceYears: {
+      type: Number,
+      default: 0,
+    },
+
+    experienceMonths: {
+      type: Number,
+      default: 0,
+    },
+
+    expectedSalary: {
+      type: String,
+      default: "",
+    },
+
+    currentSalary: {
+      type: String,
+      default: "",
+    },
+
+    noticePeriod: {
+      type: String,
+      default: "",
+    },
+
+    preferredLocation: {
+      type: String,
+      default: "",
+    },
+
+    workMode: {
+      type: String,
+      default: "",
+    },
+
+    jobType: {
+      type: String,
+      default: "",
+    },
+
+    employmentType: {
+      type: String,
+      default: "",
+    },
+
+    gender: {
+      type: String,
+      default: "",
+    },
+
+    dateOfBirth: {
+      type: String,
+      default: "",
+    },
+
+    maritalStatus: {
+      type: String,
+      default: "",
+    },
+
+    address: {
+      type: String,
+      default: "",
+    },
+
+    languages: {
+      type: [String],
+      default: [],
+    },
+
+    skills: {
+      type: [skillSchema],
+      default: [],
+    },
+
+    employment: {
+      type: [employmentSchema],
+      default: [],
+    },
+
+    education: {
+      type: [educationSchema],
+      default: [],
+    },
+
+    projects: {
+      type: [projectSchema],
+      default: [],
+    },
+
+    projectTitle: {
+      type: String,
+      default: "",
+    },
+
+    projectDomain: {
+      type: String,
+      default: "",
+    },
+
+    projectTools: {
+      type: String,
+      default: "",
+    },
+
+    projectExplanation: {
+      type: String,
+      default: "",
+    },
+
+    projectLink: {
+      type: String,
+      default: "",
+    },
+
+    linkedinUrl: {
+      type: String,
+      default: "",
+    },
+
+    githubUrl: {
+      type: String,
+      default: "",
+    },
+
+    portfolioUrl: {
+      type: String,
+      default: "",
+    },
+
+    certifications: {
+      type: [String],
+      default: [],
+    },
+
+    profileImageUrl: {
+      type: String,
+      default: "",
+    },
+
+    resumeUrl: {
+      type: String,
+      default: "",
+    },
+
+    selfIntroVideoUrl: {
+      type: String,
+      default: "",
+    },
+
+    projectVideoUrl: {
+      type: String,
+      default: "",
+    },
 
     profileViews: {
       type: Number,
@@ -104,7 +262,10 @@ const candidateSchema = new mongoose.Schema(
       default: false,
     },
 
-    recruiterNotes: [recruiterNoteSchema],
+    recruiterNotes: {
+      type: [recruiterNoteSchema],
+      default: [],
+    },
   },
   { timestamps: true }
 );
