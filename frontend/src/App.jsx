@@ -956,6 +956,449 @@ function Navbar() {
   </div>
 );}
 
+
+function CandidateUpload() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+
+    profileHeadline: "",
+    profileSummary: "",
+    selfIntro: "",
+
+    currentRole: "",
+    currentCompany: "",
+    experienceYears: "",
+    experienceMonths: "",
+
+    currentSalary: "",
+    expectedSalary: "",
+    noticePeriod: "",
+    preferredLocation: "",
+    workMode: "",
+    jobType: "",
+    employmentType: "",
+
+    gender: "",
+    dateOfBirth: "",
+    maritalStatus: "",
+    address: "",
+
+    linkedinUrl: "",
+    githubUrl: "",
+    portfolioUrl: "",
+
+    projectTitle: "",
+    projectDomain: "",
+    projectTools: "",
+    projectExplanation: "",
+    projectLink: "",
+  });
+
+  const [skills, setSkills] = useState([
+    { name: "", rating: "", years: "", lastUsed: "" },
+  ]);
+
+  const [employment, setEmployment] = useState([
+    {
+      jobTitle: "",
+      company: "",
+      employmentType: "",
+      startDate: "",
+      endDate: "",
+      currentlyWorking: true,
+      description: "",
+      noticePeriod: "",
+    },
+  ]);
+
+  const [education, setEducation] = useState([
+    {
+      degree: "",
+      specialization: "",
+      college: "",
+      startYear: "",
+      endYear: "",
+      educationType: "",
+    },
+  ]);
+
+  const [projects, setProjects] = useState([
+    {
+      title: "",
+      domain: "",
+      tools: "",
+      description: "",
+      link: "",
+    },
+  ]);
+
+  const [languages, setLanguages] = useState("");
+  const [certifications, setCertifications] = useState("");
+
+  const [files, setFiles] = useState({
+    profileImage: null,
+    resume: null,
+    selfIntroVideo: null,
+    projectVideo: null,
+  });
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const updateArray = (setter, array, index, e) => {
+    const updated = [...array];
+
+    updated[index][e.target.name] =
+      e.target.value;
+
+    setter(updated);
+  };
+
+  const handleFileChange = (e) => {
+    setFiles({
+      ...files,
+      [e.target.name]: e.target.files[0],
+    });
+  };
+
+  const submitForm = async (e) => {
+    e.preventDefault();
+
+    if (!form.name.trim()) {
+      alert("Please enter your name");
+      return;
+    }
+
+    if (!form.email.trim() && !form.phone.trim()) {
+      alert("Please enter email or mobile number");
+      return;
+    }
+
+    const data = new FormData();
+
+    Object.keys(form).forEach((key) => {
+      data.append(key, form[key]);
+    });
+
+    data.append("skills", JSON.stringify(skills));
+    data.append("employment", JSON.stringify(employment));
+    data.append("education", JSON.stringify(education));
+    data.append("projects", JSON.stringify(projects));
+
+    data.append(
+      "languages",
+      JSON.stringify(
+        languages
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean)
+      )
+    );
+
+    data.append(
+      "certifications",
+      JSON.stringify(
+        certifications
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean)
+      )
+    );
+
+    Object.keys(files).forEach((key) => {
+      if (files[key]) {
+        data.append(key, files[key]);
+      }
+    });
+
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/candidates`,
+        data
+      );
+
+      alert("Candidate uploaded successfully");
+
+      window.location.href =
+        `/dashboard/${res.data.candidate._id}`;
+
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+
+      alert(
+        err.response?.data?.error ||
+        "Upload failed"
+      );
+    }
+  };
+  return (
+    <>
+      <Navbar />
+
+      <div className="page-shell">
+        <aside className="sidebar">
+                    <img
+            src="/logo.png"
+            alt="NoProxiesJobs"
+            className="sidebar-logo"
+          />
+
+          <h3>NoProxiesJobs Profile</h3>
+          <a>Basic Details</a>
+          <a>Skills</a>
+          <a>Employment</a>
+          <a>Education</a>
+          <a>Projects</a>
+          <a>Resume & Videos</a>
+        </aside>
+
+        <main className="content">
+          <section className="hero-box">
+            <h1>Create Your Talent Profile</h1>
+            <p>
+              Build a recruiter-ready profile with resume, skills, projects,
+              GitHub, videos and career details.
+            </p>
+          </section>
+
+          <form className="form-card grid" onSubmit={submitForm}>
+            <h2 className="full">Basic Details</h2>
+
+            <input name="name" placeholder="Full Name" onChange={handleChange} />
+            <input name="email" placeholder="Email" onChange={handleChange} />
+            <input name="phone" placeholder="Phone" onChange={handleChange} />
+            <input name="location" placeholder="Current Location" onChange={handleChange} />
+
+            <input name="profileHeadline" placeholder="Resume Headline" onChange={handleChange} />
+            <input name="currentRole" placeholder="Current Role" onChange={handleChange} />
+            <input name="currentCompany" placeholder="Current Company" onChange={handleChange} />
+            <input name="experienceYears" type="number" placeholder="Experience Years" onChange={handleChange} />
+            <input name="experienceMonths" type="number" placeholder="Experience Months" onChange={handleChange} />
+
+            <textarea
+              name="profileSummary"
+              className="full"
+              placeholder="Profile Summary"
+              onChange={handleChange}
+            />
+
+            <textarea
+              name="selfIntro"
+              className="full"
+              placeholder="Self Introduction"
+              onChange={handleChange}
+            />
+
+            <h2 className="full">Career Preferences</h2>
+
+            <input name="currentSalary" placeholder="Current Salary" onChange={handleChange} />
+            <input name="expectedSalary" placeholder="Expected Salary" onChange={handleChange} />
+            <input name="noticePeriod" placeholder="Notice Period" onChange={handleChange} />
+            <input name="preferredLocation" placeholder="Preferred Location" onChange={handleChange} />
+            <input name="workMode" placeholder="Remote / Hybrid / Onsite" onChange={handleChange} />
+            <input name="jobType" placeholder="Permanent / Contract" onChange={handleChange} />
+            <input name="employmentType" placeholder="Full-time / Part-time" onChange={handleChange} />
+
+            <h2 className="full">Skills</h2>
+
+            <div className="full">
+              {skills.map((skill, index) => (
+                <div className="row-4" key={index}>
+                  <input name="name" placeholder="Skill e.g Python" onChange={(e) => updateArray(setSkills, skills, index, e)} />
+                  <input name="rating" type="number" placeholder="Rating / 5" onChange={(e) => updateArray(setSkills, skills, index, e)} />
+                  <input name="years" type="number" placeholder="Years" onChange={(e) => updateArray(setSkills, skills, index, e)} />
+                  <input name="lastUsed" placeholder="Last Used" onChange={(e) => updateArray(setSkills, skills, index, e)} />
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="small-btn"
+                onClick={() =>
+                  setSkills([...skills, { name: "", rating: "", years: "", lastUsed: "" }])
+                }
+              >
+                + Add Skill
+              </button>
+            </div>
+
+            <h2 className="full">Employment</h2>
+
+            <div className="full">
+              {employment.map((job, index) => (
+                <div className="sub-card" key={index}>
+                  <div className="grid">
+                    <input name="jobTitle" placeholder="Job Title" onChange={(e) => updateArray(setEmployment, employment, index, e)} />
+                    <input name="company" placeholder="Company" onChange={(e) => updateArray(setEmployment, employment, index, e)} />
+                    <input name="employmentType" placeholder="Employment Type" onChange={(e) => updateArray(setEmployment, employment, index, e)} />
+                    <input name="startDate" placeholder="Start Date" onChange={(e) => updateArray(setEmployment, employment, index, e)} />
+                    <input name="endDate" placeholder="End Date / Present" onChange={(e) => updateArray(setEmployment, employment, index, e)} />
+                    <input name="noticePeriod" placeholder="Notice Period" onChange={(e) => updateArray(setEmployment, employment, index, e)} />
+                    <textarea name="description" className="full" placeholder="Work Description" onChange={(e) => updateArray(setEmployment, employment, index, e)} />
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="small-btn"
+                onClick={() =>
+                  setEmployment([
+                    ...employment,
+                    {
+                      jobTitle: "",
+                      company: "",
+                      employmentType: "",
+                      startDate: "",
+                      endDate: "",
+                      currentlyWorking: true,
+                      description: "",
+                      noticePeriod: "",
+                    },
+                  ])
+                }
+              >
+                + Add Employment
+              </button>
+            </div>
+
+            <h2 className="full">Education</h2>
+
+            <div className="full">
+              {education.map((edu, index) => (
+                <div className="row-3" key={index}>
+                  <input name="degree" placeholder="Degree" onChange={(e) => updateArray(setEducation, education, index, e)} />
+                  <input name="specialization" placeholder="Specialization" onChange={(e) => updateArray(setEducation, education, index, e)} />
+                  <input name="college" placeholder="College" onChange={(e) => updateArray(setEducation, education, index, e)} />
+                  <input name="startYear" placeholder="Start Year" onChange={(e) => updateArray(setEducation, education, index, e)} />
+                  <input name="endYear" placeholder="End Year" onChange={(e) => updateArray(setEducation, education, index, e)} />
+                  <input name="educationType" placeholder="Full-time / Part-time" onChange={(e) => updateArray(setEducation, education, index, e)} />
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="small-btn"
+                onClick={() =>
+                  setEducation([
+                    ...education,
+                    {
+                      degree: "",
+                      specialization: "",
+                      college: "",
+                      startYear: "",
+                      endYear: "",
+                      educationType: "",
+                    },
+                  ])
+                }
+              >
+                + Add Education
+              </button>
+            </div>
+
+            <h2 className="full">Projects</h2>
+
+            <input name="projectTitle" placeholder="Main Project Title" onChange={handleChange} />
+            <input name="projectDomain" placeholder="Domain" onChange={handleChange} />
+            <input name="projectTools" placeholder="Tools Used" onChange={handleChange} />
+            <input name="projectLink" placeholder="Project / GitHub Link" onChange={handleChange} />
+            <textarea name="projectExplanation" className="full" placeholder="Project Explanation" onChange={handleChange} />
+
+            <div className="full">
+              {projects.map((project, index) => (
+                <div className="sub-card" key={index}>
+                  <div className="grid">
+                    <input name="title" placeholder="Project Title" onChange={(e) => updateArray(setProjects, projects, index, e)} />
+                    <input name="domain" placeholder="Project Domain" onChange={(e) => updateArray(setProjects, projects, index, e)} />
+                    <input name="tools" placeholder="Tools" onChange={(e) => updateArray(setProjects, projects, index, e)} />
+                    <input name="link" placeholder="Project Link" onChange={(e) => updateArray(setProjects, projects, index, e)} />
+                    <textarea name="description" className="full" placeholder="Project Description" onChange={(e) => updateArray(setProjects, projects, index, e)} />
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="small-btn"
+                onClick={() =>
+                  setProjects([...projects, { title: "", domain: "", tools: "", description: "", link: "" }])
+                }
+              >
+                + Add Project
+              </button>
+            </div>
+
+            <h2 className="full">Links & Personal Details</h2>
+
+            <input name="githubUrl" placeholder="GitHub URL" onChange={handleChange} />
+            <input name="linkedinUrl" placeholder="LinkedIn URL" onChange={handleChange} />
+            <input name="portfolioUrl" placeholder="Portfolio URL" onChange={handleChange} />
+            <input placeholder="Languages comma separated" onChange={(e) => setLanguages(e.target.value)} />
+            <input placeholder="Certifications comma separated" onChange={(e) => setCertifications(e.target.value)} />
+            <input name="gender" placeholder="Gender" onChange={handleChange} />
+            <input name="dateOfBirth" placeholder="Date of Birth" onChange={handleChange} />
+            <input name="maritalStatus" placeholder="Marital Status" onChange={handleChange} />
+            <textarea name="address" className="full" placeholder="Address" onChange={handleChange} />
+
+            <h2 className="full">Resume, Photo & Videos</h2>
+
+            <FileInput label="Profile Image" name="profileImage" accept="image/*" onChange={handleFileChange} />
+            <FileInput label="Resume" name="resume" accept=".pdf,.doc,.docx" onChange={handleFileChange} />
+            <FileInput label="Self Introduction Video" name="selfIntroVideo" accept="video/*" onChange={handleFileChange} />
+            <FileInput label="Project Explanation Video" name="projectVideo" accept="video/*" onChange={handleFileChange} />
+
+            <button className="submit-btn full" type="submit">
+              Save Candidate Profile
+            </button>
+          </form>
+        </main>
+      </div>
+    </>
+  );
+}
+
+function FileInput({ label, name, accept, onChange }) {
+  return (
+    <div className="file-box">
+      <label>{label}</label>
+      <input type="file" name={name} accept={accept} onChange={onChange} />
+    </div>
+  );
+}function ProfileSection({
+  id,
+  title,
+  actionText = "Add New",
+  onEdit,
+  children,
+}) {
+  return (
+    <section className="modern-profile-section" id={id}>
+      <div className="section-top">
+        <h2>{title}</h2>
+
+        <button
+          type="button"
+          className="section-edit-btn"
+          onClick={onEdit}
+        >
+          ➕ {actionText}
+        </button>
+      </div>
+
+      <div className="section-content">
+        {children}
+      </div>
+    </section>
+  );
+}
 function CandidateProfile() {
   const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1663,762 +2106,6 @@ function CandidateProfile() {
     </>
   );
 }
-
-
-function FileInput({ label, name, accept, onChange }) {
-  return (
-    <div className="file-box">
-      <label>{label}</label>
-      <input type="file" name={name} accept={accept} onChange={onChange} />
-    </div>
-  );
-}function ProfileSection({
-  id,
-  title,
-  actionText = "Add New",
-  onEdit,
-  children,
-}) {
-  return (
-    <section className="modern-profile-section" id={id}>
-      <div className="section-top">
-        <h2>{title}</h2>
-
-        <button
-          type="button"
-          className="section-edit-btn"
-          onClick={onEdit}
-        >
-          ➕ {actionText}
-        </button>
-      </div>
-
-      <div className="section-content">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-function CandidateProfile() {
-  const [candidate, setCandidate] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const [editOpen, setEditOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editIndex, setEditIndex] = useState(null);
-  const [editData, setEditData] = useState({});
-
-  const id = window.location.pathname.split("/").pop();
-
-  const candidateApi = `${API_URL}/api/candidates/${id}`;
-
-  const loadCandidate = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      await axios.patch(`${candidateApi}/view`);
-
-      const res = await axios.get(candidateApi);
-      setCandidate(res.data.candidate || res.data);
-    } catch (err) {
-      console.log("Profile Load Error:", err.response?.data || err.message);
-      setError("Failed to load candidate profile");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadCandidate();
-  }, [id]);
-
-  const updateCandidate = async (payload) => {
-    const res = await axios.patch(candidateApi, payload);
-    setCandidate(res.data.candidate || res.data);
-  };
-
-  const openEdit = (title, data = {}, index = null) => {
-    setEditTitle(title);
-    setEditData(data);
-    setEditIndex(index);
-    setEditOpen(true);
-  };
-
-  const deleteArrayItem = async (section, index) => {
-    if (!window.confirm("Delete this item?")) return;
-
-    const updated = [...(candidate[section] || [])];
-    updated.splice(index, 1);
-
-    await updateCandidate({ [section]: updated });
-  };
-
-  const saveEdit = async () => {
-    try {
-      let payload = {};
-
-      if (editTitle === "Basic Info") payload = editData;
-
-      if (editTitle === "Professional Summary") {
-        payload = { profileSummary: editData.profileSummary };
-      }
-
-      if (editTitle === "Videos") {
-        const data = new FormData();
-
-        if (editData.selfIntroVideo) {
-          data.append("selfIntroVideo", editData.selfIntroVideo);
-        }
-
-        if (editData.projectVideo) {
-          data.append("projectVideo", editData.projectVideo);
-        }
-
-        const res = await axios.patch(`${candidateApi}/videos`, data);
-        setCandidate(res.data.candidate || res.data);
-        setEditOpen(false);
-        alert("Videos updated successfully");
-        return;
-      }
-
-      if (editTitle === "Candidate Identity") {
-        payload = {
-          panNumber: editData.panNumber || "",
-          aadhaarLast4: editData.aadhaarLast4 || "",
-          identityStatus: "Pending Verification",
-        };
-      }
-
-      if (editTitle === "Key Skills") {
-        payload = {
-          skills: editData.skillsText
-            .split(",")
-            .map((skill) => ({
-              name: skill.trim(),
-              years: 0,
-              rating: 0,
-            }))
-            .filter((skill) => skill.name),
-        };
-      }
-
-      if (editTitle === "Employment") {
-        const updated = [...(candidate.employment || [])];
-
-        const item = {
-          company: editData.company || "",
-          role: editData.role || "",
-          years: Number(editData.years || 0),
-          months: Number(editData.months || 0),
-        };
-
-        if (editIndex !== null) updated[editIndex] = item;
-        else updated.push(item);
-
-        payload = {
-          employment: updated,
-          currentCompany: item.company,
-          currentRole: item.role,
-          experienceYears: item.years,
-          experienceMonths: item.months,
-        };
-      }
-
-      if (editTitle === "Education") {
-        const updated = [...(candidate.education || [])];
-
-        const item = {
-          degree: editData.degree || "",
-          college: editData.college || "",
-          year: editData.year || "",
-        };
-
-        if (editIndex !== null) updated[editIndex] = item;
-        else updated.push(item);
-
-        payload = { education: updated };
-      }
-
-      if (editTitle === "Projects") {
-        const updated = [...(candidate.projects || [])];
-
-        const item = {
-          title: editData.title || "",
-          domain: editData.domain || "",
-          tools: editData.tools || "",
-          description: editData.description || "",
-          link: editData.link || "",
-        };
-
-        if (editIndex !== null) updated[editIndex] = item;
-        else updated.push(item);
-
-        payload = { projects: updated };
-      }
-
-      if (editTitle === "Personal Details") payload = editData;
-
-      await updateCandidate(payload);
-
-      setEditOpen(false);
-      setEditIndex(null);
-      alert("Updated successfully");
-    } catch (err) {
-      console.log("Update Error:", err.response?.data || err.message);
-      alert("Update failed");
-    }
-  };
-
-  const uploadProfileImage = async (e) => {
-    try {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const data = new FormData();
-      data.append("profileImage", file);
-
-      const res = await axios.patch(`${candidateApi}/profile-image`, data);
-      setCandidate(res.data.candidate || res.data);
-    } catch (err) {
-      console.log("Profile Image Upload Error:", err.response?.data || err.message);
-      alert("Profile image upload failed");
-    }
-  };
-
-  const uploadResume = async (e) => {
-    try {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const data = new FormData();
-      data.append("resume", file);
-
-      const res = await axios.patch(`${candidateApi}/resume`, data);
-      setCandidate(res.data.candidate || res.data);
-    } catch (err) {
-      console.log("Resume Upload Error:", err.response?.data || err.message);
-      alert("Resume upload failed");
-    }
-  };
-
-  if (loading) {
-    return <div className="loading">Loading profile...</div>;
-  }
-
-  if (error) {
-    return <div className="loading">{error}</div>;
-  }
-
-  if (!candidate) {
-    return <div className="loading">Candidate not found</div>;
-  }
-
-  const score =
-    40 +
-    (candidate.resumeUrl ? 15 : 0) +
-    (candidate.profileImageUrl ? 10 : 0) +
-    (candidate.skills?.length ? 15 : 0) +
-    (candidate.profileSummary ? 10 : 0) +
-    (candidate.selfIntroVideoUrl ? 10 : 0);
- return (
-  <>
-    <Navbar />
-
-    <div className="candidate-command-page">
-      <aside className="candidate-command-left">
-        <div className="candidate-glass-card candidate-id-card">
-          <div className="candidate-photo-ring">
-            <label>
-              {candidate.profileImageUrl ? (
-                <img src={candidate.profileImageUrl} alt="profile" />
-              ) : (
-                <span>{candidate.name?.charAt(0) || "C"}</span>
-              )}
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={uploadProfileImage}
-                hidden
-              />
-            </label>
-          </div>
-
-          <h2>{candidate.name}</h2>
-          <p>{candidate.currentRole || "Candidate"}</p>
-          <span className="verified-badge">Verified Candidate</span>
-
-          <button onClick={() => openEdit("Basic Info", {
-            name: candidate.name || "",
-            currentRole: candidate.currentRole || "",
-            currentCompany: candidate.currentCompany || "",
-            phone: candidate.phone || "",
-            location: candidate.location || "",
-            noticePeriod: candidate.noticePeriod || "",
-          })}>
-            Edit Profile
-          </button>
-        </div>
-
-        <div className="candidate-glass-card trust-passport">
-          <h3>🛡 Trust Passport</h3>
-          <p><span>Proxy Risk Shield</span><b>Clean</b></p>
-          <p><span>Identity</span><b>Verified</b></p>
-          <p><span>Resume</span><b>{candidate.resumeUrl ? "Added" : "Missing"}</b></p>
-          <p><span>Video Intro</span><b>{candidate.selfIntroVideoUrl ? "Added" : "Missing"}</b></p>
-          <p><span>Project Proof</span><b>92/100</b></p>
-        </div>
-
-        <div className="candidate-glass-card profile-score-card">
-          <h3>Profile Strength</h3>
-          <h1>{Math.min(score, 100)}%</h1>
-          <div className="score-bar">
-            <span style={{ width: `${Math.min(score, 100)}%` }}></span>
-          </div>
-          <p>Complete missing sections to improve recruiter confidence.</p>
-        </div>
-      </aside>
-
-      <main className="candidate-command-main">
-        <section className="candidate-premium-hero">
-          <div>
-            <span className="hero-badge">Career Command Center</span>
-            <h1>Welcome back, {candidate.name} 👋</h1>
-            <p>
-              Build a verified profile, prove your project work, improve trust score
-              and attract genuine recruiters.
-            </p>
-
-            <div className="hero-action-row">
-              <button onClick={() => openEdit("Professional Summary", {
-                profileSummary: candidate.profileSummary || "",
-              })}>
-                Improve Summary
-              </button>
-
-              <button onClick={() => document.getElementById("resumeUpload")?.click()}>
-                Update Resume
-              </button>
-            </div>
-          </div>
-
-          <div className="trust-orbit">
-            <h2>{Math.min(score + 10, 100)}</h2>
-            <span>/100</span>
-            <p>Talent Signal</p>
-          </div>
-        </section>
-
-        <section className="candidate-metrics-row">
-          <div>
-            <span>Search Appearances</span>
-            <h2>{candidate.profileViews || 0}</h2>
-            <p>Recruiter visibility</p>
-          </div>
-
-          <div>
-            <span>Shortlisted</span>
-            <h2>{candidate.shortlisted ? "Yes" : "No"}</h2>
-            <p>Hiring interest</p>
-          </div>
-
-          <div>
-            <span>Recruiter Notes</span>
-            <h2>{candidate.recruiterNotes?.length || 0}</h2>
-            <p>Private recruiter actions</p>
-          </div>
-
-          <div>
-            <span>Resume Score</span>
-            <h2>{Math.min(score, 100)}</h2>
-            <p>Profile quality</p>
-          </div>
-        </section>
-
-        <ProfileSection
-          id="summary"
-          title="Professional Summary"
-          actionText="Modify Summary"
-          onEdit={() =>
-            openEdit("Professional Summary", {
-              profileSummary: candidate.profileSummary || "",
-            })
-          }
-        >
-          <p className="premium-text">
-            {candidate.profileSummary ||
-              "Add a powerful summary explaining your experience, projects, skills and career goal."}
-          </p>
-        </ProfileSection>
-
-        <ProfileSection
-          id="skills"
-          title="Key Skills"
-          actionText="Add / Modify Skills"
-          onEdit={() =>
-            openEdit("Key Skills", {
-              skillsText:
-                candidate.skills
-                  ?.map((s) => (typeof s === "string" ? s : s.name))
-                  .join(", ") || "",
-            })
-          }
-        >
-          <div className="premium-chip-wrap">
-            {candidate.skills?.length ? (
-              candidate.skills.map((skill, i) => (
-                <span key={i}>{skill.name || skill}</span>
-              ))
-            ) : (
-              <p>No skills added</p>
-            )}
-          </div>
-        </ProfileSection>
-
-        <div className="candidate-two-grid">
-          <ProfileSection
-            id="employment"
-            title="Employment"
-            actionText="Add Employment"
-            onEdit={() =>
-              openEdit("Employment", {
-                company: "",
-                role: "",
-                years: "",
-                months: "",
-              })
-            }
-          >
-            {candidate.employment?.length ? (
-              candidate.employment.map((emp, i) => (
-                <div className="premium-item-card" key={i}>
-                  <div>
-                    <h3>{emp.company || "Company not added"}</h3>
-                    <p>{emp.role || "Role not added"}</p>
-                    <small>{emp.years || 0} Years {emp.months || 0} Months</small>
-                  </div>
-
-                  <div>
-                    <button onClick={() =>
-                      openEdit("Employment", {
-                        company: emp.company || "",
-                        role: emp.role || "",
-                        years: emp.years || "",
-                        months: emp.months || "",
-                      }, i)
-                    }>
-                      Edit
-                    </button>
-
-                    <button className="delete-btn" onClick={() => deleteArrayItem("employment", i)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p>No employment added</p>
-            )}
-          </ProfileSection>
-
-          <ProfileSection
-            id="education"
-            title="Education"
-            actionText="Add Education"
-            onEdit={() =>
-              openEdit("Education", {
-                degree: "",
-                college: "",
-                year: "",
-              })
-            }
-          >
-            {candidate.education?.length ? (
-              candidate.education.map((edu, i) => (
-                <div className="premium-item-card" key={i}>
-                  <div>
-                    <h3>{edu.degree || "Degree not added"}</h3>
-                    <p>{edu.college || "College not added"}</p>
-                    <small>{edu.year || "Year not added"}</small>
-                  </div>
-
-                  <div>
-                    <button onClick={() =>
-                      openEdit("Education", {
-                        degree: edu.degree || "",
-                        college: edu.college || "",
-                        year: edu.year || "",
-                      }, i)
-                    }>
-                      Edit
-                    </button>
-
-                    <button className="delete-btn" onClick={() => deleteArrayItem("education", i)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p>No education added</p>
-            )}
-          </ProfileSection>
-        </div>
-
-        <ProfileSection
-          id="projects"
-          title="Project Proof"
-          actionText="Add Project"
-          onEdit={() =>
-            openEdit("Projects", {
-              title: "",
-              domain: "",
-              tools: "",
-              description: "",
-              link: "",
-            })
-          }
-        >
-          {candidate.projects?.length ? (
-            candidate.projects.map((project, i) => (
-              <div className="premium-item-card project-proof-card" key={i}>
-                <div>
-                  <h3>{project.title || "Project not added"}</h3>
-                  <p>{project.description || "No description added"}</p>
-                  <small>{project.tools || "Tools not added"}</small>
-                </div>
-
-                <div>
-                  <button onClick={() =>
-                    openEdit("Projects", {
-                      title: project.title || "",
-                      domain: project.domain || "",
-                      tools: project.tools || "",
-                      description: project.description || "",
-                      link: project.link || "",
-                    }, i)
-                  }>
-                    Edit
-                  </button>
-
-                  <button className="delete-btn" onClick={() => deleteArrayItem("projects", i)}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p>No projects added</p>
-          )}
-        </ProfileSection>
-
-        <div className="candidate-two-grid">
-          <ProfileSection
-            id="resume"
-            title="Resume"
-            actionText={candidate.resumeUrl ? "Update Resume" : "Upload Resume"}
-            onEdit={() => document.getElementById("resumeUpload")?.click()}
-          >
-            {candidate.resumeUrl ? (
-              <a href={candidate.resumeUrl} target="_blank" rel="noreferrer">
-                Download Resume
-              </a>
-            ) : (
-              <p>No resume uploaded</p>
-            )}
-
-            <input
-              id="resumeUpload"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              hidden
-              onChange={uploadResume}
-            />
-          </ProfileSection>
-          <div className="candidate-two-grid">
-            <ProfileSection
-              id="videos"
-              title="Self Intro & Project Videos"
-              actionText="Upload Videos"
-              onEdit={() =>
-                openEdit("Videos", {
-                  selfIntroVideo: null,
-                  projectVideo: null,
-                })
-              }
-            >
-              <p>
-                Self Intro Video:{" "}
-                <b>{candidate.selfIntroVideoUrl ? "Added" : "Missing"}</b>
-              </p>
-
-              <p>
-                Project Explanation Video:{" "}
-                <b>{candidate.projectVideoUrl ? "Added" : "Missing"}</b>
-              </p>
-
-              {candidate.selfIntroVideoUrl && (
-                <video controls width="100%">
-                  <source src={candidate.selfIntroVideoUrl} />
-                </video>
-              )}
-
-              {candidate.projectVideoUrl && (
-                <video controls width="100%">
-                  <source src={candidate.projectVideoUrl} />
-                </video>
-              )}
-            </ProfileSection>
-
-            <ProfileSection
-              id="identity"
-              title="Candidate Identity"
-              actionText="Add / Verify Identity"
-              onEdit={() =>
-                openEdit("Candidate Identity", {
-                  panNumber: candidate.panNumber || "",
-                  aadhaarLast4: candidate.aadhaarLast4 || "",
-                })
-              }
-            >
-              <p>
-                PAN:{" "}
-                <b>
-                  {candidate.panNumber
-                    ? `*****${candidate.panNumber.slice(-4)}`
-                    : "Not added"}
-                </b>
-              </p>
-
-              <p>
-                Aadhaar:{" "}
-                <b>
-                  {candidate.aadhaarLast4
-                    ? `XXXX XXXX ${candidate.aadhaarLast4}`
-                    : "Not added"}
-                </b>
-              </p>
-
-              <p>
-                Status:{" "}
-                <b>{candidate.identityStatus || "Not verified"}</b>
-              </p>
-            </ProfileSection>
-          </div>
-          <ProfileSection
-            id="personal"
-            title="Personal Details"
-            actionText="Modify Details"
-            onEdit={() =>
-              openEdit("Personal Details", {
-                gender: candidate.gender || "",
-                dateOfBirth: candidate.dateOfBirth || "",
-                maritalStatus: candidate.maritalStatus || "",
-                address: candidate.address || "",
-              })
-            }
-          >
-            <p>Gender: {candidate.gender || "Not added"}</p>
-            <p>DOB: {candidate.dateOfBirth || "Not added"}</p>
-            <p>Marital: {candidate.maritalStatus || "Not added"}</p>
-            <p>Address: {candidate.address || "Not added"}</p>
-          </ProfileSection>
-        </div>
-      </main>
-
-      <aside className="candidate-command-right">
-        <div className="candidate-glass-card">
-          <h3>Recruiter Confidence</h3>
-          <h1>4.7/5</h1>
-          <p>Based on profile proof, skills and activity.</p>
-        </div>
-
-        <div className="candidate-glass-card">
-          <h3>Missing Boosters</h3>
-          {!candidate.selfIntroVideoUrl && <p>⚠️ Add self intro video</p>}
-          {!candidate.projectVideoUrl && <p>⚠️ Add project explanation video</p>}
-          {!candidate.certifications?.length && <p>⚠️ Add certifications</p>}
-        </div>
-
-        <div className="candidate-pro-dark">
-          <h3>👑 NoProxy Pro</h3>
-          <p>Stand out from normal job portals.</p>
-          <ul>
-            <li>AI Resume Optimization</li>
-            <li>Mock Interview Practice</li>
-            <li>Priority Recruiter Visibility</li>
-            <li>Auto Apply With Consent</li>
-          </ul>
-          <button onClick={() => window.location.href = "/services"}>
-            Explore Pro
-          </button>
-        </div>
-      </aside>
-    </div>
-
-    {editOpen && (
-      <div className="modal-overlay">
-        <div className="edit-modal">
-          <h2>{editIndex !== null ? "Edit" : "Add"} {editTitle}</h2>
-
-          {editTitle === "Videos" ? (
-  <>
-          <label>Self Introduction Video</label>
-
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) =>
-              setEditData({
-                ...editData,
-                selfIntroVideo: e.target.files[0],
-              })
-            }
-          />
-
-          <label>Project Explanation Video</label>
-
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) =>
-              setEditData({
-                ...editData,
-                projectVideo: e.target.files[0],
-              })
-            }
-          />
-        </>
-      ) : (
-        Object.keys(editData).map((key) => (
-          <input
-            key={key}
-            value={editData[key] || ""}
-            placeholder={key}
-            onChange={(e) =>
-              setEditData({
-                ...editData,
-                [key]: e.target.value,
-              })
-            }
-          />
-        ))
-      )}
-
-                <div className="modal-actions">
-                  <button onClick={saveEdit}>Save</button>
-                  <button onClick={() => setEditOpen(false)}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      );}
-
-
 function CandidateDashboard() {
   const [candidate, setCandidate] = useState(null);
   const [jobs, setJobs] = useState([]);
