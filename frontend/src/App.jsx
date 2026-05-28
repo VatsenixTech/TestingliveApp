@@ -1402,6 +1402,9 @@ function FileInput({ label, name, accept, onChange }) {
 
 function CandidateProfile() {
   const [candidate, setCandidate] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [editOpen, setEditOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editIndex, setEditIndex] = useState(null);
@@ -1409,13 +1412,22 @@ function CandidateProfile() {
 
   const id = window.location.pathname.split("/").pop();
 
+  const candidateApi = `${API_URL}/api/candidates/${id}`;
+
   const loadCandidate = async () => {
     try {
-      await axios.patch(`${API_URL}/${id}/view`);
-      const res = await axios.get(`${API_URL}/${id}`);
-      setCandidate(res.data);
+      setLoading(true);
+      setError("");
+
+      await axios.patch(`${candidateApi}/view`);
+
+      const res = await axios.get(candidateApi);
+      setCandidate(res.data.candidate || res.data);
     } catch (err) {
-      console.log(err.response?.data || err.message);
+      console.log("Profile Load Error:", err.response?.data || err.message);
+      setError("Failed to load candidate profile");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1423,13 +1435,9 @@ function CandidateProfile() {
     loadCandidate();
   }, [id]);
 
-  if (!candidate) {
-    return <div className="loading">Loading profile...</div>;
-  }
-
   const updateCandidate = async (payload) => {
-    const res = await axios.patch(`${API_URL}/${id}`, payload);
-    setCandidate(res.data.candidate);
+    const res = await axios.patch(candidateApi, payload);
+    setCandidate(res.data.candidate || res.data);
   };
 
   const openEdit = (title, data = {}, index = null) => {
@@ -1445,53 +1453,44 @@ function CandidateProfile() {
     const updated = [...(candidate[section] || [])];
     updated.splice(index, 1);
 
-    await updateCandidate({
-      [section]: updated,
-    });
+    await updateCandidate({ [section]: updated });
   };
 
   const saveEdit = async () => {
     try {
       let payload = {};
 
-      if (editTitle === "Basic Info") {
-        payload = editData;
-      }
+      if (editTitle === "Basic Info") payload = editData;
 
       if (editTitle === "Professional Summary") {
+        payload = { profileSummary: editData.profileSummary };
+      }
+
+      if (editTitle === "Videos") {
+        const data = new FormData();
+
+        if (editData.selfIntroVideo) {
+          data.append("selfIntroVideo", editData.selfIntroVideo);
+        }
+
+        if (editData.projectVideo) {
+          data.append("projectVideo", editData.projectVideo);
+        }
+
+        const res = await axios.patch(`${candidateApi}/videos`, data);
+        setCandidate(res.data.candidate || res.data);
+        setEditOpen(false);
+        alert("Videos updated successfully");
+        return;
+      }
+
+      if (editTitle === "Candidate Identity") {
         payload = {
-          profileSummary: editData.profileSummary,
+          panNumber: editData.panNumber || "",
+          aadhaarLast4: editData.aadhaarLast4 || "",
+          identityStatus: "Pending Verification",
         };
       }
-              if (editTitle === "Videos") {
-          const data = new FormData();
-
-          if (editData.selfIntroVideo) {
-            data.append("selfIntroVideo", editData.selfIntroVideo);
-          }
-
-          if (editData.projectVideo) {
-            data.append("projectVideo", editData.projectVideo);
-          }
-
-          const res = await axios.patch(
-            `${API_URL}/${id}/videos`,
-            data
-          );
-
-          setCandidate(res.data.candidate);
-          setEditOpen(false);
-          alert("Videos updated successfully");
-          return;
-        }
-
-        if (editTitle === "Candidate Identity") {
-          payload = {
-            panNumber: editData.panNumber || "",
-            aadhaarLast4: editData.aadhaarLast4 || "",
-            identityStatus: "Pending Verification",
-          };
-        }
 
       if (editTitle === "Key Skills") {
         payload = {
@@ -1516,11 +1515,8 @@ function CandidateProfile() {
           months: Number(editData.months || 0),
         };
 
-        if (editIndex !== null) {
-          updated[editIndex] = item;
-        } else {
-          updated.push(item);
-        }
+        if (editIndex !== null) updated[editIndex] = item;
+        else updated.push(item);
 
         payload = {
           employment: updated,
@@ -1540,15 +1536,10 @@ function CandidateProfile() {
           year: editData.year || "",
         };
 
-        if (editIndex !== null) {
-          updated[editIndex] = item;
-        } else {
-          updated.push(item);
-        }
+        if (editIndex !== null) updated[editIndex] = item;
+        else updated.push(item);
 
-        payload = {
-          education: updated,
-        };
+        payload = { education: updated };
       }
 
       if (editTitle === "Projects") {
@@ -1562,20 +1553,13 @@ function CandidateProfile() {
           link: editData.link || "",
         };
 
-        if (editIndex !== null) {
-          updated[editIndex] = item;
-        } else {
-          updated.push(item);
-        }
+        if (editIndex !== null) updated[editIndex] = item;
+        else updated.push(item);
 
-        payload = {
-          projects: updated,
-        };
+        payload = { projects: updated };
       }
 
-      if (editTitle === "Personal Details") {
-        payload = editData;
-      }
+      if (editTitle === "Personal Details") payload = editData;
 
       await updateCandidate(payload);
 
@@ -1583,40 +1567,54 @@ function CandidateProfile() {
       setEditIndex(null);
       alert("Updated successfully");
     } catch (err) {
-      console.log(err.response?.data || err.message);
+      console.log("Update Error:", err.response?.data || err.message);
       alert("Update failed");
     }
   };
 
   const uploadProfileImage = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
 
-    const data = new FormData();
-    data.append("profileImage", file);
+      const data = new FormData();
+      data.append("profileImage", file);
 
-    const res = await axios.patch(
-      `${API_URL}/${id}/profile-image`,
-      data
-    );
-
-    setCandidate(res.data.candidate);
+      const res = await axios.patch(`${candidateApi}/profile-image`, data);
+      setCandidate(res.data.candidate || res.data);
+    } catch (err) {
+      console.log("Profile Image Upload Error:", err.response?.data || err.message);
+      alert("Profile image upload failed");
+    }
   };
 
   const uploadResume = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
 
-    const data = new FormData();
-    data.append("resume", file);
+      const data = new FormData();
+      data.append("resume", file);
 
-    const res = await axios.patch(
-      `${API_URL}/${id}/resume`,
-      data
-    );
-
-    setCandidate(res.data.candidate);
+      const res = await axios.patch(`${candidateApi}/resume`, data);
+      setCandidate(res.data.candidate || res.data);
+    } catch (err) {
+      console.log("Resume Upload Error:", err.response?.data || err.message);
+      alert("Resume upload failed");
+    }
   };
+
+  if (loading) {
+    return <div className="loading">Loading profile...</div>;
+  }
+
+  if (error) {
+    return <div className="loading">{error}</div>;
+  }
+
+  if (!candidate) {
+    return <div className="loading">Candidate not found</div>;
+  }
 
   const score =
     40 +
@@ -1625,7 +1623,6 @@ function CandidateProfile() {
     (candidate.skills?.length ? 15 : 0) +
     (candidate.profileSummary ? 10 : 0) +
     (candidate.selfIntroVideoUrl ? 10 : 0);
-
  return (
   <>
     <Navbar />
