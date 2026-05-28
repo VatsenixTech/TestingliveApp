@@ -5502,4 +5502,154 @@ color:white;
   background: white;
   color: #4f46e5;
   font-weight: 950;
+}/* PROFESSIONAL COMPACT CANDIDATE DASHBOARD */
+
+.candidate-dashboard,
+.candidate-dashboard * {
+  font-size: 14px;
+}
+
+.candidate-dashboard {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.candidate-dashboard h1 {
+  font-size: 26px;
+}
+
+.candidate-dashboard h2 {
+  font-size: 20px;
+}
+
+.candidate-dashboard h3 {
+  font-size: 16px;
+}
+
+.profile-card-new,
+.dashboard-card,
+.notification-panel,
+.premium-panel,
+.trust-box,
+.career-card,
+.recruiter-activity-card,
+.interview-alert-card {
+  border-radius: 16px !important;
+  padding: 18px !important;
+}
+
+.avatar-ring {
+  width: 86px !important;
+  height: 86px !important;
+}
+
+.welcome-banner {
+  padding: 24px !important;
+  border-radius: 20px !important;
+  min-height: 190px;
+}
+
+.welcome-banner h1 {
+  font-size: 26px !important;
+}
+
+.welcome-banner p {
+  font-size: 15px !important;
+}
+
+.trust-score-circle,
+.score-circle,
+.big-score-circle {
+  width: 140px !important;
+  height: 140px !important;
+}
+
+.stats-grid,
+.candidate-stats,
+.dashboard-stats {
+  gap: 12px !important;
+}
+
+.stat-card,
+.candidate-stat-card {
+  padding: 16px !important;
+  border-radius: 14px !important;
+}
+
+.modern-job-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 14px !important;
+}
+
+.modern-job-card {
+  padding: 16px !important;
+  border-radius: 14px !important;
+  min-height: auto !important;
+}
+
+.modern-job-card h3 {
+  font-size: 17px !important;
+  margin-bottom: 8px;
+}
+
+.modern-job-card p {
+  font-size: 14px !important;
+  margin: 6px 0;
+}
+
+.match-circle,
+.job-match-circle {
+  width: 86px !important;
+  height: 86px !important;
+  font-size: 14px !important;
+}
+
+.right-dashboard,
+.dash-right {
+  gap: 14px !important;
+}
+
+.new-dashboard {
+  grid-template-columns: 260px 1fr 300px !important;
+  gap: 18px !important;
+  padding: 20px !important;
+}
+
+.section-head h2 {
+  font-size: 24px !important;
+}
+
+.primary-btn,
+button {
+  padding: 11px 16px;
+  border-radius: 10px;
+}
+
+.topbar {
+  height: 64px !important;
+}
+
+.brand {
+  font-size: 20px !important;
+}
+
+.top-search {
+  height: 42px;
+  padding: 10px 14px;
+}
+
+@media (max-width: 1200px) {
+  .new-dashboard {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modern-job-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .modern-job-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
