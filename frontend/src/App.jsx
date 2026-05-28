@@ -7,17 +7,16 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 function LandingPage() {
   return (
-    <div className="np-home-page">
+      <div className="np-home-page">
       <nav className="np-home-nav">
         <a href="/" className="np-home-brand">
-          <img src="/logo.png" alt="NoProxiesJobs" />
+          <div className="np-logo-icon">NP</div>
 
-          <div>
-            <h2>NOPROXIESJOBS.COM</h2>
-            <span>Smart Solutions. Real Results.</span>
+          <div className="np-brand-text">
+            <h2>NOPROMPTJOBS.COM</h2>
+            <p>SMART HIRING. REAL CAREERS.</p>
           </div>
         </a>
-
         <div className="np-home-links">
           <a href="/jobs">Jobs</a>
           <a href="/companies">Companies</a>
@@ -2870,7 +2869,7 @@ function RecruiterAdvancedSidebar() {
           className="advanced-company-logo"
         />
 
-        <h2>NopromptJobs</h2>
+        <h2>Nopromtjobs.com</h2>
 
         <p>Smart Solutions. Real Results.</p>
 
