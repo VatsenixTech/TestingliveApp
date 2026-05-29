@@ -31,7 +31,7 @@ function LandingPage() {
       <section className="np-hero">
         <div className="np-hero-left">
           <span className="np-hero-badge">
-            🛡 Trusted AI Hiring Platform
+            🛡 Trusted Hiring Platform
           </span>
 
           <h1>
@@ -2483,33 +2483,49 @@ return (
           </a>
         </div>
 
-        <div className="passport-card">
-          <h3>Candidate Trust Passport</h3>
-
-          <div><span>Proxy Risk Shield</span><b>Clean</b></div>
-          <div><span>Identity Verified</span><b>Verified</b></div>
-          <div><span>Documents Verified</span><b>3/3</b></div>
-          <div><span>Project Proof Score</span><b>92/100</b></div>
-
-          <div>
-            <span>Self Intro Video</span>
-            <b>{candidate.selfIntroVideoUrl ? "88/100" : "Missing"}</b>
+        <div className="premium-ai-left-panel">
+          <div className="premium-ai-head">
+            <span>👑</span>
+            <div>
+              <h3>Premium Career Tools</h3>
+              <p>AI-powered career growth panel</p>
+            </div>
           </div>
 
-          <div><span>Recruiter Confidence</span><b>4.7/5</b></div>
-        </div>
+          <button onClick={() => (window.location.href = `/profile/${candidate._id}`)}>
+            <b>📝 AI Resume Builder</b>
+            <span>Create ATS resume with keywords</span>
+          </button>
 
-        <div className="resume-strength-card">
-          <h3>Resume Strength</h3>
-          <h2>{Math.min(score, 100)}/100</h2>
+          <button onClick={() => (window.location.href = "/services")}>
+            <b>🧠 AI Skill Gap Analyzer</b>
+            <span>Python, AWS, SQL, System Design</span>
+          </button>
 
-          <div className="green-progress">
-            <span style={{ width: `${Math.min(score, 100)}%` }}></span>
-          </div>
+          <button onClick={() => (window.location.href = "/services")}>
+            <b>🎤 Interview Preparation Hub</b>
+            <span>HR and technical mock practice</span>
+          </button>
 
-          <p>Your resume looks good. Add measurable achievements to improve.</p>
+          <button onClick={() => (window.location.href = `/profile/${candidate._id}`)}>
+            <b>🛡 Verification Center</b>
+            <span>PAN, Aadhaar, resume and video proof</span>
+          </button>
 
-          <a href={`/profile/${candidate._id}`}>Optimize Resume →</a>
+          <button onClick={autoApply}>
+            <b>🤖 Auto Apply Tracker</b>
+            <span>{candidate.autoAppliedCount || 0} jobs auto applied</span>
+          </button>
+
+          <button onClick={() => (window.location.href = "/jobs")}>
+            <b>💼 Opportunity Hub</b>
+            <span>Jobs, internships and freelance work</span>
+          </button>
+
+          <button onClick={() => (window.location.href = "/services")}>
+            <b>✨ AI Career Assistant</b>
+            <span>Roadmap, resume tips and career plan</span>
+          </button>
         </div>
       </aside>
 
@@ -2523,18 +2539,29 @@ return (
             </p>
 
             <div className="hero-actions">
-              <a href={`/profile/${candidate._id}`}>AI Career Assistant</a>
+              <a href="/services">AI Career Assistant</a>
               <a href={`/profile/${candidate._id}`}>View My Profile</a>
             </div>
           </div>
 
-          <div className="trust-meter">
-            <h2>{Math.min(score + 10, 100)}</h2>
-            <p>/100</p>
-            <span>Trust Score</span>
-            <b>Excellent</b>
+                  <div className="trust-meter clean-trust-meter">
+            <div className="trust-score-number">
+              {Math.min(score + 10, 100)}
+            </div>
+
+            <div className="trust-score-total">
+              /100
+            </div>
+
+            <div className="trust-score-label">
+              Trust Score
+            </div>
+
+            <div className="trust-score-status">
+              Excellent
+            </div>
           </div>
-        </section>
+                  </section>
 
         <section className="metric-row">
           <div>
@@ -2560,6 +2587,12 @@ return (
             <h2>{candidate.interviews?.length || 0}</h2>
             <p>Upcoming</p>
           </div>
+          
+          <div>
+          <span>Salary Predictor</span>
+          <h2>{candidate.expectedSalary || "₹6 - ₹10 LPA"}</h2>
+          <p>Based on profile</p>
+        </div>
         </section>
 
         <section className="premium-card" id="jobs">
@@ -2577,24 +2610,30 @@ return (
                     <span>90% Match</span>
                   </div>
 
-                  <p className="job-company">{job.company}</p>
-                  <p>{job.location} • {job.workMode}</p>
+                  <p className="job-company">
+                    {job.company || job.companyName}
+                  </p>
+
+                  <p>
+                    {job.location} • {job.workMode || job.jobType || "Full-Time"}
+                  </p>
 
                   <h4>{job.salary || "Salary not disclosed"}</h4>
 
-                 <div className="job-tags">
-                  {Array.isArray(job.skills) && job.skills.length > 0 ? (
-                    job.skills.slice(0, 4).map((skill, i) => (
-                      <span key={skill._id || i}>
-                        {typeof skill === "string"
-                          ? skill
-                          : skill?.name || "Skill"}
-                      </span>
-                    ))
-                  ) : (
-                    <span>No skills added</span>
-                  )}
-                </div>
+                  <div className="job-tags">
+                    {Array.isArray(job.skills) && job.skills.length > 0 ? (
+                      job.skills.slice(0, 4).map((skill, i) => (
+                        <span key={skill._id || i}>
+                          {typeof skill === "string"
+                            ? skill
+                            : skill?.name || "Skill"}
+                        </span>
+                      ))
+                    ) : (
+                      <span>No skills added</span>
+                    )}
+                  </div>
+
                   <button onClick={() => applyJob(job._id)}>Apply Now</button>
                 </div>
               ))}
@@ -2606,42 +2645,14 @@ return (
           )}
         </section>
 
-        <section className="bottom-grid">
+        <section className="feature-grid">
           <div className="premium-card">
-            <div className="premium-section-head">
-              <h2>Auto Apply Tracker</h2>
-              <button onClick={autoApply}>Manage Consent</button>
-            </div>
-
-            <p>No auto-apply records yet.</p>
-          </div>
-
-          <div className="premium-card">
-            <h2>Profile Improvement Tasks</h2>
-
-            <div className="task-item">
-              <div>
-                <b>Add Work Experience</b>
-                <p>Add details of your work experience</p>
-              </div>
-              <span>+15%</span>
-            </div>
-
-            <div className="task-item">
-              <div>
-                <b>Verify College Email</b>
-                <p>Get your education verified</p>
-              </div>
-              <span>+10%</span>
-            </div>
-
-            <div className="task-item">
-              <div>
-                <b>Add Project Details</b>
-                <p>Add 2 more projects</p>
-              </div>
-              <span>+10%</span>
-            </div>
+            <h2>Salary Predictor</h2>
+            <p>Based on your current profile and skills:</p>
+            <h2>{candidate.expectedSalary || "₹6 - ₹10 LPA"}</h2>
+            <p>
+              Add resume, project proof and verification to improve salary range.
+            </p>
           </div>
         </section>
       </main>
@@ -2686,6 +2697,54 @@ return (
           </div>
         </div>
 
+        <div className="passport-card right-premium-card">
+          <h3>Candidate Trust Passport</h3>
+
+          <div>
+            <span>Proxy Risk Shield</span>
+            <b>Clean</b>
+          </div>
+
+          <div>
+            <span>Identity Verified</span>
+            <b>{candidate.identityStatus || "Pending"}</b>
+          </div>
+
+          <div>
+            <span>Resume Verified</span>
+            <b>{candidate.resumeUrl ? "Added" : "Missing"}</b>
+          </div>
+
+          <div>
+            <span>Project Proof</span>
+            <b>{candidate.projectVideoUrl ? "Added" : "Missing"}</b>
+          </div>
+
+          <div>
+            <span>Self Intro Video</span>
+            <b>{candidate.selfIntroVideoUrl ? "Added" : "Missing"}</b>
+          </div>
+
+          <div>
+            <span>Recruiter Confidence</span>
+            <b>4.7/5</b>
+          </div>
+        </div>
+
+        <div className="resume-strength-card right-premium-card">
+          <h3>Resume Strength</h3>
+
+          <h2>{Math.min(score, 100)}/100</h2>
+
+          <div className="green-progress">
+            <span style={{ width: `${Math.min(score, 100)}%` }}></span>
+          </div>
+
+          <p>Add resume, projects, videos and skills to improve.</p>
+
+          <a href={`/profile/${candidate._id}`}>Optimize Resume →</a>
+        </div>
+
         <div className="premium-card">
           <h3>Career Growth Insights</h3>
 
@@ -2695,44 +2754,8 @@ return (
 
           <p>Data Engineer roles are high in demand in your location.</p>
         </div>
-
-        <div className="premium-pro-card" id="services">
-          <h3>👑 NoProxy Pro</h3>
-          <p>Unlock premium tools to accelerate your career.</p>
-
-          <ul>
-            <li>AI Resume Optimization</li>
-            <li>Mock Interview Practice</li>
-            <li>Salary Insights</li>
-            <li>Priority Job Recommendations</li>
-          </ul>
-
-          <button onClick={() => setShowProDetails(true)}>
-            Upgrade to Pro
-          </button>
-        </div>
       </aside>
     </div>
-
-    {showProDetails && (
-      <div className="modal-overlay">
-        <div className="edit-modal">
-          <h2>NoProxy Pro Benefits</h2>
-
-          <p>✅ AI Resume Optimization</p>
-          <p>✅ Mock Interview Practice</p>
-          <p>✅ Profile Boost</p>
-          <p>✅ Career Guidance</p>
-          <p>✅ Auto Apply with Consent</p>
-
-          <button onClick={() => alert("Payment integration coming soon")}>
-            Buy NoProxy Pro
-          </button>
-
-          <button onClick={() => setShowProDetails(false)}>Close</button>
-        </div>
-      </div>
-    )}
   </>
 );}
 function TalentInsightPanel({ candidate, score }) {
