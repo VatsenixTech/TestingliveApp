@@ -258,7 +258,6 @@ function Register() {
     </>
   );
 }
-
 function CandidateLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -297,78 +296,165 @@ function CandidateLogin() {
 
       window.location.href = `/dashboard/${candidate._id}`;
     } catch (err) {
-      console.log("Candidate Login Error:", err.response?.data || err.message);
-      alert(err.response?.data?.message || "Login failed. Please check email and password.");
+      alert(err.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <>
-      <div className="auth-page">
-        <div className="auth-card">
-          <h1>Candidate Login</h1>
-          <p>Login to manage your verified talent profile.</p>
+    <main className="enterprise-login-page">
+      <section className="enterprise-login-card">
+        <div className="enterprise-left-panel">
+          <a href="/" className="enterprise-brand">
+            <img src="/logo.png" alt="NoPromptJobs" />
+            <div>
+              <h2>NOPROMPTJOBS.COM</h2>
+              <p>Verified Hiring Platform</p>
+            </div>
+          </a>
 
-          <input
-            placeholder="Candidate Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <div className="product-preview-card">
+            <div className="preview-header">
+              <span>Candidate Trust Passport</span>
+              <b>Excellent</b>
+            </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <div className="preview-score-row">
+              <div className="preview-circle">96%</div>
 
-          <button onClick={loginCandidate}>Login as Candidate</button>
+              <div>
+                <p>✅ Resume verified</p>
+                <p>✅ Project proof added</p>
+                <p>✅ Self-intro video ready</p>
+                <p>✅ AI match enabled</p>
+              </div>
+            </div>
+          </div>
 
-          <a href="/candidate-email-verify">Create Candidate Account</a>
-          <a href="/">Back to Home</a>
+          <div className="preview-mini-grid">
+            <div>
+              <h3>5</h3>
+              <p>Job Matches</p>
+            </div>
+            <div>
+              <h3>100</h3>
+              <p>Trust Score</p>
+            </div>
+            <div>
+              <h3>AI</h3>
+              <p>Career Tools</p>
+            </div>
+          </div>
         </div>
-      </div>
-    </>
-  );
-}
 
-function CandidateEmailVerify() {
-  const [email, setEmail] = useState(localStorage.getItem("candidateSignupEmail") || "");
+        <div className="enterprise-right-panel">
+          <div className="enterprise-login-box">
+            <span className="login-small-badge">Candidate Portal</span>
+
+            <h1>Welcome back</h1>
+            <p>Login to continue managing your verified career profile.</p>
+
+            <label>
+              Email Address
+              <input
+                type="email"
+                placeholder="candidate@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </label>
+
+            <label>
+              Password
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+
+            <div className="enterprise-helper">
+              <label>
+                <input type="checkbox" />
+                Remember me
+              </label>
+              <a href="#">Forgot password?</a>
+            </div>
+
+            <button className="enterprise-login-btn" onClick={loginCandidate}>
+              Login to Candidate Dashboard
+            </button>
+
+            <div className="enterprise-create">
+              <span>New candidate?</span>
+              <button onClick={() => (window.location.href = "/candidate-email-verify")}>
+                Create verified account
+              </button>
+            </div>
+
+            <a href="/" className="enterprise-back-link">
+              ← Back to website
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}function CandidateEmailVerify() {
+  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const sendOtp = async () => {
-    const signupEmail = email.trim().toLowerCase();
+  const signupEmail = email.trim().toLowerCase();
 
-    if (!signupEmail) {
-      alert("Please enter your Gmail/email");
-      return;
-    }
+  if (!signupEmail) {
+    alert("Email is required");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  if (!signupEmail.includes("@")) {
+    alert("Please enter a valid email address");
+    return;
+  }
 
-      await axios.post(`${API_URL}/api/candidates/send-otp`, {
-        email: signupEmail,
-      });
+  try {
+    setLoading(true);
 
-      localStorage.setItem("candidateSignupEmail", signupEmail);
-      setOtpSent(true);
-      alert("OTP sent to your email");
-    } catch (err) {
-      console.log("Send OTP Error:", err.response?.data || err.message);
-      alert(err.response?.data?.message || "Failed to send OTP");
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log("Sending OTP payload:", {
+      email: signupEmail,
+      method: "email",
+    });
 
+    await axios.post(`${API_URL}/api/candidates/send-otp`, {
+      email: signupEmail,
+      method: "email",
+    });
+
+    localStorage.setItem("candidateSignupEmail", signupEmail);
+    localStorage.setItem("candidateSignupMobile", mobile.trim());
+
+    setOtpSent(true);
+    alert("OTP sent to your email");
+  } catch (err) {
+    console.log("SEND OTP ERROR:", err.response?.data || err.message);
+    alert(err.response?.data?.message || "Failed to send OTP");
+  } finally {
+    setLoading(false);
+  }
+};
   const verifyOtp = async () => {
     const signupEmail = email.trim().toLowerCase();
 
-    if (!signupEmail || !otp.trim()) {
-      alert("Please enter email and OTP");
+    if (!signupEmail) {
+      alert("Email is required");
+      return;
+    }
+
+    if (!otp.trim()) {
+      alert("Please enter OTP");
       return;
     }
 
@@ -378,15 +464,15 @@ function CandidateEmailVerify() {
       await axios.post(`${API_URL}/api/candidates/verify-otp`, {
         email: signupEmail,
         otp: otp.trim(),
+        method: "email",
       });
 
-      localStorage.setItem("candidateSignupEmail", signupEmail);
       localStorage.setItem("candidateOtpVerified", "true");
 
       alert("Email verified successfully");
       window.location.href = "/candidate-set-password";
     } catch (err) {
-      console.log("Verify OTP Error:", err.response?.data || err.message);
+      console.log("VERIFY OTP ERROR:", err.response?.data || err.message);
       alert(err.response?.data?.message || "Invalid OTP");
     } finally {
       setLoading(false);
@@ -394,47 +480,181 @@ function CandidateEmailVerify() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1>Verify Candidate Email</h1>
-        <p>Enter your email. We will send an OTP before profile registration.</p>
+    <main className="candidate-onboard-page">
+      <section className="candidate-onboard-left">
+        <a href="/" className="onboard-brand">
+          <img src="/logo.png" alt="NoPromptJobs" />
+          <div>
+            <h2>NOPROMPTJOBS.COM</h2>
+            <p>Verified Talent Platform</p>
+          </div>
+        </a>
 
-        <input
-          placeholder="Candidate Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={otpSent}
-        />
+        <div className="onboard-left-content">
+          <span className="onboard-trust-badge">
+            🛡 Trusted by verified candidates
+          </span>
 
-        {!otpSent ? (
-          <button onClick={sendOtp} disabled={loading}>
-            {loading ? "Sending OTP..." : "Send OTP"}
+          <h1>
+            Build your verified career <b>identity</b>
+          </h1>
+
+          <p>
+            Get discovered by genuine recruiters with your trust passport,
+            verified profile and real proof.
+          </p>
+
+          <div className="onboard-feature-list">
+            <div>📄 AI Powered Resume Builder</div>
+            <div>🛡 Trust Passport & Verification</div>
+            <div>🎥 Self Intro Video</div>
+            <div>📁 Project Explanation Proof</div>
+            <div>🎯 AI Match Score</div>
+            <div>🏅 Verified Candidate Badge</div>
+          </div>
+        </div>
+
+        <div className="onboard-stats">
+          <div>
+            <h3>95%</h3>
+            <p>Trust Score</p>
+          </div>
+          <div>
+            <h3>4.8/5</h3>
+            <p>Recruiter Confidence</p>
+          </div>
+          <div>
+            <h3>10K+</h3>
+            <p>Candidates</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="candidate-onboard-right">
+        <a href="/" className="onboard-back-btn">
+          ← Back to Home
+        </a>
+
+        <div className="candidate-onboard-card">
+          <span className="candidate-onboard-badge">
+            👤 Candidate Onboarding
+          </span>
+
+          <h1>Create your account</h1>
+          <p>Start with email verification to create your profile.</p>
+
+          <div className="onboard-divider">
+            <span></span>
+            <b>OR</b>
+            <span></span>
+          </div>
+
+          <button
+            type="button"
+            className="google-onboard-btn"
+            onClick={() => alert("Google login coming soon")}
+          >
+            <b>G</b> Continue with Google
           </button>
-        ) : (
-          <>
-            <input
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-            />
 
-            <button onClick={verifyOtp} disabled={loading}>
-              {loading ? "Verifying..." : "Verify OTP"}
-            </button>
+          {!otpSent ? (
+            <>
+              <label>
+                Email Address
+                <div className="onboard-input-wrap">
+                  <span>✉</span>
+                  <input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </label>
 
-            <button type="button" onClick={() => setOtpSent(false)}>
-              Change Email
-            </button>
-          </>
-        )}
+              <label>
+                Mobile Number
+                <div className="onboard-mobile-wrap">
+                  <span>🇮🇳 +91</span>
+                  <input
+                    type="tel"
+                    placeholder="Optional mobile number"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                  />
+                </div>
+              </label>
 
-        <a href="/candidate-login">Already have account? Login</a>
-        <a href="/">Back to Home</a>
-      </div>
-    </div>
+              <label className="whatsapp-alert-box">
+                <div>
+                  <span>🟢</span>
+                  <div>
+                    <h4>Receive job alerts & recruiter messages</h4>
+                    <p>Mobile OTP will be enabled after SMS setup</p>
+                  </div>
+                </div>
+                <input type="checkbox" defaultChecked />
+              </label>
+
+              <button
+                type="button"
+                className="create-account-main-btn"
+                onClick={sendOtp}
+                disabled={loading}
+              >
+                {loading ? "Sending OTP..." : "Create Account →"}
+              </button>
+            </>
+          ) : (
+            <>
+              <label>
+                Enter OTP
+                <div className="onboard-input-wrap">
+                  <span>🔐</span>
+                  <input
+                    placeholder="Enter 6 digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                  />
+                </div>
+              </label>
+
+              <button
+                type="button"
+                className="create-account-main-btn"
+                onClick={verifyOtp}
+                disabled={loading}
+              >
+                {loading ? "Verifying..." : "Verify & Continue →"}
+              </button>
+
+              <button
+                type="button"
+                className="change-account-btn"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp("");
+                }}
+              >
+                Change Email
+              </button>
+            </>
+          )}
+
+          <p className="onboard-signin-text">
+            Already have an account? <a href="/candidate-login">Sign In</a>
+          </p>
+        </div>
+
+        <div className="onboard-security-row">
+          <span>🔒 Secure & Private</span>
+          <span>🛡 100% Verified</span>
+          <span>🚫 No Spam</span>
+        </div>
+      </section>
+    </main>
   );
 }
-
 function CandidateSetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -751,85 +971,152 @@ function JobsPage() {
 );
 }
 function ServicesPage() {
-  const [showProDetails, setShowProDetails] = useState(false);
-
   return (
     <>
       <Navbar />
 
-      <div className="services-page">
-        <section className="services-hero">
+      <main className="career-center-page">
+
+        <section className="career-hero">
           <div>
-            <h1>NoProxy Candidate Services</h1>
+            <span className="career-badge">
+              🚀 NoProxy AI Career Center
+            </span>
+
+            <h1>
+              Build a stronger profile.
+              Get noticed faster.
+            </h1>
+
             <p>
-              Premium tools to improve profile strength, interview confidence,
-              and recruiter response.
+              AI-powered tools to improve your resume,
+              interview confidence, salary prediction,
+              trust score and recruiter visibility.
+            </p>
+
+            <div className="career-hero-actions">
+              <button>
+                Start Career Growth
+              </button>
+
+              <button className="outline-btn">
+                View Profile
+              </button>
+            </div>
+          </div>
+
+          <div className="career-score-card">
+            <h3>Career Growth Score</h3>
+
+            <div className="career-circle">
+              92%
+            </div>
+
+            <p>
+              Excellent Growth Potential
             </p>
           </div>
         </section>
 
-        <div className="services-grid">
-          <div className="service-card-pro">
-            <h2>📝 AI Resume Preparation</h2>
-            <p>Improve ATS score, keywords, achievements and recruiter visibility.</p>
-            <button onClick={() => setShowProDetails(true)}>View Details</button>
+
+        <div className="career-tools-grid">
+
+          <div className="career-tool-card">
+            <span>🧠</span>
+
+            <h2>AI Resume Studio</h2>
+
+            <p>
+              Optimize ATS score and improve resume quality.
+            </p>
+
+            <button>
+              Launch →
+            </button>
           </div>
 
-          <div className="service-card-pro">
-            <h2>🎤 Mock Interview</h2>
-            <p>Practice technical, HR, project explanation and communication rounds.</p>
-            <button onClick={() => setShowProDetails(true)}>View Details</button>
+
+          <div className="career-tool-card">
+            <span>🎤</span>
+
+            <h2>Interview Simulator</h2>
+
+            <p>
+              Practice HR and technical interviews.
+            </p>
+
+            <button>
+              Start →
+            </button>
           </div>
 
-          <div className="service-card-pro">
-            <h2>🚀 Profile Boost</h2>
-            <p>Improve search appearance and stand out as a verified candidate.</p>
-            <button onClick={() => setShowProDetails(true)}>View Details</button>
+
+          <div className="career-tool-card">
+            <span>📈</span>
+
+            <h2>Career Intelligence</h2>
+
+            <p>
+              Salary predictor and skill gap analyzer.
+            </p>
+
+            <button>
+              Explore →
+            </button>
           </div>
 
-          <div className="service-card-pro">
-            <h2>🧭 Career Guidance</h2>
-            <p>Get roadmap suggestions based on role, skills, and market demand.</p>
-            <button onClick={() => setShowProDetails(true)}>View Details</button>
+
+          <div className="career-tool-card">
+            <span>🛡</span>
+
+            <h2>Verification Hub</h2>
+
+            <p>
+              Face verification, project proof and trust badge.
+            </p>
+
+            <button>
+              Verify →
+            </button>
           </div>
 
-          <div className="service-card-pro">
-            <h2>🤖 Auto Apply With Consent</h2>
-            <p>Apply only to matching jobs after candidate approval and consent.</p>
-            <button onClick={() => setShowProDetails(true)}>View Details</button>
-          </div>
-
-          <div className="service-card-pro">
-            <h2>🛡 NoProxy Verification</h2>
-            <p>Face check, project proof, intro video and genuine candidate trust badge.</p>
-            <button onClick={() => setShowProDetails(true)}>View Details</button>
-          </div>
         </div>
 
-        {showProDetails && (
-          <div className="modal-overlay">
-            <div className="edit-modal">
-              <h2>NoProxy Pro Package</h2>
-              <p>✅ AI Resume Optimization</p>
-              <p>✅ Mock Interview Practice</p>
-              <p>✅ Career Guidance</p>
-              <p>✅ Profile Boost</p>
-              <p>✅ Auto Apply With Consent</p>
-              <p>✅ Genuine Candidate Verification</p>
 
-              <button onClick={() => alert("Payment integration coming soon")}>
-                Buy NoProxy Pro
-              </button>
+        <section className="career-growth-panel">
 
-              <button onClick={() => setShowProDetails(false)}>Close</button>
+          <h2>AI Growth Dashboard</h2>
+
+          <div className="growth-metrics">
+
+            <div>
+              <span>Profile Strength</span>
+              <h1>92%</h1>
             </div>
+
+            <div>
+              <span>Resume Quality</span>
+              <h1>88%</h1>
+            </div>
+
+            <div>
+              <span>Interview Readiness</span>
+              <h1>76%</h1>
+            </div>
+
+            <div>
+              <span>Trust Score</span>
+              <h1>100%</h1>
+            </div>
+
           </div>
-        )}
-      </div>
+
+        </section>
+
+      </main>
     </>
   );
 }
-
 function NotificationsPage() {
   const notifications = [
     {
@@ -993,12 +1280,23 @@ function Navbar() {
     }
   };
 
-  if (isRecruiterPage) {
-    return (
-      <div className="topbar recruiter-topbar">
-         <a href="/recruiter-dashboard" className="brand recruiter-brand recruiter-brand-empty">
-          </a>
+ if (isRecruiterPage) {
+  return (
+    <div className="topbar recruiter-topbar">
 
+      <div
+        className="recruiter-navbar-brand"
+        onClick={() => (window.location.href = "/recruiter-dashboard")}
+      >
+        <div className="recruiter-logo-box">
+          <img src="/logo.png" alt="NOPROMPTJOBS.COM" />
+        </div>
+
+        <div className="recruiter-brand-text">
+          <h3>NOPROMPTJOBS.COM</h3>
+          
+        </div>
+      </div>
         <div className="recruiter-nav-tabs">
           <a href="/recruiter-dashboard">Dashboard</a>
           <a href="/recruiter-post-job">Post Job</a>
@@ -1062,19 +1360,20 @@ function Navbar() {
 
   return (
   <div className="topbar candidate-topbar">
-    <a href={candidateDashboardLink} className="brand">
-      <img 
-        src="/logo.png"
-        alt="NoProxiesJobs" 
-        className="site-logo"
-       />
+ <a href={candidateDashboardLink} className="brand">
+  <div className="logo-box">
+    <img
+      src="/logo.png"
+      alt="NoPromptJobs"
+      className="site-logo"
+    />
+  </div>
 
-      <div className="brand-name">
-        <h2>NOPROXIESJOBS.COM</h2>
-        <small>SMART SOLUTIONS. REAL RESULTS.</small>
-      </div>
-    </a>
-
+  <div className="brand-name">
+    <h2>NOPROMPTJOBS.COM</h2>
+    <small>SMART SOLUTIONS. REAL RESULTS.</small>
+  </div>
+</a>
     <div className="candidate-search-wrap">
       <input
         className="top-search"
@@ -2882,22 +3181,12 @@ function RecruiterAdvancedSidebar() {
   };
 
   return (
-   <aside className="advanced-recruiter-sidebar">
+  <aside className="advanced-recruiter-sidebar">
 
-      <div className="advanced-brand-card">
-
-        <img
-          src="/logo.png"
-          alt="NoPromptjobs.com"
-          className="advanced-company-logo"
-        />
-
-        <h2>Nopromtjobs.com</h2>
-
-        <p>Smart Solutions. Real Results.</p>
-
-      </div>
-      <div className="advanced-menu-group">
+    <div className="sidebar-title">
+      <span>Recruiter Suite</span>
+    </div>
+        <div className="advanced-menu-group">
         <span>Advanced Tools</span>
 
         <button onClick={() => goTo("/recruiter-ai-assistant")}>
@@ -2982,6 +3271,8 @@ function RecruiterDashboard() {
 
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -2992,30 +3283,365 @@ function RecruiterDashboard() {
     loadDashboard();
   }, []);
 
-  
-
   const loadDashboard = async () => {
     try {
+      setLoading(true);
+
       const candidatesRes = await axios.get(`${API_URL}/api/candidates`);
       const jobsRes = await axios.get(`${API_URL}/api/jobs`);
 
-      const candidates = candidatesRes.data || [];
+      const candidateList = candidatesRes.data || [];
       const jobList = jobsRes.data || [];
 
-      const appliedCandidates = candidates.filter((c) => c.applied === true);
+      const appliedCandidates = candidateList.filter((c) => c.applied === true);
+      const shortlistedCandidates = candidateList.filter(
+        (c) => c.shortlisted === true
+      );
 
       setStats({
-        totalCandidates: candidates.length,
-        shortlisted: candidates.filter((c) => c.shortlisted === true).length,
+        totalCandidates: candidateList.length,
+        shortlisted: shortlistedCandidates.length,
         jobsPosted: jobList.length,
         applications: appliedCandidates.length,
       });
 
+      setCandidates(candidateList.slice(0, 5));
       setJobs(jobList.slice(0, 5));
       setApplications(appliedCandidates.slice(0, 5));
     } catch (err) {
       console.log(err.response?.data || err.message);
       alert("Dashboard data loading failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statCards = [
+    {
+      title: "Total Candidates",
+      value: stats.totalCandidates,
+      icon: "👥",
+      trend: "+18%",
+      text: "Live candidate database",
+      color: "violet",
+    },
+    {
+      title: "Shortlisted",
+      value: stats.shortlisted,
+      icon: "⭐",
+      trend: "+9%",
+      text: "Ready for recruiter review",
+      color: "amber",
+    },
+    {
+      title: "Jobs Posted",
+      value: stats.jobsPosted,
+      icon: "💼",
+      trend: "+12%",
+      text: "Active job listings",
+      color: "green",
+    },
+    {
+      title: "Applications",
+      value: stats.applications,
+      icon: "📄",
+      trend: "+6%",
+      text: "Incoming applications",
+      color: "blue",
+    },
+  ];
+
+  return (
+    <>
+      <Navbar />
+
+      <div className="saas-dashboard">
+        <RecruiterAdvancedSidebar />
+
+        <main className="saas-main">
+          <section className="saas-top">
+            <div>
+              <h1>Welcome back, {recruiterName} 👋</h1>
+              <p>Here is what is happening with your hiring today.</p>
+            </div>
+
+            <div className="saas-actions">
+              <button className="saas-search">Search candidates, jobs...</button>
+              <button className="saas-outline">Export Report</button>
+              <button
+                className="saas-primary"
+                onClick={() => (window.location.href = "/recruiter-post-job")}
+              >
+                + Post New Job
+              </button>
+            </div>
+          </section>
+
+          <section className="saas-stats">
+            {statCards.map((item) => (
+              <div className={`saas-stat ${item.color}`} key={item.title}>
+                <div className="saas-stat-icon">{item.icon}</div>
+
+                <div className="saas-stat-content">
+                  <p>{item.title}</p>
+                  <h2>{loading ? "..." : item.value}</h2>
+                  <small>{item.text}</small>
+                </div>
+
+                <div className="saas-trend">
+                  <b>{item.trend}</b>
+                  <span>vs last month</span>
+                </div>
+              </div>
+            ))}
+          </section>
+
+          <section className="saas-grid">
+            <div className="saas-panel pipeline-panel">
+              <div className="saas-panel-head">
+                <div>
+                  <h2>Hiring Pipeline</h2>
+                  <p>Candidate movement across recruitment stages</p>
+                </div>
+
+                <button onClick={() => (window.location.href = "/recruiter-shortlisted")}>
+                  View Pipeline →
+                </button>
+              </div>
+
+              <div className="pipeline-row">
+                <PipelineItem label="Sourced" value={stats.totalCandidates} percent="92%" />
+                <PipelineItem label="Shortlisted" value={stats.shortlisted} percent="64%" />
+                <PipelineItem label="Interview" value="0" percent="38%" />
+                <PipelineItem label="Offered" value="0" percent="18%" />
+                <PipelineItem label="Hired" value="0" percent="8%" />
+              </div>
+            </div>
+
+            <div className="saas-panel ai-panel">
+              <div className="saas-panel-head">
+                <h2>AI Insights</h2>
+                <button>View All</button>
+              </div>
+
+              <div className="ai-list">
+                <div>⚡ Improve job posts with skill-based keywords.</div>
+                <div>🎯 Shortlist verified project candidates first.</div>
+                <div>📈 Add salary range to improve applications.</div>
+                <div>🛡 Prefer candidates with trust verification.</div>
+              </div>
+            </div>
+          </section>
+
+          <section className="saas-grid">
+            <div className="saas-panel jobs-panel">
+              <div className="saas-panel-head">
+                <div>
+                  <h2>Recent Job Posts</h2>
+                  <p>Latest jobs posted by your company</p>
+                </div>
+
+                <button onClick={() => (window.location.href = "/recruiter-post-job")}>
+                  View All Jobs →
+                </button>
+              </div>
+
+              <div className="saas-table">
+                <div className="saas-table-head">
+                  <span>Job Title</span>
+                  <span>Location</span>
+                  <span>Work Mode</span>
+                  <span>Status</span>
+                  <span>Applications</span>
+                  <span>Action</span>
+                </div>
+
+                {jobs.length ? (
+                  jobs.map((job) => (
+                    <div className="saas-table-row" key={job._id}>
+                      <span>
+                        <b>{job.title || job.jobTitle}</b>
+                        <small>{job.company || "NoProxyJobs"}</small>
+                      </span>
+
+                      <span>{job.location || "Not added"}</span>
+                      <span>{job.workMode || "Hybrid"}</span>
+
+                      <span>
+                        <em>{job.status || "Active"}</em>
+                      </span>
+
+                      <span>{job.applications?.length || 0}</span>
+
+                      <button
+                        onClick={() =>
+                          (window.location.href = `/recruiter-job-details/${job._id}`)
+                        }
+                      >
+                        View
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="saas-empty">No jobs posted yet.</div>
+                )}
+              </div>
+            </div>
+
+            <div className="saas-panel candidates-panel">
+              <div className="saas-panel-head">
+                <h2>Top Candidates</h2>
+                <button onClick={() => (window.location.href = "/recruiter-search")}>
+                  View All →
+                </button>
+              </div>
+
+              {candidates.length ? (
+                candidates.map((candidate) => (
+                  <div className="saas-candidate" key={candidate._id}>
+                    <div className="candidate-avatar">
+                      {candidate.profileImageUrl ? (
+                        <img src={candidate.profileImageUrl} alt={candidate.name} />
+                      ) : (
+                        candidate.name?.charAt(0) || "C"
+                      )}
+                    </div>
+
+                    <div>
+                      <h4>{candidate.name || "Candidate"}</h4>
+                      <p>{candidate.currentRole || "Job seeker"}</p>
+                      <small>{candidate.location || "India"}</small>
+                    </div>
+
+                    <strong>92%</strong>
+
+                    <button
+                      onClick={() =>
+                        (window.location.href = `/recruiter-candidate-profile/${candidate._id}`)
+                      }
+                    >
+                      View
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="saas-empty">No candidates found.</div>
+              )}
+            </div>
+          </section>
+
+          <section className="saas-bottom">
+            <div className="saas-panel">
+              <h2>Recruiter Performance</h2>
+
+              <div className="performance-grid">
+                <Performance label="Profile Completion" value="88%" />
+                <Performance label="Job Visibility" value="76%" />
+                <Performance label="Candidate Response" value="64%" />
+              </div>
+            </div>
+
+            <div className="saas-panel quick-panel">
+              <h2>Quick Actions</h2>
+
+              <div className="quick-grid">
+                <button onClick={() => (window.location.href = "/recruiter-post-job")}>
+                  ➕ Post Job
+                </button>
+                <button onClick={() => (window.location.href = "/recruiter-search")}>
+                  🔍 Find Candidates
+                </button>
+                <button onClick={() => (window.location.href = "/recruiter-shortlisted")}>
+                  ⭐ Shortlisted
+                </button>
+                <button onClick={() => (window.location.href = "/recruiter-applications")}>
+                  📄 Applications
+                </button>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </>
+  );
+}
+
+function PipelineItem({ label, value, percent }) {
+  return (
+    <div className="pipeline-item">
+      <h3>{value}</h3>
+      <p>{label}</p>
+      <span>{percent}</span>
+      <div className="pipeline-track">
+        <div style={{ width: percent }}></div>
+      </div>
+    </div>
+  );
+}
+
+function Performance({ label, value }) {
+  return (
+    <div className="performance-card">
+      <p>{label}</p>
+      <h3>{value}</h3>
+      <div className="performance-track">
+        <div style={{ width: value }}></div>
+      </div>
+    </div>
+  );
+}
+function RecruiterPostJobPage() {
+  const [job, setJob] = useState({
+    title: "",
+    company: "",
+    location: "",
+    workMode: "Hybrid",
+    employmentType: "Full-time",
+    experience: "",
+    salary: "",
+    skills: "",
+    description: "",
+    responsibilities: "",
+    requirements: "",
+    benefits: "",
+  });
+
+  const [posting, setPosting] = useState(false);
+
+  const handleChange = (e) => {
+    setJob({
+      ...job,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const postJob = async (e) => {
+    e.preventDefault();
+
+    if (!job.title || !job.company || !job.location || !job.description) {
+      alert("Please fill Job Title, Company, Location and Description");
+      return;
+    }
+
+    try {
+      setPosting(true);
+
+      await axios.post(`${API_URL}/api/jobs`, {
+        ...job,
+        skills: job.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        status: "Active",
+      });
+
+      alert("Job posted successfully");
+      window.location.href = "/recruiter-dashboard";
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+      alert("Job post failed");
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -3023,202 +3649,250 @@ function RecruiterDashboard() {
     <>
       <Navbar />
 
-      <div className="hr-dashboard">
+      <div className="postjob-saas-layout">
         <RecruiterAdvancedSidebar />
 
-        <main className="hr-main">
-          <section className="hr-welcome">
+        <main className="postjob-saas-main">
+          <section className="postjob-saas-hero">
             <div>
-              <h1>Welcome back, {recruiterName} 👋</h1>
-              <p>Track jobs, candidates, applications and hiring performance.</p>
-            </div>
-
-            <button onClick={() => (window.location.href = "/recruiter-post-job")}>
-              + Post New Job
-            </button>
-          </section>
-
-          <section className="hr-stats">
-            <div className="hr-stat purple">
-              <span>👥</span>
-              <div>
-                <p>Total Candidates</p>
-                <h2>{stats.totalCandidates}</h2>
-                <small>Live database</small>
-              </div>
-            </div>
-
-            <div className="hr-stat green">
-              <span>🔖</span>
-              <div>
-                <p>Shortlisted</p>
-                <h2>{stats.shortlisted}</h2>
-                <small>Real shortlisted</small>
-              </div>
-            </div>
-
-            <div className="hr-stat blue">
-              <span>💼</span>
-              <div>
-                <p>Jobs Posted</p>
-                <h2>{stats.jobsPosted}</h2>
-                <small>Real jobs</small>
-              </div>
-            </div>
-
-            <div className="hr-stat orange">
-              <span>📄</span>
-              <div>
-                <p>Applications</p>
-                <h2>{stats.applications}</h2>
-                <small>Real applications</small>
-              </div>
-            </div>
-          </section>
-
-          <section className="hr-card">
-            <div className="hr-section-head">
-              <h2>Recent Job Posts</h2>
-              <button onClick={() => (window.location.href = "/recruiter-post-job")}>
-                View All Jobs →
-              </button>
-            </div>
-
-            <div className="hr-job-table">
-              <div className="hr-job-row hr-table-head">
-                <span>Job Title</span>
-                <span>Applications</span>
-                <span>Status</span>
-                <span>Location</span>
-                <span>Action</span>
-              </div>
-
-              {jobs.length ? (
-                jobs.map((job) => (
-                  <div className="hr-job-row" key={job._id}>
-                    <span>
-                      <b>{job.title}</b>
-                      <small>{job.company}</small>
-                    </span>
-
-                    <span>{job.applications?.length || 0}</span>
-
-                    <span className="hr-status active">
-                      {job.status || "Active"}
-                    </span>
-
-                    <span>{job.location || "Not added"}</span>
-
-                    <button onClick={() => window.location.href = `/recruiter-job-details/${job._id}`}>
-                      ⋮
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-box">No jobs posted yet.</div>
-              )}
-            </div>
-          </section>
-
-          <section className="hr-card">
-            <div className="hr-section-head">
-              <h2>Recent Applications</h2>
-              <button onClick={() => (window.location.href = "/recruiter-applications")}>
-                View All Applications →
-              </button>
-            </div>
-
-            {applications.length ? (
-              applications.map((candidate) => (
-                <div className="hr-application-row" key={candidate._id}>
-                  <div className="hr-avatar">
-                    {candidate.name?.charAt(0) || "C"}
-                  </div>
-
-                  <div>
-                    <h4>{candidate.name}</h4>
-                    <p>{candidate.currentRole || "Candidate"}</p>
-                  </div>
-
-                  <span>{candidate.experienceYears || 0} yrs</span>
-                  <span>{candidate.location || "NA"}</span>
-
-                  <span className="hr-tag">
-                    {candidate.status || "Applied"}
-                  </span>
-
-                  <button
-                    onClick={() =>
-                      (window.location.href = `/recruiter-candidate-profile/${candidate._id}`)
-                    }
-                  >
-                    View
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="empty-box">No applications yet.</div>
-            )}
-          </section>
-        </main>
-
-        <aside className="hr-right">
-          <div className="hr-card">
-            <h3>Applications Overview</h3>
-            <div className="hr-chart">
-              <div></div>
-            </div>
-            <h2>{stats.applications}</h2>
-            <p>Total Applications</p>
-          </div>
-
-          <div className="hr-card">
-            <h3>Shortlisted Candidates</h3>
-            <div className="hr-circle">{stats.shortlisted}</div>
-            <p>Live shortlisted candidates</p>
-          </div>
-
-          <div className="hr-card hr-quick">
-            <h3>Quick Actions</h3>
-            <button onClick={() => (window.location.href = "/recruiter-post-job")}>
-              ➕ Post Job
-            </button>
-            <button onClick={() => (window.location.href = "/recruiter-search")}>
-              🔍 Search Candidates
-            </button>
-            <button onClick={() => (window.location.href = "/recruiter-applications")}>
-              📄 View Applications
-            </button>
-            <button onClick={() => (window.location.href = "/recruiter-shortlisted")}>
-              ⭐ Shortlisted
-            </button>
-          </div>
-        </aside>
-      </div>
-    </>
-  );
-}
-function RecruiterPostJobPage() {
-  return (
-    <>
-      <Navbar />
-
-      <div className="advanced-post-layout">
-        <RecruiterAdvancedSidebar />
-
-        <main className="clean-job-main">
-          <section className="clean-job-hero">
-            <div className="clean-job-icon">💼</div>
-
-            <div>
-              <h1>Post a New Job</h1>
+              <span className="postjob-badge">💼 Recruiter Workspace</span>
+              <h1>Post a Premium Job Opening</h1>
               <p>
-                Create a professional job opening and reach verified candidates.
+                Create a complete job post with role details, compensation,
+                skills, requirements and candidate-facing preview.
               </p>
             </div>
+
+            <div className="postjob-hero-actions">
+              <button className="draft-btn" onClick={() => alert("Draft saved")}>
+                Save Draft
+              </button>
+              <button className="publish-btn" onClick={postJob}>
+                {posting ? "Publishing..." : "Publish Job"}
+              </button>
+            </div>
           </section>
 
-          <JobPostForm />
+          <section className="postjob-stats-row">
+            <div>
+              <span>Draft Jobs</span>
+              <h2>2</h2>
+              <p>Saved job templates</p>
+            </div>
+
+            <div>
+              <span>Active Jobs</span>
+              <h2>Live</h2>
+              <p>Visible to candidates</p>
+            </div>
+
+            <div>
+              <span>Reach Estimate</span>
+              <h2>1.2k</h2>
+              <p>Matching candidates</p>
+            </div>
+
+            <div>
+              <span>AI Quality</span>
+              <h2>92%</h2>
+              <p>Job post strength</p>
+            </div>
+          </section>
+
+          <div className="postjob-content-grid">
+            <form className="postjob-form-card" onSubmit={postJob}>
+              <div className="form-section-title">
+                <h2>Job Information</h2>
+                <p>Basic role details candidates will see first.</p>
+              </div>
+
+              <div className="postjob-grid">
+                <label>
+                  Job Title
+                  <input
+                    name="title"
+                    value={job.title}
+                    placeholder="e.g. Senior React Developer"
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <label>
+                  Company Name
+                  <input
+                    name="company"
+                    value={job.company}
+                    placeholder="e.g. NoPromptJobs"
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <label>
+                  Location
+                  <input
+                    name="location"
+                    value={job.location}
+                    placeholder="e.g. Bengaluru, India"
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <label>
+                  Work Mode
+                  <select name="workMode" value={job.workMode} onChange={handleChange}>
+                    <option>Remote</option>
+                    <option>Hybrid</option>
+                    <option>On-site</option>
+                  </select>
+                </label>
+
+                <label>
+                  Employment Type
+                  <select
+                    name="employmentType"
+                    value={job.employmentType}
+                    onChange={handleChange}
+                  >
+                    <option>Full-time</option>
+                    <option>Part-time</option>
+                    <option>Contract</option>
+                    <option>Internship</option>
+                  </select>
+                </label>
+
+                <label>
+                  Experience
+                  <input
+                    name="experience"
+                    value={job.experience}
+                    placeholder="e.g. 2 - 5 years"
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <label>
+                  Salary Range
+                  <input
+                    name="salary"
+                    value={job.salary}
+                    placeholder="e.g. ₹6 LPA - ₹12 LPA"
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <label>
+                  Required Skills
+                  <input
+                    name="skills"
+                    value={job.skills}
+                    placeholder="React, Node, MongoDB"
+                    onChange={handleChange}
+                  />
+                </label>
+              </div>
+
+              <div className="form-section-title">
+                <h2>Job Description</h2>
+                <p>Add clear details to improve application quality.</p>
+              </div>
+
+              <label>
+                Overview
+                <textarea
+                  name="description"
+                  value={job.description}
+                  placeholder="Write a professional role overview..."
+                  onChange={handleChange}
+                />
+              </label>
+
+              <label>
+                Responsibilities
+                <textarea
+                  name="responsibilities"
+                  value={job.responsibilities}
+                  placeholder="Mention key responsibilities..."
+                  onChange={handleChange}
+                />
+              </label>
+
+              <label>
+                Requirements
+                <textarea
+                  name="requirements"
+                  value={job.requirements}
+                  placeholder="Mention must-have skills and experience..."
+                  onChange={handleChange}
+                />
+              </label>
+
+              <label>
+                Benefits
+                <textarea
+                  name="benefits"
+                  value={job.benefits}
+                  placeholder="Mention benefits, growth, work culture..."
+                  onChange={handleChange}
+                />
+              </label>
+
+              <div className="postjob-bottom-actions">
+                <button type="button" className="draft-btn">
+                  Save as Draft
+                </button>
+
+                <button type="submit" className="publish-btn">
+                  {posting ? "Publishing..." : "Publish Job"}
+                </button>
+              </div>
+            </form>
+
+            <aside className="postjob-right-panel">
+              <div className="postjob-ai-card">
+                <h2>✨ AI Job Quality</h2>
+                <div className="quality-circle">92%</div>
+                <p>Strong job post. Add salary and benefits for better applications.</p>
+
+                <ul>
+                  <li>✅ Clear job title</li>
+                  <li>✅ Skills added</li>
+                  <li>✅ Candidate-friendly description</li>
+                  <li>⚠️ Add interview process</li>
+                </ul>
+              </div>
+
+              <div className="job-preview-card">
+                <h2>Live Candidate Preview</h2>
+
+                <div className="preview-job-card">
+                  <span>Verified Job</span>
+                  <h3>{job.title || "Job Title"}</h3>
+                  <p>{job.company || "Company Name"}</p>
+                  <small>
+                    {job.location || "Location"} • {job.workMode}
+                  </small>
+
+                  <h4>{job.salary || "Salary not disclosed"}</h4>
+
+                  <div className="preview-skills">
+                    {job.skills ? (
+                      job.skills.split(",").slice(0, 5).map((skill, i) => (
+                        <b key={i}>{skill.trim()}</b>
+                      ))
+                    ) : (
+                      <>
+                        <b>React</b>
+                        <b>Node</b>
+                        <b>MongoDB</b>
+                      </>
+                    )}
+                  </div>
+
+                  <button>Candidate View</button>
+                </div>
+              </div>
+            </aside>
+          </div>
         </main>
       </div>
     </>
@@ -4813,29 +5487,11 @@ function RecruiterTeamPage() {
   );
 }
 function RecruiterBillingPage() {
-  const savedPlan = localStorage.getItem("recruiterPlan") || "Free";
-
-  const [activePlan, setActivePlan] = useState(savedPlan);
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   const plans = [
     {
       name: "Free",
       price: "₹0",
-      amount: 0,
-      period: "/month",
-      badge: "Starter",
+      tag: "Starter",
       desc: "For testing basic hiring tools",
       features: [
         "Post 1 job",
@@ -4843,13 +5499,12 @@ function RecruiterBillingPage() {
         "Limited shortlist access",
         "Basic dashboard",
       ],
+      current: true,
     },
     {
       name: "Growth",
       price: "₹4,999",
-      amount: 4999,
-      period: "/month",
-      badge: "Most Popular",
+      tag: "Most Popular",
       desc: "For startups hiring regularly",
       features: [
         "Post 10 jobs",
@@ -4858,13 +5513,12 @@ function RecruiterBillingPage() {
         "Applications dashboard",
         "Recruiter notes",
       ],
+      popular: true,
     },
     {
       name: "Enterprise",
       price: "₹14,999",
-      amount: 14999,
-      period: "/month",
-      badge: "Premium",
+      tag: "Premium",
       desc: "For companies with full hiring teams",
       features: [
         "Unlimited jobs",
@@ -4877,236 +5531,138 @@ function RecruiterBillingPage() {
     },
   ];
 
-  
-
-  const startPayment = async (plan) => {
-    try {
-      if (plan.amount === 0) {
-        localStorage.setItem("recruiterPlan", "Free");
-        setActivePlan("Free");
-        alert("Free plan activated");
-        return;
-      }
-
-      if (!window.Razorpay) {
-        alert("Razorpay not loaded. Please refresh page.");
-        return;
-      }
-
-      const res = await axios.post(
-        `${API_URL}/api/payments/create-order`,
-        {
-          amount: plan.amount,
-          planName: plan.name,
-        }
-      );
-
-      const options = {
-        key: res.data.key,
-        amount: res.data.order.amount,
-        currency: "INR",
-        name: "NoProxy Talent",
-        description: `${plan.name} Plan`,
-        order_id: res.data.order.id,
-
-        handler: async function (response) {
-          try {
-            const verifyRes = await axios.post(
-              `${API_URL}/api/payments/verify`,
-              {
-                ...response,
-                planName: plan.name,
-              }
-            );
-
-            if (verifyRes.data.success) {
-              localStorage.setItem(
-                "recruiterPlan",
-                plan.name
-              );
-
-              localStorage.setItem(
-                "paymentId",
-                verifyRes.data.paymentId
-              );
-
-              setActivePlan(plan.name);
-
-              alert(
-                "Payment successful. Plan activated."
-              );
-            } else {
-              alert("Payment verification failed");
-            }
-          } catch (err) {
-            console.log(
-              err.response?.data || err.message
-            );
-            alert("Verification failed");
-          }
-        },
-
-        prefill: {
-          name: "Recruiter",
-          email:
-            JSON.parse(
-              localStorage.getItem("user")
-            )?.email ||
-            "recruiter@example.com",
-        },
-
-        theme: {
-          color: "#6C47FF",
-        },
-      };
-
-      const razorpay =
-        new window.Razorpay(options);
-
-      razorpay.open();
-
-    } catch (err) {
-      console.log(
-        err.response?.data || err.message
-      );
-      alert("Payment failed");
-    }
-  };
-  const paymentId = localStorage.getItem("paymentId");
-
   return (
     <>
       <Navbar />
 
-      <div className="applications-layout">
+      <div className="billing-saas-layout">
         <RecruiterAdvancedSidebar />
 
-        <main className="applications-main">
+        <main className="billing-saas-main">
           <section className="billing-hero-premium">
-            <div>
-              <span className="billing-mini-label">
-                NoProxy Talent Pro
-              </span>
-
-              <h1>💳 Billing & Plans</h1>
-
+            <div>z
+              <span className="billing-badge">👑 NO Proxy Talent Pro</span>
+              <h1>Billing & Plans</h1>
               <p>
-                Choose the right hiring plan for verified candidates,
-                advanced search, interview pipeline and recruiter tools.
+                Upgrade your hiring workspace with advanced search, AI hiring tools,
+                interview pipeline and premium recruiter features.
               </p>
             </div>
 
-            <div className="billing-current-plan premium">
-              <span>Current Plan</span>
-              <h2>{activePlan}</h2>
-              <p>
-                {paymentId
-                  ? `Payment ID: ${paymentId.slice(-8)}`
-                  : "No payment yet"}
-              </p>
+            <div className="current-plan-card">
+              <small>CURRENT PLAN</small>
+              <h2>Free</h2>
+              <p>No payment yet</p>
             </div>
           </section>
 
-          <section className="billing-plan-grid premium-grid">
+          <section className="billing-stats-row">
+            <div>
+              <span>Jobs Posted</span>
+              <h2>7</h2>
+              <p>Used this month</p>
+            </div>
+
+            <div>
+              <span>Candidate Searches</span>
+              <h2>142</h2>
+              <p>Search activity</p>
+            </div>
+
+            <div>
+              <span>Shortlists</span>
+              <h2>18</h2>
+              <p>Candidates saved</p>
+            </div>
+
+            <div>
+              <span>Plan Health</span>
+              <h2>Free</h2>
+              <p>Upgrade recommended</p>
+            </div>
+          </section>
+
+          <section className="plans-grid-premium">
             {plans.map((plan) => (
               <div
-                className={
-                  activePlan === plan.name
-                    ? "billing-plan-card premium-card active"
-                    : "billing-plan-card premium-card"
-                }
+                className={`plan-card-premium ${
+                  plan.popular ? "popular-plan" : ""
+                } ${plan.current ? "current-plan" : ""}`}
                 key={plan.name}
               >
-                <div className="plan-card-top">
-                  <h2>{plan.name}</h2>
-                  <span>{plan.badge}</span>
+                <div className="plan-top">
+                  <div>
+                    <h2>{plan.name}</h2>
+                    <p>{plan.desc}</p>
+                  </div>
+
+                  <span>{plan.tag}</span>
                 </div>
 
-                <div className="plan-price-row">
+                <div className="plan-price">
                   <h1>{plan.price}</h1>
-                  <small>{plan.period}</small>
+                  <small>/month</small>
                 </div>
-
-                <p>{plan.desc}</p>
 
                 <ul>
-                  {plan.features.map((feature, i) => (
-                    <li key={i}>✅ {feature}</li>
+                  {plan.features.map((feature) => (
+                    <li key={feature}>✅ {feature}</li>
                   ))}
                 </ul>
 
-                <button onClick={() => startPayment(plan)}>
-                  {activePlan === plan.name
-                    ? "Current Plan"
-                    : plan.amount === 0
-                    ? "Activate Free"
-                    : "Pay & Activate"}
+                <button className={plan.current ? "current-btn" : "upgrade-btn"}>
+                  {plan.current ? "Current Plan" : "Pay & Activate"}
                 </button>
               </div>
             ))}
           </section>
 
           <section className="billing-bottom-grid">
-            <div className="billing-info-card premium-info">
+            <div className="billing-panel">
               <h2>Invoice & Payment</h2>
 
               <div className="billing-info-row">
                 <span>Next billing date</span>
-                <b>
-                  {activePlan === "Free"
-                    ? "Not active"
-                    : "Next month"}
-                </b>
+                <b>Not active</b>
               </div>
 
               <div className="billing-info-row">
                 <span>Payment method</span>
-                <b>
-                  {paymentId
-                    ? "Razorpay verified"
-                    : "Not added"}
-                </b>
+                <b>Not added</b>
               </div>
 
               <div className="billing-info-row">
                 <span>Billing status</span>
-                <b className="billing-status-active">
-                  {activePlan === "Free" ? "Free Plan" : "Active"}
-                </b>
+                <b className="green-text">Free Plan</b>
               </div>
             </div>
 
-            <div className="billing-info-card premium-info">
+            <div className="billing-panel">
               <h2>Usage Summary</h2>
 
-              <div className="billing-usage">
-                <p>Jobs Posted</p>
-                <div>
-                  <span style={{ width: "45%" }}></span>
-                </div>
-                <b>7 used</b>
-              </div>
-
-              <div className="billing-usage">
-                <p>Candidate Searches</p>
-                <div>
-                  <span style={{ width: "70%" }}></span>
-                </div>
-                <b>142 searches</b>
-              </div>
-
-              <div className="billing-usage">
-                <p>Shortlists</p>
-                <div>
-                  <span style={{ width: "30%" }}></span>
-                </div>
-                <b>18 candidates</b>
-              </div>
+              <UsageBar label="Jobs Posted" value="45%" text="7 used" />
+              <UsageBar label="Candidate Searches" value="70%" text="142 searches" />
+              <UsageBar label="Shortlists" value="30%" text="18 candidates" />
             </div>
           </section>
         </main>
       </div>
     </>
+  );
+}
+
+function UsageBar({ label, value, text }) {
+  return (
+    <div className="usage-box">
+      <div>
+        <b>{label}</b>
+        <span>{text}</span>
+      </div>
+
+      <div className="usage-track">
+        <span style={{ width: value }}></span>
+      </div>
+    </div>
   );
 }
 function CompaniesPage() {

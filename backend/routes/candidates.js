@@ -105,54 +105,54 @@ const safeJsonParse = (
 };
 
 /* =======================================================
-   SEND OTP
+   SEND OTP - EMAIL ONLY NOW, MOBILE LATER
 ======================================================= */
 
-router.post(
-  "/send-otp",
-  async (req, res) => {
-    try {
-      const contact =
-        req.body.contact
-          ?.toLowerCase()
-          .trim();
+router.post("/send-otp", async (req, res) => {
+  try {
+    console.log("BODY RECEIVED:", req.body);
 
-      if (!contact) {
-        return res.status(400).json({
-          message: "Email is required",
-        });
-      }
+    const method = req.body.method || "email";
 
-      if (!contact.includes("@")) {
-        return res.status(400).json({
-          message:
-            "Please enter valid email",
-        });
-      }
+    const email = req.body.email
+      ? req.body.email.toLowerCase().trim()
+      : "";
 
-      const existingCandidate =
-        await Candidate.findOne({
-          email: contact,
-        });
+    const mobile = req.body.mobile
+      ? req.body.mobile.trim()
+      : "";
 
-      if (existingCandidate) {
-        return res.status(400).json({
-          message:
-            "Candidate already registered. Please login.",
-        });
-      }
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
 
-      const otp = Math.floor(
-        100000 +
-          Math.random() * 900000
-      ).toString();
+    if (!email.includes("@")) {
+      return res.status(400).json({
+        message: "Please enter valid email",
+      });
+    }
 
-      await transporter.sendMail({
-        from: `"NoPromptJobs" <${process.env.EMAIL_USER}>`,
-        to: contact,
-        subject:
-          "Verify your NoPromptJobs account",
-        html: `
+    const existingCandidate = await Candidate.findOne({
+      email,
+    });
+
+    if (existingCandidate) {
+      return res.status(400).json({
+        message: "Candidate already registered. Please login.",
+      });
+    }
+
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    await transporter.sendMail({
+      from: `"NoPromptJobs" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Verify your NoPromptJobs account",
+      html: `
         <div style="font-family:Arial;padding:20px">
           <h2>NoPromptJobs Verification</h2>
           <p>Your OTP is:</p>
@@ -160,96 +160,91 @@ router.post(
           <p>This OTP is valid for 10 minutes.</p>
         </div>
       `,
-      });
+    });
 
-      global.candidateOtpStore[
-        contact
-      ] = {
-        otp,
-        verified: false,
-        expiresAt:
-          Date.now() +
-          10 * 60 * 1000,
-      };
+    global.candidateOtpStore[email] = {
+      otp,
+      verified: false,
+      method,
+      mobile,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    };
 
-      res.json({
-        success: true,
-        message:
-          "OTP sent to your email",
-      });
-    } catch (error) {
-      console.log(
-        "SEND OTP ERROR:",
-        error
-      );
+    console.log("EMAIL OTP SENT TO:", email);
+    console.log("OTP:", otp);
 
-      res.status(500).json({
-        message: "OTP email failed",
-        error: error.message,
-      });
-    }
+    res.json({
+      success: true,
+      message: "OTP sent to your email",
+    });
+  } catch (error) {
+    console.log("SEND OTP ERROR:", error);
+
+    res.status(500).json({
+      message: "OTP failed",
+      error: error.message,
+    });
   }
-);
-
+});
 /* =======================================================
-   VERIFY OTP
+   VERIFY OTP - EMAIL ONLY NOW
 ======================================================= */
 
-router.post(
-  "/verify-otp",
-  async (req, res) => {
-    try {
-      const contact =
-        req.body.contact
-          ?.toLowerCase()
-          .trim();
+router.post("/verify-otp", async (req, res) => {
+  try {
+    console.log("VERIFY BODY RECEIVED:", req.body);
 
-      const otp =
-        req.body.otp?.trim();
+    const email = req.body.email
+      ? req.body.email.toLowerCase().trim()
+      : "";
 
-      const savedOtp =
-        global.candidateOtpStore[
-          contact
-        ];
+    const otp = req.body.otp
+      ? req.body.otp.trim()
+      : "";
 
-      if (!savedOtp) {
-        return res.status(400).json({
-          message: "OTP not found",
-        });
-      }
-
-      if (
-        Date.now() >
-        savedOtp.expiresAt
-      ) {
-        return res.status(400).json({
-          message: "OTP expired",
-        });
-      }
-
-      if (savedOtp.otp !== otp) {
-        return res.status(400).json({
-          message: "Invalid OTP",
-        });
-      }
-
-      savedOtp.verified = true;
-
-      res.json({
-        success: true,
-        message:
-          "OTP verified successfully",
-      });
-    } catch (error) {
-      res.status(500).json({
-        message:
-          "OTP verification failed",
-        error: error.message,
+    if (!email || !otp) {
+      return res.status(400).json({
+        message: "Email and OTP are required",
       });
     }
-  }
-);
 
+    const savedOtp = global.candidateOtpStore[email];
+
+    if (!savedOtp) {
+      return res.status(400).json({
+        message: "OTP not found. Please request OTP again.",
+      });
+    }
+
+    if (Date.now() > savedOtp.expiresAt) {
+      delete global.candidateOtpStore[email];
+
+      return res.status(400).json({
+        message: "OTP expired. Please request a new OTP.",
+      });
+    }
+
+    if (savedOtp.otp !== otp) {
+      return res.status(400).json({
+        message: "Invalid OTP",
+      });
+    }
+
+    savedOtp.verified = true;
+
+    res.json({
+      success: true,
+      message: "OTP verified successfully",
+    });
+  } catch (error) {
+    console.log("VERIFY OTP ERROR:", error);
+
+    res.status(500).json({
+      message: "OTP verification failed",
+      error: error.message,
+    });
+  }
+});
 /* =======================================================
    LOGIN
 ======================================================= */
