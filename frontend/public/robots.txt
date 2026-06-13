@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nopromptjobs.com/sitemap.xml

@@ -1532,8 +1532,8 @@ function App() {
   if (path === "/recruiter-screening") return <RecruiterScreeningPage />;
   if (path === "/recruiter-team") return <RecruiterTeamPage />;
   if (path === "/recruiter-billing") return <RecruiterBillingPage />;
+  if (path.startsWith("/jobs/")) return <JobDetailsPage />;
   if (path === "/jobs") return <JobsPage />;
-  if (path.startsWith("/jobs/software-support-engineer-bangalore")) return <JobDetailsPage />;
   if (path === "/services") return <ServicesPage />;
   if (path === "/notifications") return <NotificationsPage />;
 
