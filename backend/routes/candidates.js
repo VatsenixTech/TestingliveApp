@@ -33,13 +33,17 @@ global.candidateOtpStore =
 /* ---------------- EMAIL TRANSPORT ---------------- */
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
-
 /* ---------------- DELETE LOCAL FILE ---------------- */
 
 const deleteLocalFile = (filePath) => {
@@ -113,30 +117,18 @@ router.post("/send-otp", async (req, res) => {
     console.log("BODY RECEIVED:", req.body);
 
     const method = req.body.method || "email";
-
-    const email = req.body.email
-      ? req.body.email.toLowerCase().trim()
-      : "";
-
-    const mobile = req.body.mobile
-      ? req.body.mobile.trim()
-      : "";
+    const email = req.body.email ? req.body.email.toLowerCase().trim() : "";
+    const mobile = req.body.mobile ? req.body.mobile.trim() : "";
 
     if (!email) {
-      return res.status(400).json({
-        message: "Email is required",
-      });
+      return res.status(400).json({ message: "Email is required" });
     }
 
     if (!email.includes("@")) {
-      return res.status(400).json({
-        message: "Please enter valid email",
-      });
+      return res.status(400).json({ message: "Please enter valid email" });
     }
 
-    const existingCandidate = await Candidate.findOne({
-      email,
-    });
+    const existingCandidate = await Candidate.findOne({ email });
 
     if (existingCandidate) {
       return res.status(400).json({
@@ -144,23 +136,9 @@ router.post("/send-otp", async (req, res) => {
       });
     }
 
-    const otp = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
+    global.candidateOtpStore = global.candidateOtpStore || {};
 
-    await transporter.sendMail({
-      from: `"NoPromptJobs" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Verify your NoPromptJobs account",
-      html: `
-        <div style="font-family:Arial;padding:20px">
-          <h2>NoPromptJobs Verification</h2>
-          <p>Your OTP is:</p>
-          <h1>${otp}</h1>
-          <p>This OTP is valid for 10 minutes.</p>
-        </div>
-      `,
-    });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     global.candidateOtpStore[email] = {
       otp,
@@ -170,17 +148,44 @@ router.post("/send-otp", async (req, res) => {
       expiresAt: Date.now() + 10 * 60 * 1000,
     };
 
-    console.log("EMAIL OTP SENT TO:", email);
+    console.log("OTP GENERATED FOR:", email);
     console.log("OTP:", otp);
 
-    res.json({
-      success: true,
-      message: "OTP sent to your email",
-    });
-  } catch (error) {
-    console.log("SEND OTP ERROR:", error);
+    try {
+      await transporter.sendMail({
+        from: `"NoPromptJobs" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: "Verify your NoPromptJobs account",
+        html: `
+          <div style="font-family:Arial;padding:20px">
+            <h2>NoPromptJobs Verification</h2>
+            <p>Your OTP is:</p>
+            <h1>${otp}</h1>
+            <p>This OTP is valid for 10 minutes.</p>
+          </div>
+        `,
+      });
 
-    res.status(500).json({
+      console.log("EMAIL OTP SENT TO:", email);
+
+      return res.json({
+        success: true,
+        message: "OTP sent to your email",
+      });
+    } catch (mailError) {
+      console.log("EMAIL SEND ERROR:", mailError);
+
+      return res.status(500).json({
+        success: false,
+        message: "OTP generated but email sending failed",
+        error: mailError.message,
+      });
+    }
+  } catch (error) {
+    console.log("SEND OTP MAIN ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
       message: "OTP failed",
       error: error.message,
     });
