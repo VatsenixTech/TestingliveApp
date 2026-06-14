@@ -1130,10 +1130,23 @@ function ServicesPage() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const candidateId = user?.candidateId || user?._id || user?.id;
 
+  const RAZORPAY_PRO_LINK = "https://rzp.io/rzp/wBgr5eag";
+
+  const openPayment = (planName) => {
+    console.log("Opening Razorpay payment for:", planName);
+    window.open(RAZORPAY_PRO_LINK, "_blank", "noopener,noreferrer");
+  };
+
   const goProfile = () => {
     window.location.href = candidateId
       ? `/profile/${candidateId}`
       : "/candidate-login";
+  };
+
+  const startFreePlan = () => {
+    window.location.href = candidateId
+      ? `/profile/${candidateId}`
+      : "/candidate-email-verify";
   };
 
   const comingSoon = (name) => {
@@ -1211,7 +1224,10 @@ function ServicesPage() {
             </p>
 
             <div className="hero-actions">
-              <button onClick={goProfile}>⚡ Upgrade to Pro</button>
+              <button onClick={() => openPayment("Hero Pro Upgrade")}>
+                ⚡ Upgrade to Pro
+              </button>
+
               <button onClick={() => comingSoon("All Features")}>
                 Explore All Features →
               </button>
@@ -1226,65 +1242,65 @@ function ServicesPage() {
           </div>
 
           <div className="pro-dashboard-preview">
-  <aside className="dash-sidebar">
-    <div className="dash-logo">N</div>
-    <p className="active">Overview</p>
-    <p>Applications</p>
-    <p>Auto Apply</p>
-    <p>Alerts</p>
-    <p>Resume</p>
-    <p>Interview Prep</p>
-  </aside>
+            <aside className="dash-sidebar">
+              <div className="dash-logo">N</div>
+              <p className="active">Overview</p>
+              <p>Applications</p>
+              <p>Auto Apply</p>
+              <p>Alerts</p>
+              <p>Resume</p>
+              <p>Interview Prep</p>
+            </aside>
 
-  <section className="dash-main">
-    <div className="dash-head">
-      <div>
-        <h3>Welcome back, Venkatesha! 👋</h3>
-        <small>Smart career overview</small>
-      </div>
-      <div className="trust-chip">🛡 Verified</div>
-    </div>
+            <section className="dash-main">
+              <div className="dash-head">
+                <div>
+                  <h3>Welcome back, Venkatesha! 👋</h3>
+                  <small>Smart career overview</small>
+                </div>
+                <div className="trust-chip">🛡 Verified</div>
+              </div>
 
-    <div className="dash-grid">
-      <div className="dash-card score-card">
-        <p>AI Match Score</p>
-        <h2>92</h2>
-        <span>Excellent Match</span>
-      </div>
+              <div className="dash-grid">
+                <div className="dash-card score-card">
+                  <p>AI Match Score</p>
+                  <h2>92</h2>
+                  <span>Excellent Match</span>
+                </div>
 
-      <div className="dash-card applications">
-        <div>
-          <p>Applications</p>
-          <h3>24</h3>
-          <small>Applied</small>
-        </div>
-        <div>
-          <h3>12</h3>
-          <small>Interviewing</small>
-        </div>
-      </div>
+                <div className="dash-card applications">
+                  <div>
+                    <p>Applications</p>
+                    <h3>24</h3>
+                    <small>Applied</small>
+                  </div>
+                  <div>
+                    <h3>12</h3>
+                    <small>Interviewing</small>
+                  </div>
+                </div>
 
-      <div className="dash-card strength">
-        <p>Profile Strength</p>
-        <h2>82%</h2>
-        <span>Strong</span>
-      </div>
+                <div className="dash-card strength">
+                  <p>Profile Strength</p>
+                  <h2>82%</h2>
+                  <span>Strong</span>
+                </div>
 
-      <div className="dash-card auto">
-        <p>Auto Apply</p>
-        <h2>125</h2>
-        <span>Applied</span>
-      </div>
+                <div className="dash-card auto">
+                  <p>Auto Apply</p>
+                  <h2>125</h2>
+                  <span>Applied</span>
+                </div>
 
-      <div className="dash-card activity">
-        <p>Recent Activity</p>
-        <span>Applied for Senior Data Engineer</span>
-        <span>Interview scheduled - Tech Mahindra</span>
-        <span>Profile viewed by 5 recruiters</span>
-      </div>
-    </div>
-  </section>
-</div>
+                <div className="dash-card activity">
+                  <p>Recent Activity</p>
+                  <span>Applied for Senior Data Engineer</span>
+                  <span>Interview scheduled - Tech Mahindra</span>
+                  <span>Profile viewed by 5 recruiters</span>
+                </div>
+              </div>
+            </section>
+          </div>
         </section>
 
         <section className="pro-stats-strip">
@@ -1299,35 +1315,32 @@ function ServicesPage() {
           <div className="pro-section-title">
             <span>POWERFUL FEATURES</span>
             <h2>Everything NoPromptPro has, plus your own AI trust layer</h2>
-            <p>8 powerful AI tools to automate, analyze and accelerate your career journey.</p>
+            <p>
+              8 powerful AI tools to automate, analyze and accelerate your career
+              journey.
+            </p>
           </div>
 
           <div className="pro-feature-grid">
-  {featureCards.map((item) => (
-    <article className="pro-feature-card" key={item.title}>
+            {featureCards.map((item) => (
+              <article className="pro-feature-card" key={item.title}>
+                <span className="feature-tag">+ {item.tag}</span>
 
-      <span className="feature-tag">
-        + {item.tag}
-      </span>
+                <img
+                  src={item.img}
+                  alt={item.title}
+                  className="feature-image"
+                />
 
-      <img
-        src={item.img}
-        alt={item.title}
-        className="feature-image"
-      />
-
-      
-
-      <button
-        className="feature-btn"
-        onClick={() => comingSoon(item.title)}
-      >
-        Explore →
-      </button>
-
-    </article>
-  ))}
-</div>
+                <button
+                  className="feature-btn"
+                  onClick={() => comingSoon(item.title)}
+                >
+                  Explore →
+                </button>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="pro-bottom-grid">
@@ -1364,7 +1377,9 @@ function ServicesPage() {
                 "Mock Interviews",
                 "Target Salary",
               ].map((x) => (
-                <div key={x}>🎯<span>{x}</span></div>
+                <div key={x}>
+                  🎯<span>{x}</span>
+                </div>
               ))}
             </div>
           </div>
@@ -1378,13 +1393,16 @@ function ServicesPage() {
             <span>✓ Basic profile</span>
             <span>✓ Job alerts</span>
             <span>✓ Basic resume upload</span>
-            <button>Get Started</button>
+
+            <button onClick={startFreePlan}>
+              Get Started
+            </button>
           </div>
 
           <div className="price-card popular">
             <b>Most Popular</b>
             <h3>Pro</h3>
-            <h2>₹499/month</h2>
+            <h2>₹899/month</h2>
             <p>For serious job seekers</p>
             <span>✓ Auto Apply</span>
             <span>✓ Job Alerts</span>
@@ -1392,24 +1410,34 @@ function ServicesPage() {
             <span>✓ Trust Passport</span>
             <span>✓ Interview Practice</span>
             <span>✓ Salary Predictor</span>
-            <button>Start Pro →</button>
+
+            <button onClick={() => openPayment("Pro Plan")}>
+              Start Pro →
+            </button>
           </div>
 
           <div className="price-card">
             <h3>Ultimate</h3>
-            <h2>₹999/month</h2>
+            <h2>₹1999/month</h2>
             <p>For career accelerators</p>
             <span>✓ Everything in Pro</span>
             <span>✓ Priority recruiter visibility</span>
             <span>✓ AI Career Coach</span>
             <span>✓ Advanced insights</span>
-            <button>Upgrade to Ultimate</button>
+
+            <button onClick={() => openPayment("Ultimate Plan")}>
+              Upgrade to Ultimate
+            </button>
           </div>
 
           <div className="final-pro-cta">
             <h2>Ready to accelerate your career?</h2>
             <p>Join 100K+ professionals who are already ahead.</p>
-            <button onClick={goProfile}>Upgrade to Pro →</button>
+
+            <button onClick={() => openPayment("Final CTA Pro Upgrade")}>
+              Upgrade to Pro →
+            </button>
+
             <ul>
               <li>✅ 7-Day Free Trial</li>
               <li>✅ No Credit Card Required</li>
