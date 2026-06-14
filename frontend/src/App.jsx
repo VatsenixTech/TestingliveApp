@@ -279,15 +279,16 @@ function CandidateLogin() {
 
       console.log("LOGIN RESPONSE:", response.data);
 
-      localStorage.setItem("user", JSON.stringify(response.data.candidate || response.data.user));
+      const candidate = response.data.candidate || response.data.user;
+
+      localStorage.setItem("user", JSON.stringify(candidate));
 
       alert("Login successful");
 
       const candidateId =
-        response.data?.candidate?._id ||
-        response.data?.candidate?.id ||
-        response.data?.user?._id ||
-        response.data?.user?.id;
+        candidate?._id ||
+        candidate?.id ||
+        candidate?.candidateId;
 
       window.location.href = candidateId
         ? `/dashboard/${candidateId}`
@@ -301,182 +302,137 @@ function CandidateLogin() {
   };
 
   return (
-    <main className="candidate-login-pro">
-      <section className="cl-left">
-        <div className="cl-brand">
-          <img src="/logo.png" alt="NoPromptJobs" />
-          <div>
-            <h2>NOPROMPTJOBS.COM</h2>
-            <p>VERIFIED HIRING PLATFORM</p>
-          </div>
+  <main className="candidate-login-pro">
+  <section className="cl-left">
+    <div className="cl-bg-glow cl-glow-one"></div>
+    <div className="cl-bg-glow cl-glow-two"></div>
+
+    {/* Company Logo */}
+    <div className="cl-company-header">
+      <img
+        src="/logo.png"
+        alt="Vatsenix"
+        className="company-logo"
+      />
+    </div>
+
+    {/* Heading */}
+    <div className="cl-copy">
+      <div>
+        <h1>Candidate Trust Passport</h1>
+        <p>
+          Your verified identity. Your career credibility.
+        </p>
+      </div>
+
+      <span className="cl-status">
+        🏅 Excellent
+      </span>
+    </div>
+
+    {/* Trust Image */}
+    <div className="cl-trust-image">
+      <img
+        src="/images/trust-passport-login.png"
+        alt="Candidate Trust Passport"
+      />
+    </div>
+  </section>
+
+  <section className="cl-right">
+    <div className="cl-login-card">
+
+      <span className="cl-pill">
+        Candidate Portal
+      </span>
+
+      {/* Changed from Welcome Back */}
+      <h1>
+        Continue Your Career Journey
+      </h1>
+
+      <p>
+        Access your verified profile, AI tools, interview preparation and opportunities—all in one place.
+      </p>
+
+      <label>
+        Email Address
+
+        <div className="cl-input">
+          <span>✉</span>
+
+          <input
+            type="email"
+            placeholder="candidate@example.com"
+            value={email}
+            disabled={loading}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
+      </label>
 
-        <div className="cl-copy">
-          <div>
-            <h1>Candidate Trust Passport</h1>
-            <p>Your verified identity. Your career credibility.</p>
-          </div>
+      <label>
+        Password
 
-          <span className="cl-status">🏅 Excellent</span>
-        </div>
+        <div className="cl-input">
+          <span>🔒</span>
 
-        <div className="cl-visual">
-          <div className="cl-orbit"></div>
-
-          <div className="cl-id-card">
-            <div className="cl-avatar"></div>
-            <span></span>
-            <span></span>
-            <span></span>
-            <b>✓</b>
-          </div>
-
-          <div className="cl-passport">
-            <h3>TRUST<br />PASSPORT</h3>
-            <div className="cl-passport-shield">👤</div>
-            <small></small>
-            <small></small>
-            <small></small>
-            <i></i>
-          </div>
-
-          <div className="cl-chart-card">
-            <div className="bars">
-              <span></span><span></span><span></span><span></span>
-            </div>
-            <h4>96%</h4>
-          </div>
-
-          <div className="cl-lock-card">🔒</div>
-
-          <div className="cl-check-list">
-            <div>
-              <span>📄</span>
-              <p>Resume<br />verified</p>
-              <b>✓</b>
-            </div>
-            <div>
-              <span>💼</span>
-              <p>Project proof<br />added</p>
-              <b>✓</b>
-            </div>
-            <div>
-              <span>▶</span>
-              <p>Self-intro<br />video ready</p>
-              <b>✓</b>
-            </div>
-            <div>
-              <span>🎯</span>
-              <p>AI match<br />enabled</p>
-              <b>✓</b>
-            </div>
-          </div>
-        </div>
-
-        <div className="cl-metrics">
-          <div>
-            <span>🛡</span>
-            <h3>96%</h3>
-            <p>Trust Score</p>
-          </div>
-          <div>
-            <span>👥</span>
-            <h3>100+</h3>
-            <p>Skills Verified</p>
-          </div>
-          <div>
-            <span>⭐</span>
-            <h3>5K+</h3>
-            <p>Opportunities</p>
-          </div>
-        </div>
-
-        <div className="cl-security">
-          <div>
-            <b>🔐 Secure & Encrypted</b>
-            <p>Your data is always protected</p>
-          </div>
-          <div>
-            <b>🛡 Verified Platform</b>
-            <p>Trusted by recruiters worldwide</p>
-          </div>
-          <div>
-            <b>🔒 Privacy First</b>
-            <p>You're in control of your data</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="cl-right">
-        <div className="cl-login-card">
-          <span className="cl-pill">Candidate Portal</span>
-
-          <h1>Welcome back</h1>
-          <p>Login to continue managing your verified career profile.</p>
-
-          <label>
-            Email Address
-            <div className="cl-input">
-              <span>✉</span>
-              <input
-                type="email"
-                placeholder="candidate@example.com"
-                value={email}
-                disabled={loading}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          </label>
-
-          <label>
-            Password
-            <div className="cl-input">
-              <span>🔒</span>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter password"
-                value={password}
-                disabled={loading}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                👁
-              </button>
-            </div>
-          </label>
-
-          <div className="cl-options">
-            <label>
-              <input type="checkbox" /> Remember me
-            </label>
-            <a href="/candidate-forgot-password">Forgot password?</a>
-          </div>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter password"
+            value={password}
+            disabled={loading}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
           <button
             type="button"
-            className="cl-main-btn"
-            disabled={loading}
-            onClick={loginCandidate}
+            className="password-eye-btn"
+            onClick={() => setShowPassword(!showPassword)}
           >
-            {loading ? "Logging in..." : "Login to Candidate Dashboard →"}
+            {showPassword ? "🙈" : "👁"}
           </button>
-
-          <div className="cl-new-box">
-            <p>New candidate?</p>
-            <a href="/candidate-email-verify">Create verified account</a>
-          </div>
-
-          <a className="cl-back" href="/">
-            ← Back to website
-          </a>
         </div>
-      </section>
-    </main>
-  );
-}
+      </label>
+
+      <div className="cl-options">
+        <label>
+          <input type="checkbox" />
+          Remember me
+        </label>
+
+        <a href="/candidate-forgot-password">
+          Forgot password?
+        </a>
+      </div>
+
+      <button
+        type="button"
+        className="cl-main-btn"
+        disabled={loading}
+        onClick={loginCandidate}
+      >
+        {loading
+          ? "Signing you in..."
+          : "Access Candidate Dashboard →"}
+      </button>
+
+      <div className="cl-new-box">
+        <p>New candidate?</p>
+
+        <a href="/candidate-email-verify">
+          Create Verified Account
+        </a>
+      </div>
+
+      <a className="cl-back" href="/">
+        ← Back to website
+      </a>
+
+    </div>
+  </section>
+</main>
+);}
 function CandidateEmailVerify() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");

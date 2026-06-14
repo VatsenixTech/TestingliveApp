@@ -10832,4 +10832,445 @@ input:disabled {
   font-size: 16px;
   line-height: 1.7;
   color: #64748b;
+}/* Candidate Login - size refinement */
+
+.np-login-final {
+  min-height: 100vh;
+  grid-template-columns: 0.96fr 1.04fr;
+}
+
+.np-login-final-left {
+  padding: 28px 46px;
+}
+
+.np-company-logo-wrap {
+  height: 110px;
+}
+
+.np-company-logo-img {
+  width: 300px;
+  max-width: 80%;
+}
+
+.np-trust-image-only {
+  height: calc(100vh - 150px);
+  align-items: center;
+}
+
+.np-trust-image-only img {
+  width: 88%;
+  max-width: 720px;
+  max-height: 520px;
+  border-radius: 22px;
+}
+
+.np-login-final-right {
+  padding: 28px 38px;
+}
+
+.np-login-final-card {
+  width: min(100%, 500px);
+  padding: 42px 44px;
+  border-radius: 30px;
+}
+
+.np-login-final-pill {
+  padding: 9px 18px;
+  font-size: 14px;
+}
+
+.np-login-final-card h1 {
+  font-size: 36px;
+  margin: 24px 0 8px;
+}
+
+.np-login-final-card > p {
+  font-size: 15px;
+  margin-bottom: 28px;
+}
+
+.np-login-final-card label {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.np-final-input {
+  height: 54px;
+  border-radius: 16px;
+}
+
+.np-final-input span {
+  min-width: 56px;
+}
+
+.np-final-input input {
+  font-size: 15px;
+}
+
+.np-final-options {
+  margin: 4px 0 22px;
+  font-size: 14px;
+}
+
+.np-final-login-btn {
+  height: 56px;
+  border-radius: 16px;
+  font-size: 15px;
+}
+
+.np-final-new-box {
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 18px;
+}
+
+.np-final-new-box a {
+  padding: 13px;
+  font-size: 14px;
+}
+
+.np-final-back {
+  margin-top: 20px;
+  font-size: 14px;
+}.candidate-login-pro {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  background: #f8fbff;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.cl-left {
+  position: relative;
+  overflow: hidden;
+  padding: 30px 46px;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(124, 58, 237, 0.42), transparent 28%),
+    radial-gradient(circle at 88% 88%, rgba(37, 99, 235, 0.36), transparent 34%),
+    linear-gradient(145deg, #020716, #061b4a 55%, #090331);
+  color: white;
+}
+
+.cl-bg-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(95px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.cl-glow-one {
+  width: 300px;
+  height: 300px;
+  background: #7c3aed;
+  left: -90px;
+  top: -80px;
+}
+
+.cl-glow-two {
+  width: 360px;
+  height: 360px;
+  background: #2563eb;
+  right: -130px;
+  bottom: -80px;
+}
+
+.cl-brand {
+  position: relative;
+  z-index: 2;
+  height: 92px;
+  display: flex;
+  align-items: center;
+}
+
+.company-logo {
+  width: 300px;
+  max-width: 82%;
+  height: auto;
+  object-fit: contain;
+  background: transparent;
+  filter: drop-shadow(0 20px 50px rgba(168, 85, 247, 0.35));
+}
+
+.cl-copy {
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.cl-copy h1 {
+  margin: 0;
+  color: white;
+  font-size: clamp(28px, 2.9vw, 40px);
+  line-height: 1.08;
+  letter-spacing: -1.2px;
+  font-weight: 900;
+}
+
+.cl-copy p {
+  margin: 9px 0 0;
+  color: #bfdbfe;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.cl-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #4ade80;
+  font-size: 14px;
+  font-weight: 950;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cl-trust-image {
+  position: relative;
+  z-index: 2;
+  height: calc(100vh - 178px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cl-trust-image img {
+  width: 94%;
+  max-width: 760px;
+  max-height: 560px;
+  object-fit: contain;
+  border-radius: 24px;
+  filter: drop-shadow(0 34px 80px rgba(37, 99, 235, 0.36));
+}
+
+.cl-right {
+  display: grid;
+  place-items: center;
+  padding: 34px 44px;
+  background:
+    radial-gradient(circle at 20% 14%, rgba(37, 99, 235, 0.08), transparent 26%),
+    radial-gradient(circle at 95% 86%, rgba(124, 58, 237, 0.12), transparent 32%),
+    #f8fbff;
+}
+
+.cl-login-card {
+  width: min(100%, 510px);
+  padding: 42px 44px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.11);
+}
+
+.cl-pill {
+  display: inline-flex;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #6d28d9;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.cl-login-card h1 {
+  margin: 24px 0 8px;
+  font-size: 36px;
+  letter-spacing: -1.4px;
+  color: #071026;
+  line-height: 1.08;
+}
+
+.cl-login-card > p {
+  margin: 0 0 28px;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.cl-login-card label {
+  display: block;
+  margin-bottom: 16px;
+  color: #071026;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.cl-input {
+  height: 54px;
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  border-radius: 16px;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  overflow: hidden;
+  transition: 0.2s ease;
+}
+
+.cl-input:focus-within {
+  border-color: #7c3aed;
+  background: white;
+  box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.12);
+}
+
+.cl-input span {
+  min-width: 56px;
+  display: grid;
+  place-items: center;
+  border-right: 1px solid #e2e8f0;
+}
+
+.cl-input input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0 16px;
+  color: #071026;
+  font-size: 15px;
+}
+
+.password-eye-btn {
+  background: transparent;
+  color: #64748b;
+  padding: 0 16px;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.cl-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 22px;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.cl-options label {
+  margin: 0;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.cl-options input {
+  width: auto;
+  margin-right: 8px;
+}
+
+.cl-options a {
+  color: #6d28d9;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.cl-main-btn {
+  width: 100%;
+  height: 56px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  font-size: 15px;
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.22);
+}
+
+.cl-main-btn:hover {
+  transform: translateY(-2px);
+}
+
+.cl-new-box {
+  margin-top: 22px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.cl-new-box p {
+  margin: 0 0 12px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.cl-new-box a {
+  display: block;
+  padding: 13px;
+  border-radius: 14px;
+  background: #eef2ff;
+  color: #6d28d9;
+  font-size: 14px;
+  font-weight: 950;
+  text-decoration: none;
+}
+
+.cl-back {
+  display: block;
+  margin-top: 20px;
+  text-align: center;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+@media (max-width: 1100px) {
+  .candidate-login-pro {
+    grid-template-columns: 1fr;
+  }
+
+  .cl-trust-image {
+    height: auto;
+  }
+
+  .cl-right {
+    padding: 28px 18px;
+  }
+}
+
+@media (max-width: 650px) {
+  .cl-left {
+    padding: 24px 18px;
+  }
+
+  .company-logo {
+    width: 260px;
+  }
+
+  .cl-copy {
+    flex-direction: column;
+  }
+
+  .cl-login-card {
+    padding: 32px 22px;
+  }
+
+  .cl-login-card h1 {
+    font-size: 32px;
+  }
+
+  .cl-options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}.cl-brand {
+  display: none !important;
+}
+
+.cl-left {
+  padding-top: 42px;
+}
+
+.cl-copy {
+  margin-top: 0;
 }
