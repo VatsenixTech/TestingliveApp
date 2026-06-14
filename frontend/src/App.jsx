@@ -1131,10 +1131,14 @@ function ServicesPage() {
   const candidateId = user?.candidateId || user?._id || user?.id;
 
   const RAZORPAY_PRO_LINK = "https://rzp.io/rzp/wBgr5eag";
+  const ULTIMATE_PAYMENT_LINK = "https://rzp.io/rzp/gT6RQiD";
 
-  const openPayment = (planName) => {
-    console.log("Opening Razorpay payment for:", planName);
-    window.open(RAZORPAY_PRO_LINK, "_blank", "noopener,noreferrer");
+  const openPayment = (plan) => {
+    const paymentLink =
+      plan === "Ultimate" ? ULTIMATE_PAYMENT_LINK : RAZORPAY_PRO_LINK;
+
+    console.log("Opening Razorpay payment for:", plan);
+    window.open(paymentLink, "_blank", "noopener,noreferrer");
   };
 
   const goProfile = () => {
@@ -1224,7 +1228,7 @@ function ServicesPage() {
             </p>
 
             <div className="hero-actions">
-              <button onClick={() => openPayment("Hero Pro Upgrade")}>
+              <button onClick={() => openPayment("Pro")}>
                 ⚡ Upgrade to Pro
               </button>
 
@@ -1411,7 +1415,7 @@ function ServicesPage() {
             <span>✓ Interview Practice</span>
             <span>✓ Salary Predictor</span>
 
-            <button onClick={() => openPayment("Pro Plan")}>
+            <button onClick={() => openPayment("Pro")}>
               Start Pro →
             </button>
           </div>
@@ -1425,8 +1429,8 @@ function ServicesPage() {
             <span>✓ AI Career Coach</span>
             <span>✓ Advanced insights</span>
 
-            <button onClick={() => openPayment("Ultimate Plan")}>
-              Upgrade to Ultimate
+            <button onClick={() => openPayment("Ultimate")}>
+              Upgrade to Ultimate →
             </button>
           </div>
 
@@ -1434,7 +1438,7 @@ function ServicesPage() {
             <h2>Ready to accelerate your career?</h2>
             <p>Join 100K+ professionals who are already ahead.</p>
 
-            <button onClick={() => openPayment("Final CTA Pro Upgrade")}>
+            <button onClick={() => openPayment("Pro")}>
               Upgrade to Pro →
             </button>
 
@@ -1449,7 +1453,6 @@ function ServicesPage() {
     </>
   );
 }
-
 function NotificationsPage() {
   const notifications = [
     {
