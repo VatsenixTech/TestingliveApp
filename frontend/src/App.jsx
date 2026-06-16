@@ -264,10 +264,20 @@ function CandidateLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const loginCandidate = async () => {
-    if (!email.trim()) return alert("Email is required");
-    if (!password.trim()) return alert("Password is required");
+    setErrorMsg("");
+
+    if (!email.trim()) {
+      setErrorMsg("Email is required");
+      return;
+    }
+
+    if (!password.trim()) {
+      setErrorMsg("Password is required");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -283,8 +293,6 @@ function CandidateLogin() {
 
       localStorage.setItem("user", JSON.stringify(candidate));
 
-      alert("Login successful");
-
       const candidateId =
         candidate?._id ||
         candidate?.id ||
@@ -295,145 +303,147 @@ function CandidateLogin() {
         : "/candidate";
     } catch (error) {
       console.log("LOGIN ERROR:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Login failed");
+
+      setErrorMsg(
+        error.response?.data?.message ||
+          "Invalid email or password"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-  <main className="candidate-login-pro">
-  <section className="cl-left">
-    <div className="cl-bg-glow cl-glow-one"></div>
-    <div className="cl-bg-glow cl-glow-two"></div>
+    <main className="candidate-login-pro">
+      <section className="cl-left">
+        <div className="cl-bg-glow cl-glow-one"></div>
+        <div className="cl-bg-glow cl-glow-two"></div>
 
-    {/* Company Logo */}
-    <div className="cl-company-header">
-      <img
-        src="/logo.png"
-        alt="Vatsenix"
-        className="company-logo"
-      />
-    </div>
-
-    {/* Heading */}
-    <div className="cl-copy">
-      <div>
-        <h1>Candidate Trust Passport</h1>
-        <p>
-          Your verified identity. Your career credibility.
-        </p>
-      </div>
-
-      <span className="cl-status">
-        🏅 Excellent
-      </span>
-    </div>
-
-    {/* Trust Image */}
-    <div className="cl-trust-image">
-      <img
-        src="/images/trust-passport-login.png"
-        alt="Candidate Trust Passport"
-      />
-    </div>
-  </section>
-
-  <section className="cl-right">
-    <div className="cl-login-card">
-
-      <span className="cl-pill">
-        Candidate Portal
-      </span>
-
-      {/* Changed from Welcome Back */}
-      <h1>
-        Continue Your Career Journey
-      </h1>
-
-      <p>
-        Access your verified profile, AI tools, interview preparation and opportunities—all in one place.
-      </p>
-
-      <label>
-        Email Address
-
-        <div className="cl-input">
-          <span>✉</span>
-
-          <input
-            type="email"
-            placeholder="candidate@example.com"
-            value={email}
-            disabled={loading}
-            onChange={(e) => setEmail(e.target.value)}
+        <div className="cl-company-header">
+          <img
+            src="/logo.png"
+            alt="NoPromptJobs"
+            className="company-logo"
           />
         </div>
-      </label>
 
-      <label>
-        Password
+        <div className="cl-copy">
+          <div>
+            <h1>Candidate Trust Passport</h1>
+            <p>Your verified identity. Your career credibility.</p>
+          </div>
 
-        <div className="cl-input">
-          <span>🔒</span>
+          <span className="cl-status">🏅 Excellent</span>
+        </div>
 
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Enter password"
-            value={password}
-            disabled={loading}
-            onChange={(e) => setPassword(e.target.value)}
+        <div className="cl-trust-image">
+          <img
+            src="/images/trust-passport-login.png"
+            alt="Candidate Trust Passport"
           />
+        </div>
+      </section>
+
+      <section className="cl-right">
+        <div className="cl-login-card">
+          <span className="cl-pill">Candidate Portal</span>
+
+          <h1>Continue Your Career Journey</h1>
+
+          <p>
+            Access your verified profile, AI tools, interview preparation and
+            opportunities—all in one place.
+          </p>
+
+          {errorMsg && (
+            <div className="login-error-box">
+              {errorMsg}
+            </div>
+          )}
+
+          <label>
+            Email Address
+            <div className="cl-input">
+              <span>✉</span>
+
+              <input
+                type="email"
+                placeholder="candidate@example.com"
+                value={email}
+                disabled={loading}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setErrorMsg("");
+                }}
+              />
+            </div>
+          </label>
+
+          <label>
+            Password
+            <div className="cl-input">
+              <span>🔒</span>
+
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter password"
+                value={password}
+                disabled={loading}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrorMsg("");
+                }}
+              />
+
+              <button
+                type="button"
+                className="password-eye-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+              >
+                {showPassword ? "🙈" : "👁"}
+              </button>
+            </div>
+          </label>
+
+          <div className="cl-options">
+            <label>
+              <input type="checkbox" />
+              Remember me
+            </label>
+
+            <a href="/candidate-forgot-password">
+              Forgot password?
+            </a>
+          </div>
 
           <button
             type="button"
-            className="password-eye-btn"
-            onClick={() => setShowPassword(!showPassword)}
+            className="cl-main-btn"
+            disabled={loading}
+            onClick={loginCandidate}
           >
-            {showPassword ? "🙈" : "👁"}
+            {loading
+              ? "Signing you in..."
+              : "Access Candidate Dashboard →"}
           </button>
+
+          <div className="cl-new-box">
+            <p>New candidate?</p>
+
+            <a href="/candidate-email-verify">
+              Create Verified Account
+            </a>
+          </div>
+
+          <a className="cl-back" href="/">
+            ← Back to website
+          </a>
         </div>
-      </label>
-
-      <div className="cl-options">
-        <label>
-          <input type="checkbox" />
-          Remember me
-        </label>
-
-        <a href="/candidate-forgot-password">
-          Forgot password?
-        </a>
-      </div>
-
-      <button
-        type="button"
-        className="cl-main-btn"
-        disabled={loading}
-        onClick={loginCandidate}
-      >
-        {loading
-          ? "Signing you in..."
-          : "Access Candidate Dashboard →"}
-      </button>
-
-      <div className="cl-new-box">
-        <p>New candidate?</p>
-
-        <a href="/candidate-email-verify">
-          Create Verified Account
-        </a>
-      </div>
-
-      <a className="cl-back" href="/">
-        ← Back to website
-      </a>
-
-    </div>
-  </section>
-</main>
-);}
-function CandidateEmailVerify() {
+      </section>
+    </main>
+  );
+}function CandidateEmailVerify() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
@@ -931,13 +941,17 @@ function RecruiterRegister() {
 function JobsPage() {
   const [jobs, setJobs] = useState([]);
   const [activeTab, setActiveTab] = useState("Applied");
+  const [searchText, setSearchText] = useState("");
+
   const user = JSON.parse(localStorage.getItem("user")) || {};
+  const candidateId = user?.candidateId || user?._id || user?.id;
 
   useEffect(() => {
     const loadJobs = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/jobs`);
-        setJobs(res.data || []);
+        const allJobs = res.data.jobs || res.data.data || res.data || [];
+        setJobs(Array.isArray(allJobs) ? allJobs : []);
       } catch (err) {
         console.log(err.response?.data || err.message);
       }
@@ -945,8 +959,6 @@ function JobsPage() {
 
     loadJobs();
   }, []);
-
-  const candidateId = user?.candidateId || user?._id || user?.id;
 
   const applyJob = async (jobId) => {
     if (!candidateId) {
@@ -964,41 +976,74 @@ function JobsPage() {
     }
   };
 
-  const tabs = [
-    "Applied",
-    "Recommended",
-    "Top Match",
-    "Invites",
-    "Saved",
-  ];
+  const filteredJobs = jobs.filter((job) => {
+    if (!searchText.trim()) return true;
+
+    const search = searchText.toLowerCase();
+
+    const skillsText = Array.isArray(job.skills)
+      ? job.skills
+          .map((skill) =>
+            typeof skill === "string" ? skill : skill?.name || ""
+          )
+          .join(" ")
+      : job.skills || "";
+
+    return (
+      job.title?.toLowerCase().includes(search) ||
+      job.jobTitle?.toLowerCase().includes(search) ||
+      job.role?.toLowerCase().includes(search) ||
+      job.company?.toLowerCase().includes(search) ||
+      job.companyName?.toLowerCase().includes(search) ||
+      job.location?.toLowerCase().includes(search) ||
+      job.city?.toLowerCase().includes(search) ||
+      skillsText.toLowerCase().includes(search)
+    );
+  });
+
+  const tabs = ["Applied", "Recommended", "Top Match", "Invites", "Saved"];
 
   return (
     <>
       <Navbar />
 
-      <main className="np-jobs-premium-page">
-        <section className="np-jobs-top">
+      <main className="jobs-premium-page">
+        <section className="jobs-premium-hero">
           <div>
-            <span>✨ AI Job Discovery</span>
+            <span className="jobs-premium-pill">✨ AI Job Discovery</span>
             <h1>Recommended jobs for you</h1>
             <p>
               Curated roles based on your skills, experience, trust score and recruiter activity.
             </p>
           </div>
 
-          <div className="np-jobs-count">
-            <h2>{jobs.length}</h2>
+          <div className="jobs-live-box">
+            <h2>{filteredJobs.length}</h2>
             <p>Live Jobs</p>
           </div>
         </section>
 
-        <section className="np-jobs-recommend-card">
-          <div className="np-jobs-section-head">
-            <h2>Jobs matching your profile</h2>
-            <button>View all →</button>
+        <section className="jobs-search-card">
+          <input
+            type="text"
+            placeholder="Search jobs, skills, companies, location..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+          <span>🔍</span>
+        </section>
+
+        <section className="jobs-panel">
+          <div className="jobs-panel-head">
+            <div>
+              <h2>Jobs matching your profile</h2>
+              <p>{filteredJobs.length} opportunities available</p>
+            </div>
+
+            <button onClick={() => setSearchText("")}>View all →</button>
           </div>
 
-          <div className="np-job-tabs">
+          <div className="job-tabs">
             {tabs.map((tab) => (
               <button
                 key={tab}
@@ -1008,7 +1053,7 @@ function JobsPage() {
                 {tab}
                 <span>
                   {tab === "Applied"
-                    ? jobs.length
+                    ? filteredJobs.length
                     : tab === "Recommended"
                     ? 71
                     : tab === "Top Match"
@@ -1021,96 +1066,165 @@ function JobsPage() {
             ))}
           </div>
 
-          <div className="np-horizontal-jobs">
-            {jobs.slice(0, 5).map((job, index) => (
-              <article className="np-mini-job-card" key={job._id || index}>
-                <div className="np-mini-job-top">
-                  <div className="np-company-logo">
-                    {(job.company || "N").charAt(0).toUpperCase()}
+          <div className="premium-jobs-list">
+            {filteredJobs.length > 0 ? (
+              filteredJobs.map((job, index) => (
+                <article className="premium-job-row" key={job._id || job.id || index}>
+                  <div className="job-company-avatar">
+                    {(job.company || job.companyName || "N").charAt(0).toUpperCase()}
                   </div>
-                  <small>{index + 1}d ago</small>
-                </div>
 
-                <h3>{job.title || "Data Engineer"}</h3>
-                <p>{job.company || "Company not added"}</p>
+                  <div className="job-main-info">
+                    <div className="job-title-row">
+                      <h3>
+                        {job.title || job.jobTitle || job.role || "Untitled Job"}
+                      </h3>
+                      <span>{index + 1}d ago</span>
+                    </div>
 
-                <div className="np-rating-line">
-                  <span>⭐ 3.{index + 4}</span>
-                  <span>Verified</span>
-                </div>
+                    <p className="job-company-name">
+                      {job.company || job.companyName || "Company not added"}
+                    </p>
 
-                <p className="np-location">
-                  📍 {job.location || "Bengaluru, Pune, Remote"}
-                </p>
+                    <p className="job-location-line">
+                      📍 {job.location || job.city || "Location not added"} •{" "}
+                      {job.workMode || job.jobType || job.employmentType || "Full-Time"}
+                    </p>
 
-                <button onClick={() => applyJob(job._id)}>
-                  Apply Now
-                </button>
-              </article>
-            ))}
-          </div>
-        </section>
+                    <div className="job-tags">
+                      {Array.isArray(job.skills) && job.skills.length > 0 ? (
+                        job.skills.slice(0, 5).map((skill, i) => (
+                          <span key={i}>
+                            {typeof skill === "string" ? skill : skill?.name || "Skill"}
+                          </span>
+                        ))
+                      ) : (
+                        <span>Verified</span>
+                      )}
+                    </div>
+                  </div>
 
-        <section className="np-jobs-main-grid">
-          <div className="np-invite-panel">
-            <div className="np-envelope">✉️</div>
-            <h2>NoPrompt Invites</h2>
-            <p>Recruiters invite you directly based on your verified profile.</p>
-            <button>View all invites</button>
-          </div>
-
-          <div className="np-invite-list">
-            {jobs.slice(0, 4).map((job, index) => (
-              <div className="np-invite-row" key={job._id || index}>
-                <div className="np-invite-logo">
-                  {(job.company || "C").charAt(0).toUpperCase()}
-                </div>
-
-                <div>
-                  <h3>{job.title || "Data Engineer"}</h3>
-                  <p>{job.company || "Hiring for IT Services"}</p>
-                </div>
-
-                <span>
-                  Invited {index === 0 ? "5:04 PM" : `${index + 1}d ago`}
-                </span>
+                  <div className="job-action-box">
+                    <span className="match-badge">90% Match</span>
+                    <button onClick={() => applyJob(job._id || job.id)}>
+                      Apply Now
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="jobs-empty-box">
+                No jobs found for "{searchText}"
               </div>
-            ))}
+            )}
           </div>
         </section>
       </main>
     </>
   );
-}
-function ServicesPage() {
+}function ServicesPage() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const candidateId = user?.candidateId || user?._id || user?.id;
 
   const RAZORPAY_PRO_LINK = "https://rzp.io/rzp/wBgr5eag";
   const ULTIMATE_PAYMENT_LINK = "https://rzp.io/rzp/gT6RQiD";
 
-  const openPayment = (plan) => {
-    const paymentLink =
-      plan === "Ultimate" ? ULTIMATE_PAYMENT_LINK : RAZORPAY_PRO_LINK;
+  const [selectedFeature, setSelectedFeature] = useState(null);
 
-    console.log("Opening Razorpay payment for:", plan);
+  const featureDetails = {
+    "Auto Apply Engine": {
+      steps: [
+        "AI reads your profile, skills and preferred role.",
+        "System finds matching jobs from backend.",
+        "Candidate gives permission before auto apply.",
+        "Applications are tracked inside dashboard.",
+      ],
+      benefits: ["Save time", "Apply faster", "Never miss matching jobs", "Track all applications"],
+    },
+    "Instant Job Alerts": {
+      steps: [
+        "AI monitors newly posted jobs.",
+        "Matches jobs with your skills.",
+        "Sends instant alerts.",
+        "Candidate can apply immediately.",
+      ],
+      benefits: ["Early access to jobs", "Better response chance", "Personalized alerts"],
+    },
+    "Hidden Opportunities": {
+      steps: [
+        "System identifies recruiter-only roles.",
+        "AI checks your profile eligibility.",
+        "Matching hidden jobs appear in your dashboard.",
+        "You can apply before public competition increases.",
+      ],
+      benefits: ["Access exclusive jobs", "Less competition", "Better recruiter visibility"],
+    },
+    "AI Match Score": {
+      steps: [
+        "AI compares your profile with job description.",
+        "Checks skills, experience, location and role fit.",
+        "Generates match percentage.",
+        "Shows best-fit jobs first.",
+      ],
+      benefits: ["Know your hiring chance", "Apply to right jobs", "Improve weak areas"],
+    },
+    "AI Resume Studio": {
+      steps: [
+        "Upload or create your resume.",
+        "AI checks ATS score, keywords and structure.",
+        "System recommends improvements.",
+        "Download recruiter-ready resume.",
+      ],
+      benefits: ["Better ATS score", "Professional resume", "More interview chances"],
+    },
+    "Trust Passport": {
+      steps: [
+        "Verify identity, resume, skills and project proof.",
+        "System builds a trust profile.",
+        "Recruiters see verified signals.",
+        "Your profile stands out from normal candidates.",
+      ],
+      benefits: ["Higher recruiter confidence", "Proof-based profile", "Better credibility"],
+    },
+    "AI Interview Prep": {
+      steps: [
+        "Select role and interview type.",
+        "Practice HR and technical questions.",
+        "AI gives feedback.",
+        "Improve before real interviews.",
+      ],
+      benefits: ["Better confidence", "Role-based preparation", "Interview readiness"],
+    },
+    "Skill Intelligence": {
+      steps: [
+        "AI reads your current skills.",
+        "Compares with market demand.",
+        "Shows missing skills and salary impact.",
+        "Creates learning roadmap.",
+      ],
+      benefits: ["Clear skill roadmap", "Salary growth insights", "Career planning"],
+    },
+  };
+
+  const openPayment = (plan) => {
+    const paymentLink = plan === "Ultimate" ? ULTIMATE_PAYMENT_LINK : RAZORPAY_PRO_LINK;
     window.open(paymentLink, "_blank", "noopener,noreferrer");
   };
 
   const goProfile = () => {
-    window.location.href = candidateId
-      ? `/profile/${candidateId}`
-      : "/candidate-login";
+    window.location.href = candidateId ? `/profile/${candidateId}` : "/candidate-login";
   };
 
   const startFreePlan = () => {
-    window.location.href = candidateId
-      ? `/profile/${candidateId}`
-      : "/candidate-email-verify";
+    window.location.href = candidateId ? `/profile/${candidateId}` : "/candidate-email-verify";
   };
 
-  const comingSoon = (name) => {
-    alert(`${name} coming soon`);
+  const openFeatureDetails = (feature) => {
+    setSelectedFeature(feature);
+  };
+
+  const closeFeatureDetails = () => {
+    setSelectedFeature(null);
   };
 
   const featureCards = [
@@ -1165,250 +1279,447 @@ function ServicesPage() {
   ];
 
   return (
-    <>
-      <Navbar />
+  <>
+    <Navbar />
 
-      <main className="pro-saas-page">
-        <section className="pro-hero">
-          <div className="pro-hero-left">
-            <span className="hero-pill">⚡ AI-POWERED CAREER INTELLIGENCE</span>
+    <main className="pro-saas-page">
+      <section className="pro-hero">
+        <div className="pro-hero-left">
+          <span className="hero-pill">⚡ AI-POWERED CAREER INTELLIGENCE</span>
 
-            <h1>
-              Your <span>AI Co-Pilot</span> For Smarter Job Search &{" "}
-              <span>Career Growth</span>
-            </h1>
+          <h1>
+            Your <span>AI Co-Pilot</span> For Smarter Job Search &{" "}
+            <span>Career Growth</span>
+          </h1>
 
-            <p>
-              Apply smarter, get noticed earlier, and land your dream role faster
-              with the power of AI.
-            </p>
+          <p>
+            Apply smarter, get noticed earlier, and land your dream role faster
+            with the power of AI.
+          </p>
 
-            <div className="hero-actions">
-              <button onClick={() => openPayment("Pro")}>
-                ⚡ Upgrade to Pro
-              </button>
+        <div className="hero-actions">
+  <button onClick={() => openPayment("Pro")}>
+    ⚡ Upgrade to Pro
+  </button>
 
-              <button onClick={() => comingSoon("All Features")}>
-                Explore All Features →
-              </button>
-            </div>
+  <button
+    onClick={() => {
+      const section = document.getElementById("all-features");
 
-            <div className="hero-trust-row">
-              <span>✅ AI-Powered</span>
-              <span>✅ Verified & Trusted</span>
-              <span>✅ Privacy First</span>
-              <span>✅ Secure & Reliable</span>
-            </div>
+      if (section) {
+        section.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }}
+  >
+    Explore All Features →
+  </button>
+</div>
+
+          <div className="hero-trust-row">
+            <span>✅ AI-Powered</span>
+            <span>✅ Verified & Trusted</span>
+            <span>✅ Privacy First</span>
+            <span>✅ Secure & Reliable</span>
           </div>
+        </div>
 
-          <div className="pro-dashboard-preview">
-            <aside className="dash-sidebar">
-              <div className="dash-logo">N</div>
-              <p className="active">Overview</p>
-              <p>Applications</p>
-              <p>Auto Apply</p>
-              <p>Alerts</p>
-              <p>Resume</p>
-              <p>Interview Prep</p>
-            </aside>
+        <div className="pro-dashboard-preview">
+          <aside className="dash-sidebar">
+            <div className="dash-logo">N</div>
+            <p className="active">Overview</p>
+            <p>Applications</p>
+            <p>Auto Apply</p>
+            <p>Alerts</p>
+            <p>Resume</p>
+            <p>Interview Prep</p>
+          </aside>
 
-            <section className="dash-main">
-              <div className="dash-head">
-                <div>
-                  <h3>Welcome back, Venkatesha! 👋</h3>
-                  <small>Smart career overview</small>
-                </div>
-                <div className="trust-chip">🛡 Verified</div>
+          <section className="dash-main">
+            <div className="dash-head">
+              <div>
+                <h3>Welcome back, Venkatesha! 👋</h3>
+                <small>Smart career overview</small>
+              </div>
+              <div className="trust-chip">🛡 Verified</div>
+            </div>
+
+            <div className="dash-grid">
+              <div className="dash-card score-card">
+                <p>AI Match Score</p>
+                <h2>92</h2>
+                <span>Excellent Match</span>
               </div>
 
-              <div className="dash-grid">
-                <div className="dash-card score-card">
-                  <p>AI Match Score</p>
-                  <h2>92</h2>
-                  <span>Excellent Match</span>
+              <div className="dash-card applications">
+                <div>
+                  <p>Applications</p>
+                  <h3>24</h3>
+                  <small>Applied</small>
                 </div>
 
-                <div className="dash-card applications">
-                  <div>
-                    <p>Applications</p>
-                    <h3>24</h3>
-                    <small>Applied</small>
-                  </div>
-                  <div>
-                    <h3>12</h3>
-                    <small>Interviewing</small>
-                  </div>
+                <div>
+                  <h3>12</h3>
+                  <small>Interviewing</small>
+                </div>
+              </div>
+
+              <div className="dash-card strength">
+                <p>Profile Strength</p>
+                <h2>82%</h2>
+                <span>Strong</span>
+              </div>
+
+              <div className="dash-card auto">
+                <p>Auto Apply</p>
+                <h2>125</h2>
+                <span>Applied</span>
+              </div>
+
+              <div className="dash-card activity">
+                <p>Recent Activity</p>
+                <span>Applied for Senior Data Engineer</span>
+                <span>Interview scheduled - Tech Mahindra</span>
+                <span>Profile viewed by 5 recruiters</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section className="pro-stats-strip">
+        <div>👥 <b>100K+</b><span>Active Professionals</span></div>
+        <div>☑️ <b>3M+</b><span>Jobs Analysed Daily</span></div>
+        <div>🏢 <b>500+</b><span>Top Companies</span></div>
+        <div>⭐ <b>98%</b><span>User Satisfaction</span></div>
+        <div>🌟 <b>4.8/5</b><span>Average Rating</span></div>
+      </section>
+
+      <section id="all-features" className="pro-feature-section">
+        <div className="pro-section-title">
+          <span>POWERFUL FEATURES</span>
+
+          <h2>Everything NoPromptPro has, plus your own AI trust layer</h2>
+
+          <p>
+            8 powerful tools to automate, analyze and accelerate your career
+            journey.
+          </p>
+        </div>
+
+        <div className="pro-feature-grid">
+          {featureCards.map((item) => (
+            <article className="pro-feature-card" key={item.title}>
+              <span className="feature-tag">+ {item.tag}</span>
+
+              <img
+                src={item.img}
+                alt={item.title}
+                className="feature-image"
+              />
+
+              <button
+                className="feature-btn"
+                onClick={() => openFeatureDetails(item)}
+              >
+                Explore →
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="pro-bottom-grid">
+        <div className="trust-passport-banner">
+          <div>
+            <h2>Candidate Trust Passport</h2>
+
+            <p>
+              Your verified identity and professional credibility that opens
+              doors to better opportunities.
+            </p>
+
+            <button onClick={goProfile}>Explore Trust Passport →</button>
+          </div>
+
+          <div className="trust-list">
+            <span>✅ Identity Verified</span>
+            <span>✅ Resume Verified</span>
+            <span>✅ Skill Certifications</span>
+            <span>✅ LinkedIn Verification</span>
+            <span>✅ Resume Tested</span>
+            <span>✅ Real User Videos</span>
+            <span>✅ Status Verification</span>
+            <span>✅ Strong Role Intent</span>
+          </div>
+        </div>
+
+        <div className="career-roadmap-card">
+          <h3>From profile gap to interview-ready candidate</h3>
+
+          <div className="roadmap-flow">
+            {[
+              "Current Skills",
+              "Skill Gaps",
+              "Projects",
+              "Certifications",
+              "Mock Interviews",
+              "Target Salary",
+            ].map((x) => (
+              <div key={x}>
+                🎯<span>{x}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="pricing-cta-grid">
+        <div className="price-card">
+          <h3>Basic</h3>
+          <h2>₹0</h2>
+          <p>For basic job seekers</p>
+          <span>✓ Basic profile</span>
+          <span>✓ Job alerts</span>
+          <span>✓ Basic resume upload</span>
+
+          <button onClick={startFreePlan}>Get Started</button>
+        </div>
+
+        <div className="price-card popular">
+          <b>Most Popular</b>
+          <h3>Pro</h3>
+          <h2>₹899/month</h2>
+          <p>For serious job seekers</p>
+          <span>✓ Auto Apply</span>
+          <span>✓ Job Alerts</span>
+          <span>✓ AI Resume Studio</span>
+          <span>✓ Trust Passport</span>
+          <span>✓ Interview Practice</span>
+          <span>✓ Salary Predictor</span>
+
+          <button onClick={() => openPayment("Pro")}>
+            Start Pro →
+          </button>
+        </div>
+
+   <div className="price-card">
+  <h3>Ultimate</h3>
+  <h2>₹1999/month</h2>
+  <p>For career accelerators</p>
+
+  <span>✓ Everything in Pro</span>
+  <span>✓ Priority recruiter visibility</span>
+  <span>✓ AI Career Coach</span>
+  <span>✓ Advanced insights</span>
+
+  <button
+    onClick={() => {
+      const currentPlan = localStorage.getItem("plan");
+
+      if (currentPlan === "Ultimate") {
+        window.location.href = "/ultimate-dashboard";
+      } else {
+        localStorage.setItem("pendingPlan", "Ultimate");
+
+        window.open(
+          "https://rzp.io/rzp/gT6RQiD",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
+    }}
+  >
+    Upgrade to Ultimate →
+  </button>
+</div>
+
+<div className="final-pro-cta">
+  <h2>Ready to accelerate your career?</h2>
+
+  <p>Join 100K+ professionals who are already ahead.</p>
+
+  <button
+    onClick={() => {
+      const currentPlan = localStorage.getItem("plan");
+
+      if (currentPlan === "Ultimate") {
+        window.location.href = "/ultimate-dashboard";
+      } else {
+        localStorage.setItem("pendingPlan", "Ultimate");
+
+        window.open(
+          "https://rzp.io/rzp/gT6RQiD",
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
+    }}
+  >
+    Upgrade to Pro →
+  </button>
+
+  <ul>
+    <li>✅ 7-Day Free Trial</li>
+    <li>✅ No Credit Card Required</li>
+    <li>✅ 24/7 Priority Support</li>
+  </ul>
+</div>
+      </section>
+
+      {selectedFeature && (
+        <div className="feature-premium-overlay">
+          <div className="feature-premium-page">
+            <button
+              className="feature-close-btn"
+              onClick={closeFeatureDetails}
+            >
+              ×
+            </button>
+
+            <section className="feature-premium-hero">
+              <div className="feature-left-panel">
+                <button
+                  className="back-feature-btn"
+                  onClick={closeFeatureDetails}
+                >
+                  ← Back to all features
+                </button>
+
+                <span className="feature-pill">
+                  ⚡ {selectedFeature.tag}
+                </span>
+
+                <h1>{selectedFeature.title}</h1>
+
+                <p>{selectedFeature.desc}</p>
+
+                <div className="feature-mini-benefits">
+                  {(featureDetails[selectedFeature.title]?.benefits || [
+                    "Save time",
+                    "Apply faster",
+                    "Improve visibility",
+                    "Track progress",
+                  ]).map((item, index) => (
+                    <div key={index}>
+                      <span>
+                        {index === 0 && "⚡"}
+                        {index === 1 && "🎯"}
+                        {index === 2 && "🛡"}
+                        {index === 3 && "📈"}
+                      </span>
+
+                      <p>{item}</p>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="dash-card strength">
-                  <p>Profile Strength</p>
-                  <h2>82%</h2>
-                  <span>Strong</span>
-                </div>
+    <div className="feature-actions">
+  <button
+    onClick={() => {
+      localStorage.setItem("pendingPlan", "Ultimate");
 
-                <div className="dash-card auto">
-                  <p>Auto Apply</p>
-                  <h2>125</h2>
-                  <span>Applied</span>
-                </div>
+      window.open(
+        "https://rzp.io/rzp/gT6RQiD",
+        "_blank",
+        "noopener,noreferrer"
+      );
 
-                <div className="dash-card activity">
-                  <p>Recent Activity</p>
-                  <span>Applied for Senior Data Engineer</span>
-                  <span>Interview scheduled - Tech Mahindra</span>
-                  <span>Profile viewed by 5 recruiters</span>
+      setTimeout(() => {
+        window.location.href = "/ultimate-dashboard";
+      }, 5000);
+    }}
+  >
+    Start Using Feature →
+  </button>
+
+  <button onClick={closeFeatureDetails}>
+    Back to Services
+  </button>
+</div>
+              </div>
+
+              <div className="feature-right-preview">
+                <img
+                  src={selectedFeature.img}
+                  alt={selectedFeature.title}
+                />
+              </div>
+            </section>
+
+            <section className="feature-bottom-grid">
+              <div className="feature-how-card">
+                <h2>How it works</h2>
+
+                <div className="feature-steps-row">
+                  {(featureDetails[selectedFeature.title]?.steps || [
+                    "AI analyzes your profile.",
+                    "System finds suitable career opportunities.",
+                    "You take action from dashboard.",
+                    "Progress is tracked automatically.",
+                  ]).map((step, index) => (
+                    <div className="feature-step-item" key={index}>
+                      <div className="step-icon">
+                        {index === 0 && "🤖"}
+                        {index === 1 && "🎯"}
+                        {index === 2 && "🚀"}
+                        {index === 3 && "📈"}
+                      </div>
+
+                      <small>Step {String(index + 1).padStart(2, "0")}</small>
+
+                      <h3>
+                        {index === 0 && "Profile Analysis"}
+                        {index === 1 && "Smart Matching"}
+                        {index === 2 && "Take Action"}
+                        {index === 3 && "Track Results"}
+                      </h3>
+
+                      <p>{step}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="feature-benefit-card">
+                <h2>Key Benefits</h2>
+
+                <div className="benefit-grid">
+                  {(featureDetails[selectedFeature.title]?.benefits || [
+                    "Save time",
+                    "Improve visibility",
+                    "Better job matching",
+                    "Track applications",
+                  ]).map((benefit, index) => (
+                    <div className="benefit-item" key={index}>
+                      <span>
+                        {index === 0 && "📈"}
+                        {index === 1 && "🖥"}
+                        {index === 2 && "🎯"}
+                        {index === 3 && "💎"}
+                      </span>
+
+                      <div>
+                        <h3>{benefit}</h3>
+
+                        <p>
+                          Improve your career workflow with smarter AI-powered
+                          automation.
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </section>
           </div>
-        </section>
-
-        <section className="pro-stats-strip">
-          <div>👥 <b>100K+</b><span>Active Professionals</span></div>
-          <div>☑️ <b>3M+</b><span>Jobs Analysed Daily</span></div>
-          <div>🏢 <b>500+</b><span>Top Companies</span></div>
-          <div>⭐ <b>98%</b><span>User Satisfaction</span></div>
-          <div>🌟 <b>4.8/5</b><span>Average Rating</span></div>
-        </section>
-
-        <section className="pro-feature-section">
-          <div className="pro-section-title">
-            <span>POWERFUL FEATURES</span>
-            <h2>Everything NoPromptPro has, plus your own AI trust layer</h2>
-            <p>
-              8 powerful AI tools to automate, analyze and accelerate your career
-              journey.
-            </p>
-          </div>
-
-          <div className="pro-feature-grid">
-            {featureCards.map((item) => (
-              <article className="pro-feature-card" key={item.title}>
-                <span className="feature-tag">+ {item.tag}</span>
-
-                <img
-                  src={item.img}
-                  alt={item.title}
-                  className="feature-image"
-                />
-
-                <button
-                  className="feature-btn"
-                  onClick={() => comingSoon(item.title)}
-                >
-                  Explore →
-                </button>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="pro-bottom-grid">
-          <div className="trust-passport-banner">
-            <div>
-              <h2>Candidate Trust Passport</h2>
-              <p>
-                Your verified identity and professional credibility that opens
-                doors to better opportunities.
-              </p>
-              <button onClick={goProfile}>Explore Trust Passport →</button>
-            </div>
-
-            <div className="trust-list">
-              <span>✅ Identity Verified</span>
-              <span>✅ Resume Verified</span>
-              <span>✅ Skill Certifications</span>
-              <span>✅ LinkedIn Verification</span>
-              <span>✅ Resume Tested</span>
-              <span>✅ Real User Videos</span>
-              <span>✅ Status Verification</span>
-              <span>✅ Strong Role Intent</span>
-            </div>
-          </div>
-
-          <div className="career-roadmap-card">
-            <h3>From profile gap to interview-ready candidate</h3>
-            <div className="roadmap-flow">
-              {[
-                "Current Skills",
-                "Skill Gaps",
-                "Projects",
-                "Certifications",
-                "Mock Interviews",
-                "Target Salary",
-              ].map((x) => (
-                <div key={x}>
-                  🎯<span>{x}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="pricing-cta-grid">
-          <div className="price-card">
-            <h3>Basic</h3>
-            <h2>₹0</h2>
-            <p>For basic job seekers</p>
-            <span>✓ Basic profile</span>
-            <span>✓ Job alerts</span>
-            <span>✓ Basic resume upload</span>
-
-            <button onClick={startFreePlan}>
-              Get Started
-            </button>
-          </div>
-
-          <div className="price-card popular">
-            <b>Most Popular</b>
-            <h3>Pro</h3>
-            <h2>₹899/month</h2>
-            <p>For serious job seekers</p>
-            <span>✓ Auto Apply</span>
-            <span>✓ Job Alerts</span>
-            <span>✓ AI Resume Studio</span>
-            <span>✓ Trust Passport</span>
-            <span>✓ Interview Practice</span>
-            <span>✓ Salary Predictor</span>
-
-            <button onClick={() => openPayment("Pro")}>
-              Start Pro →
-            </button>
-          </div>
-
-          <div className="price-card">
-            <h3>Ultimate</h3>
-            <h2>₹1999/month</h2>
-            <p>For career accelerators</p>
-            <span>✓ Everything in Pro</span>
-            <span>✓ Priority recruiter visibility</span>
-            <span>✓ AI Career Coach</span>
-            <span>✓ Advanced insights</span>
-
-            <button onClick={() => openPayment("Ultimate")}>
-              Upgrade to Ultimate →
-            </button>
-          </div>
-
-          <div className="final-pro-cta">
-            <h2>Ready to accelerate your career?</h2>
-            <p>Join 100K+ professionals who are already ahead.</p>
-
-            <button onClick={() => openPayment("Pro")}>
-              Upgrade to Pro →
-            </button>
-
-            <ul>
-              <li>✅ 7-Day Free Trial</li>
-              <li>✅ No Credit Card Required</li>
-              <li>✅ 24/7 Priority Support</li>
-            </ul>
-          </div>
-        </section>
-      </main>
-    </>
-  );
-}
+        </div>
+      )}
+    </main>
+  </>
+);}
 function NotificationsPage() {
   const notifications = [
     {
@@ -1510,6 +1821,7 @@ function App() {
   if (path === "/company-profile") return <CompanyProfilePage />;
   if (path === "/recruiter-settings") return <RecruiterSettingsPage />;
   if (path === "/recruiter-notifications") return <RecruiterNotificationsPage />;
+  if (path === "/ultimate-dashboard") return <UltimateDashboard />;
 
   if (path.startsWith("/recruiter-job-details/"))
     return <RecruiterJobDetailsPage />;
@@ -1526,7 +1838,11 @@ function App() {
 
   return <LandingPage />;
 }
-function Navbar() {
+function Navbar({
+  searchText = "",
+  setSearchText = () => {},
+  handleSearch = () => {},
+}) {
   const [showMenu, setShowMenu] = useState(false);
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const path = window.location.pathname;
@@ -1559,10 +1875,7 @@ function Navbar() {
     : null;
 
   const candidateId =
-    user?.candidateId ||
-    user?._id ||
-    user?.id ||
-    dashboardIdFromUrl;
+    user?.candidateId || user?._id || user?.id || dashboardIdFromUrl;
 
   const candidateDashboardLink = candidateId
     ? `/dashboard/${candidateId}`
@@ -1571,18 +1884,8 @@ function Navbar() {
   const goDashboard = (e) => {
     if (e) e.preventDefault();
 
-    const savedUser = JSON.parse(localStorage.getItem("user")) || {};
-
-    const savedCandidateId =
-      savedUser?.candidateId ||
-      savedUser?._id ||
-      savedUser?.id ||
-      dashboardIdFromUrl;
-
-    if (savedCandidateId) {
-      window.location.href = `/dashboard/${savedCandidateId}`;
-    } else if (path.startsWith("/dashboard/")) {
-      window.location.href = path;
+    if (candidateId) {
+      window.location.href = `/dashboard/${candidateId}`;
     } else {
       window.location.href = "/candidate-login";
     }
@@ -1678,26 +1981,30 @@ function Navbar() {
 
   return (
     <div className="topbar candidate-topbar">
-      <a
-        href={candidateDashboardLink}
-        className="brand"
-        onClick={goDashboard}
-      >
-        <img
-          src="/logo.png"
-          alt="NoPrompt Jobs"
-          className="site-logo"
-        />
+      <a href={candidateDashboardLink} className="brand" onClick={goDashboard}>
+        <img src="/logo.png" alt="NoPrompt Jobs" className="site-logo" />
       </a>
 
       <div className="candidate-search-wrap">
-        <input
-          className="top-search"
-          placeholder="Search jobs, skills, companies..."
-        />
-        <span>⌕</span>
-      </div>
+  <input
+    className="top-search"
+    placeholder="Search jobs, skills, companies..."
+    value={searchText}
+    onChange={(e) => setSearchText(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        handleSearch();
+      }
+    }}
+  />
 
+  <span
+    className="search-icon"
+    onClick={handleSearch}
+  >
+    🔍
+  </span>
+</div>
       <div className="nav-menu candidate-nav-menu">
         <a href={candidateDashboardLink} onClick={goDashboard}>
           Dashboard
@@ -1725,9 +2032,7 @@ function Navbar() {
               "U"}
           </span>
 
-          <span className="profile-label">
-            {user?.name || "Dashboard"}
-          </span>
+          <span className="profile-label">{user?.name || "Dashboard"}</span>
 
           <b>⌄</b>
         </button>
@@ -2976,7 +3281,7 @@ function CandidateProfile() {
 function CandidateDashboard() {
   const [candidate, setCandidate] = useState(null);
   const [jobs, setJobs] = useState([]);
-  const [showProDetails, setShowProDetails] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
   const candidateId = window.location.pathname.split("/").pop();
 
@@ -2987,31 +3292,31 @@ function CandidateDashboard() {
           `${API_URL}/api/candidates/${candidateId}`
         );
 
-        setCandidate(candidateRes.data.candidate || candidateRes.data.data || candidateRes.data);
-
-        const jobsRes = await axios.get(
-          `${API_URL}/api/jobs/recommended/${candidateId}`
+        setCandidate(
+          candidateRes.data.candidate ||
+            candidateRes.data.data ||
+            candidateRes.data
         );
 
-        setJobs(jobsRes.data);
+        const jobsRes = await axios.get(`${API_URL}/api/jobs`);
 
+        const allJobs = jobsRes.data.jobs || jobsRes.data.data || jobsRes.data || [];
+
+        console.log("ALL JOBS:", allJobs);
+
+        setJobs(Array.isArray(allJobs) ? allJobs : []);
       } catch (err) {
-        console.log(err.response?.data || err.message);
+        console.log("DASHBOARD LOAD ERROR:", err.response?.data || err.message);
       }
     };
 
     if (candidateId) loadDashboard();
-
   }, [candidateId]);
 
   const applyJob = async (jobId) => {
     try {
-      await axios.post(
-        `${API_URL}/api/jobs/${jobId}/apply/${candidateId}`
-      );
-
+      await axios.post(`${API_URL}/api/jobs/${jobId}/apply/${candidateId}`);
       alert("Applied Successfully");
-
     } catch (err) {
       console.log(err.response?.data || err.message);
       alert("Apply failed");
@@ -3020,17 +3325,13 @@ function CandidateDashboard() {
 
   const autoApply = async () => {
     try {
-      if (!window.confirm("Auto apply matching jobs?"))
-        return;
+      if (!window.confirm("Auto apply matching jobs?")) return;
 
       const res = await axios.post(
         `${API_URL}/api/jobs/auto-apply/${candidateId}`
       );
 
-      alert(
-        `Applied ${res.data.appliedCount} jobs`
-      );
-
+      alert(`Applied ${res.data.appliedCount || 0} jobs`);
     } catch (err) {
       console.log(err.response?.data || err.message);
       alert("Auto apply failed");
@@ -3038,11 +3339,7 @@ function CandidateDashboard() {
   };
 
   if (!candidate) {
-    return (
-      <div className="loading">
-        Loading Dashboard...
-      </div>
-    );
+    return <div className="loading">Loading Dashboard...</div>;
   }
 
   const score =
@@ -3053,325 +3350,347 @@ function CandidateDashboard() {
     (candidate.profileSummary ? 10 : 0) +
     (candidate.selfIntroVideoUrl ? 10 : 0);
 
-  const companies = [
-    ...new Map(
-      jobs
-        .filter((job) => job.company)
-        .map((job) => [
-          job.company,
-          {
-            company: job.company,
-            location: job.location,
-            workMode: job.workMode,
-            openings: jobs.filter(
-              (j) => j.company === job.company
-            ).length,
-            skills: job.skills || [],
-          },
-        ])
-    ).values(),
-  ];
-return (
-  <>
-    <Navbar />
+  const filteredJobs = jobs.filter((job) => {
+    if (!searchText.trim()) return true;
 
-    <div className="premium-dashboard">
-      <aside className="premium-left">
-        <div className="premium-profile-card">
-          <div className="premium-avatar">
-            {candidate.profileImageUrl ? (
-              <img src={candidate.profileImageUrl} alt="profile" />
-            ) : (
-              <span>{candidate.name?.charAt(0) || "N"}</span>
-            )}
+    const search = searchText.toLowerCase();
+
+    const skillsText = Array.isArray(job.skills)
+      ? job.skills
+          .map((skill) =>
+            typeof skill === "string" ? skill : skill?.name || ""
+          )
+          .join(" ")
+      : job.skills || "";
+
+    return (
+      job.title?.toLowerCase().includes(search) ||
+      job.jobTitle?.toLowerCase().includes(search) ||
+      job.role?.toLowerCase().includes(search) ||
+      job.company?.toLowerCase().includes(search) ||
+      job.companyName?.toLowerCase().includes(search) ||
+      job.location?.toLowerCase().includes(search) ||
+      job.city?.toLowerCase().includes(search) ||
+      job.workMode?.toLowerCase().includes(search) ||
+      job.jobType?.toLowerCase().includes(search) ||
+      job.employmentType?.toLowerCase().includes(search) ||
+      job.description?.toLowerCase().includes(search) ||
+      skillsText.toLowerCase().includes(search)
+    );
+  });
+
+  const handleSearch = () => {
+    document
+      .getElementById("jobs")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <>
+      <Navbar
+  searchText={searchText}
+  setSearchText={setSearchText}
+  handleSearch={handleSearch}
+/>
+
+      <div className="premium-dashboard">
+        <aside className="premium-left">
+          <div className="premium-profile-card">
+            <div className="premium-avatar">
+              {candidate.profileImageUrl ? (
+                <img src={candidate.profileImageUrl} alt="profile" />
+              ) : (
+                <span>{candidate.name?.charAt(0) || "N"}</span>
+              )}
+            </div>
+
+            <h2>{candidate.name}</h2>
+            <span className="verified-badge">Verified Candidate ✓</span>
+            <p>{candidate.currentRole || "Candidate"}</p>
+            <p>@ {candidate.currentCompany || "Company not added"}</p>
+            <p>📍 {candidate.location || "Location not added"}</p>
+
+            <a href={`/profile/${candidate._id}`} className="premium-main-btn">
+              Improve Profile
+            </a>
           </div>
 
-          <h2>{candidate.name}</h2>
-          <span className="verified-badge">Verified Candidate ✓</span>
-          <p>{candidate.currentRole || "Candidate"}</p>
-          <p>@ {candidate.currentCompany || "Company not added"}</p>
-          <p>📍 {candidate.location || "Location not added"}</p>
+          <div className="premium-ai-left-panel">
+            <div className="premium-ai-head">
+              <span>👑</span>
+              <div>
+                <h3>Premium Career Tools</h3>
+                <p>AI-powered career growth panel</p>
+              </div>
+            </div>
 
-          <a href={`/profile/${candidate._id}`} className="premium-main-btn">
-            Improve Profile
-          </a>
-        </div>
+            <button onClick={() => (window.location.href = `/profile/${candidate._id}`)}>
+              <b>📝 AI Resume Builder</b>
+              <span>Create ATS resume with keywords</span>
+            </button>
 
-        <div className="premium-ai-left-panel">
-          <div className="premium-ai-head">
-            <span>👑</span>
+            <button onClick={() => (window.location.href = "/services")}>
+              <b>🧠 AI Skill Gap Analyzer</b>
+              <span>Python, AWS, SQL, System Design</span>
+            </button>
+
+            <button onClick={() => (window.location.href = "/services")}>
+              <b>🎤 Interview Preparation Hub</b>
+              <span>HR and technical mock practice</span>
+            </button>
+
+            <button onClick={() => (window.location.href = `/profile/${candidate._id}`)}>
+              <b>🛡 Verification Center</b>
+              <span>PAN, Aadhaar, resume and video proof</span>
+            </button>
+
+            <button onClick={autoApply}>
+              <b>🤖 Auto Apply Tracker</b>
+              <span>{candidate.autoAppliedCount || 0} jobs auto applied</span>
+            </button>
+
+            <button onClick={() => (window.location.href = "/jobs")}>
+              <b>💼 Opportunity Hub</b>
+              <span>Jobs, internships and freelance work</span>
+            </button>
+
+            <button onClick={() => (window.location.href = "/services")}>
+              <b>✨ AI Career Assistant</b>
+              <span>Roadmap, resume tips and career plan</span>
+            </button>
+          </div>
+        </aside>
+
+        <main className="premium-center">
+          <section className="premium-hero">
             <div>
-              <h3>Premium Career Tools</h3>
-              <p>AI-powered career growth panel</p>
-            </div>
-          </div>
+              <h1>Good Evening, {candidate.name} 👋</h1>
+              <p>
+                Your profile is getting stronger. Improve trust score and attract
+                genuine recruiters.
+              </p>
 
-          <button onClick={() => (window.location.href = `/profile/${candidate._id}`)}>
-            <b>📝 AI Resume Builder</b>
-            <span>Create ATS resume with keywords</span>
-          </button>
-
-          <button onClick={() => (window.location.href = "/services")}>
-            <b>🧠 AI Skill Gap Analyzer</b>
-            <span>Python, AWS, SQL, System Design</span>
-          </button>
-
-          <button onClick={() => (window.location.href = "/services")}>
-            <b>🎤 Interview Preparation Hub</b>
-            <span>HR and technical mock practice</span>
-          </button>
-
-          <button onClick={() => (window.location.href = `/profile/${candidate._id}`)}>
-            <b>🛡 Verification Center</b>
-            <span>PAN, Aadhaar, resume and video proof</span>
-          </button>
-
-          <button onClick={autoApply}>
-            <b>🤖 Auto Apply Tracker</b>
-            <span>{candidate.autoAppliedCount || 0} jobs auto applied</span>
-          </button>
-
-          <button onClick={() => (window.location.href = "/jobs")}>
-            <b>💼 Opportunity Hub</b>
-            <span>Jobs, internships and freelance work</span>
-          </button>
-
-          <button onClick={() => (window.location.href = "/services")}>
-            <b>✨ AI Career Assistant</b>
-            <span>Roadmap, resume tips and career plan</span>
-          </button>
-        </div>
-      </aside>
-
-      <main className="premium-center">
-        <section className="premium-hero">
-          <div>
-            <h1>Good Evening, {candidate.name} 👋</h1>
-            <p>
-              Your profile is getting stronger. Improve trust score and attract
-              genuine recruiters.
-            </p>
-
-            <div className="hero-actions">
-              <a href="/services">AI Career Assistant</a>
-              <a href={`/profile/${candidate._id}`}>View My Profile</a>
-            </div>
-          </div>
-
-                  <div className="trust-meter clean-trust-meter">
-            <div className="trust-score-number">
-              {Math.min(score + 10, 100)}
+              <div className="hero-actions">
+                <a href="/services">AI Career Assistant</a>
+                <a href={`/profile/${candidate._id}`}>View My Profile</a>
+              </div>
             </div>
 
-            <div className="trust-score-total">
-              /100
+            <div className="trust-meter clean-trust-meter">
+              <div className="trust-score-number">{Math.min(score + 10, 100)}</div>
+              <div className="trust-score-total">/100</div>
+              <div className="trust-score-label">Trust Score</div>
+              <div className="trust-score-status">Excellent</div>
             </div>
+          </section>
 
-            <div className="trust-score-label">
-              Trust Score
-            </div>
-
-            <div className="trust-score-status">
-              Excellent
-            </div>
-          </div>
-                  </section>
-
-        <section className="metric-row">
-          <div>
-            <span>Job Matches</span>
-            <h2>{jobs.length}</h2>
-            <p>Live backend jobs</p>
-          </div>
-
-          <div>
-            <span>Auto Applied</span>
-            <h2>{candidate.autoAppliedCount || 0}</h2>
-            <p>Active</p>
-          </div>
-
-          <div>
-            <span>Shortlisted</span>
-            <h2>{candidate.shortlisted ? 1 : 0}</h2>
-            <p>Recruiter interest</p>
-          </div>
-
-          <div>
-            <span>Interviews</span>
-            <h2>{candidate.interviews?.length || 0}</h2>
-            <p>Upcoming</p>
-          </div>
           
-          <div>
-          <span>Salary Predictor</span>
-          <h2>{candidate.expectedSalary || "₹6 - ₹10 LPA"}</h2>
-          <p>Based on profile</p>
-        </div>
-        </section>
-
-        <section className="premium-card" id="jobs">
-          <div className="premium-section-head">
-            <h2>Recommended Jobs for You</h2>
-            <span>{jobs.length} matches</span>
-          </div>
-
-          {jobs.length > 0 ? (
-            <div className="premium-job-grid">
-              {jobs.slice(0, 6).map((job) => (
-                <div className="premium-job-card" key={job._id}>
-                  <div className="job-top">
-                    <h3>{job.title}</h3>
-                    <span>90% Match</span>
-                  </div>
-
-                  <p className="job-company">
-                    {job.company || job.companyName}
-                  </p>
-
-                  <p>
-                    {job.location} • {job.workMode || job.jobType || "Full-Time"}
-                  </p>
-
-                  <h4>{job.salary || "Salary not disclosed"}</h4>
-
-                  <div className="job-tags">
-                    {Array.isArray(job.skills) && job.skills.length > 0 ? (
-                      job.skills.slice(0, 4).map((skill, i) => (
-                        <span key={skill._id || i}>
-                          {typeof skill === "string"
-                            ? skill
-                            : skill?.name || "Skill"}
-                        </span>
-                      ))
-                    ) : (
-                      <span>No skills added</span>
-                    )}
-                  </div>
-
-                  <button onClick={() => applyJob(job._id)}>Apply Now</button>
-                </div>
-              ))}
+          <section className="metric-row">
+            <div>
+              <span>Job Matches</span>
+              <h2>{filteredJobs.length}</h2>
+              <p>{searchText ? `Results for "${searchText}"` : "Live backend jobs"}</p>
             </div>
-          ) : (
-            <div className="empty-premium-box">
-              No backend jobs found. Ask recruiter to post jobs first.
-            </div>
-          )}
-        </section>
 
-        <section className="feature-grid">
+            <div>
+              <span>Auto Applied</span>
+              <h2>{candidate.autoAppliedCount || 0}</h2>
+              <p>Active</p>
+            </div>
+
+            <div>
+              <span>Shortlisted</span>
+              <h2>{candidate.shortlisted ? 1 : 0}</h2>
+              <p>Recruiter interest</p>
+            </div>
+
+            <div>
+              <span>Interviews</span>
+              <h2>{candidate.interviews?.length || 0}</h2>
+              <p>Upcoming</p>
+            </div>
+
+            <div>
+              <span>Salary Predictor</span>
+              <h2>{candidate.expectedSalary || "₹6 - ₹10 LPA"}</h2>
+              <p>Based on profile</p>
+            </div>
+          </section>
+
+          <section className="premium-card jobs-result-section" id="jobs">
+            <div className="premium-section-head">
+              <h2>Recommended Jobs for You</h2>
+              <span>{filteredJobs.length} matches</span>
+            </div>
+
+            {filteredJobs.length > 0 ? (
+              <div className="premium-job-grid">
+                {filteredJobs.map((job) => (
+                  <div className="premium-job-card" key={job._id || job.id}>
+                    <div className="job-top">
+                      <h3>
+                        {job.title ||
+                          job.jobTitle ||
+                          job.role ||
+                          "Untitled Job"}
+                      </h3>
+                      <span>90% Match</span>
+                    </div>
+
+                    <p className="job-company">
+                      {job.company || job.companyName || "Company not added"}
+                    </p>
+
+                    <p>
+                      {job.location || job.city || "Location not added"} •{" "}
+                      {job.workMode ||
+                        job.jobType ||
+                        job.employmentType ||
+                        "Full-Time"}
+                    </p>
+
+                    <h4>{job.salary || job.package || "Salary not disclosed"}</h4>
+
+                    <div className="job-tags">
+                      {Array.isArray(job.skills) && job.skills.length > 0 ? (
+                        job.skills.slice(0, 4).map((skill, i) => (
+                          <span key={skill._id || i}>
+                            {typeof skill === "string"
+                              ? skill
+                              : skill?.name || "Skill"}
+                          </span>
+                        ))
+                      ) : (
+                        <span>No skills added</span>
+                      )}
+                    </div>
+
+                    <button onClick={() => applyJob(job._id || job.id)}>
+                      Apply Now
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-premium-box">
+                {searchText
+                  ? `No jobs found for "${searchText}"`
+                  : "No backend jobs found. Ask recruiter to post jobs first."}
+              </div>
+            )}
+          </section>
+
+          <section className="feature-grid">
+            <div className="premium-card">
+              <h2>Salary Predictor</h2>
+              <p>Based on your current profile and skills:</p>
+              <h2>{candidate.expectedSalary || "₹6 - ₹10 LPA"}</h2>
+              <p>
+                Add resume, project proof and verification to improve salary range.
+              </p>
+            </div>
+          </section>
+        </main>
+
+        <aside className="premium-right">
           <div className="premium-card">
-            <h2>Salary Predictor</h2>
-            <p>Based on your current profile and skills:</p>
-            <h2>{candidate.expectedSalary || "₹6 - ₹10 LPA"}</h2>
-            <p>
-              Add resume, project proof and verification to improve salary range.
-            </p>
-          </div>
-        </section>
-      </main>
+            <div className="premium-section-head">
+              <h3>Recruiter Activity</h3>
+              <a href="#">View All →</a>
+            </div>
 
-      <aside className="premium-right">
-        <div className="premium-card">
-          <div className="premium-section-head">
-            <h3>Recruiter Activity</h3>
-            <a href="#">View All →</a>
-          </div>
+            <div className="activity-item">
+              <b>Recruiter viewed your profile</b>
+              <span>2h ago</span>
+            </div>
 
-          <div className="activity-item">
-            <b>Recruiter viewed your profile</b>
-            <span>2h ago</span>
-          </div>
+            <div className="activity-item">
+              <b>You were shortlisted</b>
+              <span>5h ago</span>
+            </div>
 
-          <div className="activity-item">
-            <b>You were shortlisted</b>
-            <span>5h ago</span>
+            <div className="activity-item">
+              <b>Resume opened</b>
+              <span>1d ago</span>
+            </div>
           </div>
 
-          <div className="activity-item">
-            <b>Resume opened</b>
-            <span>1d ago</span>
-          </div>
-        </div>
+          <div className="premium-card">
+            <div className="premium-section-head">
+              <h3>Interview Alerts</h3>
+              <a href="#">View All →</a>
+            </div>
 
-        <div className="premium-card">
-          <div className="premium-section-head">
-            <h3>Interview Alerts</h3>
-            <a href="#">View All →</a>
-          </div>
+            <div className="activity-item">
+              <b>Technical Round</b>
+              <span>No schedule yet</span>
+            </div>
 
-          <div className="activity-item">
-            <b>Technical Round</b>
-            <span>No schedule yet</span>
-          </div>
-
-          <div className="activity-item">
-            <b>HR Round</b>
-            <span>No schedule yet</span>
-          </div>
-        </div>
-
-        <div className="passport-card right-premium-card">
-          <h3>Candidate Trust Passport</h3>
-
-          <div>
-            <span>Proxy Risk Shield</span>
-            <b>Clean</b>
+            <div className="activity-item">
+              <b>HR Round</b>
+              <span>No schedule yet</span>
+            </div>
           </div>
 
-          <div>
-            <span>Identity Verified</span>
-            <b>{candidate.identityStatus || "Pending"}</b>
+          <div className="passport-card right-premium-card">
+            <h3>Candidate Trust Passport</h3>
+
+            <div>
+              <span>Proxy Risk Shield</span>
+              <b>Clean</b>
+            </div>
+
+            <div>
+              <span>Identity Verified</span>
+              <b>{candidate.identityStatus || "Pending"}</b>
+            </div>
+
+            <div>
+              <span>Resume Verified</span>
+              <b>{candidate.resumeUrl ? "Added" : "Missing"}</b>
+            </div>
+
+            <div>
+              <span>Project Proof</span>
+              <b>{candidate.projectVideoUrl ? "Added" : "Missing"}</b>
+            </div>
+
+            <div>
+              <span>Self Intro Video</span>
+              <b>{candidate.selfIntroVideoUrl ? "Added" : "Missing"}</b>
+            </div>
+
+            <div>
+              <span>Recruiter Confidence</span>
+              <b>4.7/5</b>
+            </div>
           </div>
 
-          <div>
-            <span>Resume Verified</span>
-            <b>{candidate.resumeUrl ? "Added" : "Missing"}</b>
+          <div className="resume-strength-card right-premium-card">
+            <h3>Resume Strength</h3>
+            <h2>{Math.min(score, 100)}/100</h2>
+
+            <div className="green-progress">
+              <span style={{ width: `${Math.min(score, 100)}%` }}></span>
+            </div>
+
+            <p>Add resume, projects, videos and skills to improve.</p>
+
+            <a href={`/profile/${candidate._id}`}>Optimize Resume →</a>
           </div>
 
-          <div>
-            <span>Project Proof</span>
-            <b>{candidate.projectVideoUrl ? "Added" : "Missing"}</b>
+          <div className="premium-card">
+            <h3>Career Growth Insights</h3>
+            <div className="career-chip">Data Engineering</div>
+            <div className="career-chip">AWS</div>
+            <div className="career-chip">Python</div>
+            <p>Data Engineer roles are high in demand in your location.</p>
           </div>
-
-          <div>
-            <span>Self Intro Video</span>
-            <b>{candidate.selfIntroVideoUrl ? "Added" : "Missing"}</b>
-          </div>
-
-          <div>
-            <span>Recruiter Confidence</span>
-            <b>4.7/5</b>
-          </div>
-        </div>
-
-        <div className="resume-strength-card right-premium-card">
-          <h3>Resume Strength</h3>
-
-          <h2>{Math.min(score, 100)}/100</h2>
-
-          <div className="green-progress">
-            <span style={{ width: `${Math.min(score, 100)}%` }}></span>
-          </div>
-
-          <p>Add resume, projects, videos and skills to improve.</p>
-
-          <a href={`/profile/${candidate._id}`}>Optimize Resume →</a>
-        </div>
-
-        <div className="premium-card">
-          <h3>Career Growth Insights</h3>
-
-          <div className="career-chip">Data Engineering</div>
-          <div className="career-chip">AWS</div>
-          <div className="career-chip">Python</div>
-
-          <p>Data Engineer roles are high in demand in your location.</p>
-        </div>
-      </aside>
-    </div>
-  </>
-);}
+        </aside>
+      </div>
+    </>
+  );
+}
 function TalentInsightPanel({ candidate, score }) {
   const searchAppearances = candidate.profileViews || 0;
 
@@ -3574,6 +3893,144 @@ function RecruiterAdvancedSidebar() {
         </button>
       </div>
     </aside>
+  );
+}
+function ProFeaturesPage() {
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const pendingPlan = localStorage.getItem("pendingPlan");
+
+  const activateProForTesting = () => {
+    const updatedUser = {
+      ...user,
+      plan: "Pro",
+      subscriptionStatus: "active",
+    };
+
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    localStorage.removeItem("pendingPlan");
+
+    alert("Pro activated successfully");
+    window.location.reload();
+  };
+
+  const isPro =
+    user?.subscriptionStatus === "active" ||
+    user?.plan === "Pro" ||
+    user?.plan === "Ultimate";
+
+  const features = [
+    {
+      title: "Auto Apply Engine",
+      desc: "Automatically apply to matching jobs.",
+      path: "/feature/auto-apply",
+      icon: "⚡",
+    },
+    {
+      title: "Instant Job Alerts",
+      desc: "Get instant job alerts based on your profile.",
+      path: "/feature/job-alerts",
+      icon: "🔔",
+    },
+    {
+      title: "AI Resume Studio",
+      desc: "Create ATS-ready resumes with AI.",
+      path: "/feature/resume-studio",
+      icon: "📄",
+    },
+    {
+      title: "AI Match Score",
+      desc: "Know your job match percentage.",
+      path: "/feature/ai-match-score",
+      icon: "🎯",
+    },
+    {
+      title: "Trust Passport",
+      desc: "Verify identity, resume, projects and skills.",
+      path: "/feature/trust-passport",
+      icon: "🛡",
+    },
+    {
+      title: "Interview Practice",
+      desc: "Practice HR and technical interviews.",
+      path: "/feature/interview-prep",
+      icon: "🎤",
+    },
+    {
+      title: "Salary Predictor",
+      desc: "Predict your salary growth range.",
+      path: "/feature/salary-predictor",
+      icon: "💰",
+    },
+    {
+      title: "Skill Intelligence",
+      desc: "Find missing skills and career roadmap.",
+      path: "/feature/skill-intelligence",
+      icon: "🧠",
+    },
+  ];
+
+  return (
+    <>
+      <Navbar />
+
+      <main className="pro-features-page">
+        <section className="pro-features-hero">
+          <span>NoPromptJobs Pro</span>
+
+          <h1>
+            Unlock Your AI Career Workspace
+          </h1>
+
+          <p>
+            Access all premium AI tools after subscription.
+          </p>
+
+          {!isPro && pendingPlan && (
+            <button onClick={activateProForTesting}>
+              I Completed Payment - Activate Pro
+            </button>
+          )}
+
+          {!isPro && !pendingPlan && (
+            <button
+              onClick={() => {
+                localStorage.setItem("pendingPlan", "Pro");
+                window.open("https://rzp.io/rzp/wBgr5eag", "_blank");
+              }}
+            >
+              Subscribe to Pro →
+            </button>
+          )}
+        </section>
+
+        <section className="pro-features-grid">
+          {features.map((feature) => (
+            <article
+              className={`pro-feature-work-card ${!isPro ? "locked" : ""}`}
+              key={feature.title}
+            >
+              <div className="pro-feature-icon">{feature.icon}</div>
+
+              <h3>{feature.title}</h3>
+              <p>{feature.desc}</p>
+
+              <button
+                onClick={() => {
+                  if (!isPro) {
+                    alert("Please activate Pro subscription first.");
+                    return;
+                  }
+
+                  window.location.href = feature.path;
+                }}
+              >
+                {isPro ? "Open Feature →" : "Locked 🔒"}
+              </button>
+            </article>
+          ))}
+        </section>
+      </main>
+    </>
   );
 }
 function RecruiterDashboard() {
@@ -4882,6 +5339,242 @@ function RecruiterApplicationsPage() {
           </section>
         </main>
       </div>
+    </>
+  );
+}
+function UltimateDashboard() {
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+
+  const isUltimate =
+    user?.plan === "Ultimate" ||
+    user?.plan === "ultimate" ||
+    user?.subscriptionStatus === "active";
+
+  const activateUltimateForTesting = () => {
+    const updatedUser = {
+      ...user,
+      plan: "Ultimate",
+      subscriptionStatus: "active",
+      subscriptionDate: new Date().toISOString(),
+    };
+
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    localStorage.removeItem("pendingPlan");
+
+    window.location.reload();
+  };
+
+  const openTool = (toolName) => {
+    if (!isUltimate) {
+      alert("Please activate Ultimate plan to use this feature.");
+      return;
+    }
+
+    alert(`${toolName} opening soon with AI integration`);
+  };
+
+  const tools = [
+    {
+      icon: "🤖",
+      title: "Auto Apply Engine",
+      desc: "Automatically apply to matching jobs with your permission.",
+      action: "Start Auto Apply",
+    },
+    {
+      icon: "📄",
+      title: "AI Resume Studio",
+      desc: "Generate ATS-ready resumes and improve resume score.",
+      action: "Build Resume",
+    },
+    {
+      icon: "🎯",
+      title: "AI Match Score",
+      desc: "Check how well your profile matches each job.",
+      action: "Calculate Score",
+    },
+    {
+      icon: "🧠",
+      title: "Skill Gap Analyzer",
+      desc: "Find missing skills and get a learning roadmap.",
+      action: "Analyze Skills",
+    },
+    {
+      icon: "🎤",
+      title: "Interview Preparation Hub",
+      desc: "Practice HR and technical interview questions.",
+      action: "Start Practice",
+    },
+    {
+      icon: "💰",
+      title: "Salary Predictor",
+      desc: "Predict expected salary based on skills and experience.",
+      action: "Predict Salary",
+    },
+    {
+      icon: "🛡",
+      title: "Candidate Trust Passport",
+      desc: "Verify identity, resume, projects and professional credibility.",
+      action: "Open Passport",
+    },
+    {
+      icon: "🔔",
+      title: "Instant Job Alerts",
+      desc: "Get real-time alerts for best matching jobs.",
+      action: "Enable Alerts",
+    },
+    {
+      icon: "💎",
+      title: "Hidden Opportunities",
+      desc: "Access recruiter-only premium opportunities.",
+      action: "View Jobs",
+    },
+  ];
+
+  return (
+    <>
+      <Navbar />
+
+      <main className="ultimate-page">
+        <section className="ultimate-hero">
+          <div>
+            <span className="ultimate-pill">👑 NoPromptJobs Ultimate</span>
+
+            <h1>
+              Your AI Career Command Center
+            </h1>
+
+            <p>
+              Unlock premium AI tools for resume building, job matching,
+              interview preparation, salary prediction and verified career
+              growth.
+            </p>
+
+            <div className="ultimate-actions">
+              {!isUltimate ? (
+                <>
+                  <button onClick={activateUltimateForTesting}>
+                    I Completed Payment - Activate Ultimate
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      localStorage.setItem("pendingPlan", "Ultimate");
+                      window.open(
+                        "https://rzp.io/rzp/gT6RQiD",
+                        "_blank",
+                        "noopener,noreferrer"
+                      );
+                    }}
+                  >
+                    Pay ₹1999 Now →
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => openTool("AI Career Assistant")}>
+                  Start AI Career Assistant →
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="ultimate-score-card">
+            <h2>{isUltimate ? "Active" : "Locked"}</h2>
+            <p>Ultimate Plan</p>
+            <span>{isUltimate ? "All tools unlocked" : "Payment required"}</span>
+          </div>
+        </section>
+
+        <section className="ultimate-stats">
+          <div>
+            <span>AI Tools</span>
+            <h2>9</h2>
+            <p>Premium features</p>
+          </div>
+
+          <div>
+            <span>Resume Score</span>
+            <h2>92%</h2>
+            <p>ATS optimized</p>
+          </div>
+
+          <div>
+            <span>Job Match</span>
+            <h2>90%</h2>
+            <p>AI calculated</p>
+          </div>
+
+          <div>
+            <span>Trust Score</span>
+            <h2>96%</h2>
+            <p>Verified profile</p>
+          </div>
+        </section>
+
+        <section className="ultimate-tools-section">
+          <div className="ultimate-section-head">
+            <span>AI WORKSPACE</span>
+            <h2>All Ultimate Features</h2>
+            <p>
+              Every tool below will be connected to backend AI APIs step by step.
+            </p>
+          </div>
+
+          <div className="ultimate-tools-grid">
+            {tools.map((tool) => (
+              <article
+                className={`ultimate-tool-card ${!isUltimate ? "locked" : ""}`}
+                key={tool.title}
+              >
+                <div className="ultimate-tool-icon">{tool.icon}</div>
+
+                <h3>{tool.title}</h3>
+                <p>{tool.desc}</p>
+
+                <button onClick={() => openTool(tool.title)}>
+                  {isUltimate ? `${tool.action} →` : "Locked 🔒"}
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="ultimate-bottom-grid">
+          <div className="ultimate-ai-assistant">
+            <span>✨ AI Career Assistant</span>
+            <h2>Ask anything about your career</h2>
+
+            <textarea placeholder="Example: How can I become a Data Engineer in 6 months?" />
+
+            <button onClick={() => openTool("AI Career Assistant")}>
+              Generate AI Answer →
+            </button>
+          </div>
+
+          <div className="ultimate-roadmap">
+            <h3>Your AI Roadmap</h3>
+
+            <div>
+              <b>Step 1</b>
+              <span>Improve Resume Score</span>
+            </div>
+
+            <div>
+              <b>Step 2</b>
+              <span>Complete Trust Passport</span>
+            </div>
+
+            <div>
+              <b>Step 3</b>
+              <span>Apply to 90% match jobs</span>
+            </div>
+
+            <div>
+              <b>Step 4</b>
+              <span>Practice interviews</span>
+            </div>
+          </div>
+        </section>
+      </main>
     </>
   );
 }
