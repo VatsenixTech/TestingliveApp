@@ -5,10 +5,12 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 
+const aiRoutes = require("./routes/aiRoutes");
 const candidateRoutes = require("./routes/candidates");
 const authRoutes = require("./routes/auth");
 const jobRoutes = require("./routes/jobs");
 const paymentRoutes = require("./routes/payments");
+const autoApplyRoutes = require("./routes/autoApplyRoutes");
 
 const app = express();
 
@@ -59,11 +61,6 @@ app.get("/api/mail-test", async (req, res) => {
   try {
     console.log("SMTP TEST STARTED");
 
-    console.log("SMTP_HOST:", process.env.SMTP_HOST);
-    console.log("SMTP_PORT:", process.env.SMTP_PORT);
-    console.log("SMTP_USER:", process.env.SMTP_USER);
-    console.log("SMTP_FROM:", process.env.SMTP_FROM);
-
     if (!process.env.SMTP_HOST) {
       return res.status(500).json({
         success: false,
@@ -85,7 +82,7 @@ app.get("/api/mail-test", async (req, res) => {
       });
     }
 
-      const testTransporter = nodemailer.createTransport({
+    const testTransporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
       secure: false,
@@ -131,11 +128,19 @@ app.get("/api/mail-test", async (req, res) => {
   }
 });
 
+/* ✅ API ROUTES */
 app.use("/api/candidates", candidateRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/payments", paymentRoutes);
 
+/* ✅ AI ROUTES */
+app.use("/api/ai", aiRoutes);
+
+/* ✅ AUTO APPLY ROUTES */
+app.use("/api/auto-apply", autoApplyRoutes);
+
+/* ✅ 404 ROUTE SHOULD ALWAYS BE LAST */
 app.use((req, res) => {
   res.status(404).json({
     success: false,

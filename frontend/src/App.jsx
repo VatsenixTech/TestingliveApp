@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./index.css";
 import JobDetailsPage from "./pages/JobDetailsPage";
+import AIInterviewPrepPage from "./pages/AIInterviewPrepPage";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -1131,92 +1132,63 @@ function JobsPage() {
 
   const [selectedFeature, setSelectedFeature] = useState(null);
 
-  const featureDetails = {
-    "Auto Apply Engine": {
-      steps: [
-        "AI reads your profile, skills and preferred role.",
-        "System finds matching jobs from backend.",
-        "Candidate gives permission before auto apply.",
-        "Applications are tracked inside dashboard.",
-      ],
-      benefits: ["Save time", "Apply faster", "Never miss matching jobs", "Track all applications"],
-    },
-    "Instant Job Alerts": {
-      steps: [
-        "AI monitors newly posted jobs.",
-        "Matches jobs with your skills.",
-        "Sends instant alerts.",
-        "Candidate can apply immediately.",
-      ],
-      benefits: ["Early access to jobs", "Better response chance", "Personalized alerts"],
-    },
-    "Hidden Opportunities": {
-      steps: [
-        "System identifies recruiter-only roles.",
-        "AI checks your profile eligibility.",
-        "Matching hidden jobs appear in your dashboard.",
-        "You can apply before public competition increases.",
-      ],
-      benefits: ["Access exclusive jobs", "Less competition", "Better recruiter visibility"],
-    },
-    "AI Match Score": {
-      steps: [
-        "AI compares your profile with job description.",
-        "Checks skills, experience, location and role fit.",
-        "Generates match percentage.",
-        "Shows best-fit jobs first.",
-      ],
-      benefits: ["Know your hiring chance", "Apply to right jobs", "Improve weak areas"],
-    },
-    "AI Resume Studio": {
-      steps: [
-        "Upload or create your resume.",
-        "AI checks ATS score, keywords and structure.",
-        "System recommends improvements.",
-        "Download recruiter-ready resume.",
-      ],
-      benefits: ["Better ATS score", "Professional resume", "More interview chances"],
-    },
-    "Trust Passport": {
-      steps: [
-        "Verify identity, resume, skills and project proof.",
-        "System builds a trust profile.",
-        "Recruiters see verified signals.",
-        "Your profile stands out from normal candidates.",
-      ],
-      benefits: ["Higher recruiter confidence", "Proof-based profile", "Better credibility"],
-    },
-    "AI Interview Prep": {
-      steps: [
-        "Select role and interview type.",
-        "Practice HR and technical questions.",
-        "AI gives feedback.",
-        "Improve before real interviews.",
-      ],
-      benefits: ["Better confidence", "Role-based preparation", "Interview readiness"],
-    },
-    "Skill Intelligence": {
-      steps: [
-        "AI reads your current skills.",
-        "Compares with market demand.",
-        "Shows missing skills and salary impact.",
-        "Creates learning roadmap.",
-      ],
-      benefits: ["Clear skill roadmap", "Salary growth insights", "Career planning"],
-    },
+  const isUltimateUser = () => {
+    const savedUser = JSON.parse(localStorage.getItem("user")) || {};
+
+    return (
+      savedUser?.plan === "Ultimate" ||
+      savedUser?.subscriptionStatus === "active" ||
+      localStorage.getItem("plan") === "Ultimate"
+    );
   };
 
-  const openPayment = (plan) => {
-    const paymentLink = plan === "Ultimate" ? ULTIMATE_PAYMENT_LINK : RAZORPAY_PRO_LINK;
-    window.open(paymentLink, "_blank", "noopener,noreferrer");
+  // const openPayment = (plan) => {
+  //   if (isUltimateUser()) {
+  //     window.location.href = "/ultimate-dashboard";
+  //     return;
+  //   }
+
+  //   localStorage.setItem("pendingPlan", plan);
+
+  //   const paymentLink =
+  //     plan === "Ultimate" ? ULTIMATE_PAYMENT_LINK : RAZORPAY_PRO_LINK;
+
+  //   window.open(paymentLink, "_blank", "noopener,noreferrer");
+  // };
+  // Temporary testing code (remove after Razorpay integration)
+
+const openPayment = () => {
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+
+  localStorage.setItem(
+    "user",
+    JSON.stringify({
+      ...user,
+      plan: "Ultimate",
+      subscriptionStatus: "active",
+    })
+  );
+
+  localStorage.setItem("plan", "Ultimate");
+  localStorage.setItem("subscriptionStatus", "active");
+
+  window.location.href = "/ultimate-dashboard";
+};
+
+  const goUltimateDashboard = () => {
+    window.location.href = "/ultimate-dashboard";
   };
 
   const goProfile = () => {
-    window.location.href = candidateId ? `/profile/${candidateId}` : "/candidate-login";
+    window.location.href = candidateId
+      ? `/profile/${candidateId}`
+      : "/candidate-login";
   };
 
   const startFreePlan = () => {
-    window.location.href = candidateId ? `/profile/${candidateId}` : "/candidate-email-verify";
+    window.location.href = candidateId
+      ? `/profile/${candidateId}`
+      : "/candidate-email-verify";
   };
 
   const openFeatureDetails = (feature) => {
@@ -1225,6 +1197,114 @@ function JobsPage() {
 
   const closeFeatureDetails = () => {
     setSelectedFeature(null);
+  };
+
+  const featureDetails = {
+    "Auto Apply Engine": {
+      steps: [
+        "AI reads your profile, skills and preferred role.",
+        "System finds matching jobs from backend.",
+        "Candidate gives permission before auto apply.",
+        "Applications are tracked inside dashboard.",
+      ],
+      benefits: [
+        "Save time",
+        "Apply faster",
+        "Never miss matching jobs",
+        "Track all applications",
+      ],
+    },
+    "Instant Job Alerts": {
+      steps: [
+        "AI monitors newly posted jobs.",
+        "Matches jobs with your skills.",
+        "Sends instant alerts.",
+        "Candidate can apply immediately.",
+      ],
+      benefits: [
+        "Early access to jobs",
+        "Better response chance",
+        "Personalized alerts",
+      ],
+    },
+    "Hidden Opportunities": {
+      steps: [
+        "System identifies recruiter-only roles.",
+        "AI checks your profile eligibility.",
+        "Matching hidden jobs appear in your dashboard.",
+        "You can apply before public competition increases.",
+      ],
+      benefits: [
+        "Access exclusive jobs",
+        "Less competition",
+        "Better recruiter visibility",
+      ],
+    },
+    "AI Match Score": {
+      steps: [
+        "AI compares your profile with job description.",
+        "Checks skills, experience, location and role fit.",
+        "Generates match percentage.",
+        "Shows best-fit jobs first.",
+      ],
+      benefits: [
+        "Know your hiring chance",
+        "Apply to right jobs",
+        "Improve weak areas",
+      ],
+    },
+    "AI Resume Studio": {
+      steps: [
+        "Upload or create your resume.",
+        "AI checks ATS score, keywords and structure.",
+        "System recommends improvements.",
+        "Download recruiter-ready resume.",
+      ],
+      benefits: [
+        "Better ATS score",
+        "Professional resume",
+        "More interview chances",
+      ],
+    },
+    "Trust Passport": {
+      steps: [
+        "Verify identity, resume, skills and project proof.",
+        "System builds a trust profile.",
+        "Recruiters see verified signals.",
+        "Your profile stands out from normal candidates.",
+      ],
+      benefits: [
+        "Higher recruiter confidence",
+        "Proof-based profile",
+        "Better credibility",
+      ],
+    },
+    "AI Interview Prep": {
+      steps: [
+        "Select role and interview type.",
+        "Practice HR and technical questions.",
+        "AI gives feedback.",
+        "Improve before real interviews.",
+      ],
+      benefits: [
+        "Better confidence",
+        "Role-based preparation",
+        "Interview readiness",
+      ],
+    },
+    "Skill Intelligence": {
+      steps: [
+        "AI reads your current skills.",
+        "Compares with market demand.",
+        "Shows missing skills and salary impact.",
+        "Creates learning roadmap.",
+      ],
+      benefits: [
+        "Clear skill roadmap",
+        "Salary growth insights",
+        "Career planning",
+      ],
+    },
   };
 
   const featureCards = [
@@ -1278,14 +1358,16 @@ function JobsPage() {
     },
   ];
 
-  return (
+ return (
   <>
     <Navbar />
 
     <main className="pro-saas-page">
       <section className="pro-hero">
         <div className="pro-hero-left">
-          <span className="hero-pill">⚡ AI-POWERED CAREER INTELLIGENCE</span>
+          <span className="hero-pill">
+            ⚡ AI-POWERED CAREER INTELLIGENCE
+          </span>
 
           <h1>
             Your <span>AI Co-Pilot</span> For Smarter Job Search &{" "}
@@ -1293,433 +1375,456 @@ function JobsPage() {
           </h1>
 
           <p>
-            Apply smarter, get noticed earlier, and land your dream role faster
-            with the power of AI.
+            Apply smarter, get noticed earlier, and land your dream role
+            faster with the power of AI.
           </p>
 
-        <div className="hero-actions">
-  <button onClick={() => openPayment("Pro")}>
-    ⚡ Upgrade to Pro
-  </button>
+          <div className="hero-actions">
 
-  <button
-    onClick={() => {
-      const section = document.getElementById("all-features");
-
-      if (section) {
-        section.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-    }}
-  >
-    Explore All Features →
-  </button>
-</div>
-
-          <div className="hero-trust-row">
-            <span>✅ AI-Powered</span>
-            <span>✅ Verified & Trusted</span>
-            <span>✅ Privacy First</span>
-            <span>✅ Secure & Reliable</span>
-          </div>
-        </div>
-
-        <div className="pro-dashboard-preview">
-          <aside className="dash-sidebar">
-            <div className="dash-logo">N</div>
-            <p className="active">Overview</p>
-            <p>Applications</p>
-            <p>Auto Apply</p>
-            <p>Alerts</p>
-            <p>Resume</p>
-            <p>Interview Prep</p>
-          </aside>
-
-          <section className="dash-main">
-            <div className="dash-head">
-              <div>
-                <h3>Welcome back, Venkatesha! 👋</h3>
-                <small>Smart career overview</small>
-              </div>
-              <div className="trust-chip">🛡 Verified</div>
-            </div>
-
-            <div className="dash-grid">
-              <div className="dash-card score-card">
-                <p>AI Match Score</p>
-                <h2>92</h2>
-                <span>Excellent Match</span>
-              </div>
-
-              <div className="dash-card applications">
-                <div>
-                  <p>Applications</p>
-                  <h3>24</h3>
-                  <small>Applied</small>
-                </div>
-
-                <div>
-                  <h3>12</h3>
-                  <small>Interviewing</small>
-                </div>
-              </div>
-
-              <div className="dash-card strength">
-                <p>Profile Strength</p>
-                <h2>82%</h2>
-                <span>Strong</span>
-              </div>
-
-              <div className="dash-card auto">
-                <p>Auto Apply</p>
-                <h2>125</h2>
-                <span>Applied</span>
-              </div>
-
-              <div className="dash-card activity">
-                <p>Recent Activity</p>
-                <span>Applied for Senior Data Engineer</span>
-                <span>Interview scheduled - Tech Mahindra</span>
-                <span>Profile viewed by 5 recruiters</span>
-              </div>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <section className="pro-stats-strip">
-        <div>👥 <b>100K+</b><span>Active Professionals</span></div>
-        <div>☑️ <b>3M+</b><span>Jobs Analysed Daily</span></div>
-        <div>🏢 <b>500+</b><span>Top Companies</span></div>
-        <div>⭐ <b>98%</b><span>User Satisfaction</span></div>
-        <div>🌟 <b>4.8/5</b><span>Average Rating</span></div>
-      </section>
-
-      <section id="all-features" className="pro-feature-section">
-        <div className="pro-section-title">
-          <span>POWERFUL FEATURES</span>
-
-          <h2>Everything NoPromptPro has, plus your own AI trust layer</h2>
-
-          <p>
-            8 powerful tools to automate, analyze and accelerate your career
-            journey.
-          </p>
-        </div>
-
-        <div className="pro-feature-grid">
-          {featureCards.map((item) => (
-            <article className="pro-feature-card" key={item.title}>
-              <span className="feature-tag">+ {item.tag}</span>
-
-              <img
-                src={item.img}
-                alt={item.title}
-                className="feature-image"
-              />
-
-              <button
-                className="feature-btn"
-                onClick={() => openFeatureDetails(item)}
-              >
-                Explore →
+            {/*
+            {isUltimateUser() ? (
+              <button onClick={goUltimateDashboard}>
+                👑 Ultimate Dashboard
               </button>
-            </article>
-          ))}
-        </div>
-      </section>
+            ) : (
+              <button onClick={() => openPayment("Ultimate")}>
+                ⚡ Upgrade to Pro
+              </button>
+            )}
+            */}
 
-      <section className="pro-bottom-grid">
-        <div className="trust-passport-banner">
-          <div>
-            <h2>Candidate Trust Passport</h2>
-
-            <p>
-              Your verified identity and professional credibility that opens
-              doors to better opportunities.
-            </p>
-
-            <button onClick={goProfile}>Explore Trust Passport →</button>
-          </div>
-
-          <div className="trust-list">
-            <span>✅ Identity Verified</span>
-            <span>✅ Resume Verified</span>
-            <span>✅ Skill Certifications</span>
-            <span>✅ LinkedIn Verification</span>
-            <span>✅ Resume Tested</span>
-            <span>✅ Real User Videos</span>
-            <span>✅ Status Verification</span>
-            <span>✅ Strong Role Intent</span>
-          </div>
-        </div>
-
-        <div className="career-roadmap-card">
-          <h3>From profile gap to interview-ready candidate</h3>
-
-          <div className="roadmap-flow">
-            {[
-              "Current Skills",
-              "Skill Gaps",
-              "Projects",
-              "Certifications",
-              "Mock Interviews",
-              "Target Salary",
-            ].map((x) => (
-              <div key={x}>
-                🎯<span>{x}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="pricing-cta-grid">
-        <div className="price-card">
-          <h3>Basic</h3>
-          <h2>₹0</h2>
-          <p>For basic job seekers</p>
-          <span>✓ Basic profile</span>
-          <span>✓ Job alerts</span>
-          <span>✓ Basic resume upload</span>
-
-          <button onClick={startFreePlan}>Get Started</button>
-        </div>
-
-        <div className="price-card popular">
-          <b>Most Popular</b>
-          <h3>Pro</h3>
-          <h2>₹899/month</h2>
-          <p>For serious job seekers</p>
-          <span>✓ Auto Apply</span>
-          <span>✓ Job Alerts</span>
-          <span>✓ AI Resume Studio</span>
-          <span>✓ Trust Passport</span>
-          <span>✓ Interview Practice</span>
-          <span>✓ Salary Predictor</span>
-
-          <button onClick={() => openPayment("Pro")}>
-            Start Pro →
-          </button>
-        </div>
-
-   <div className="price-card">
-  <h3>Ultimate</h3>
-  <h2>₹1999/month</h2>
-  <p>For career accelerators</p>
-
-  <span>✓ Everything in Pro</span>
-  <span>✓ Priority recruiter visibility</span>
-  <span>✓ AI Career Coach</span>
-  <span>✓ Advanced insights</span>
-
-  <button
-    onClick={() => {
-      const currentPlan = localStorage.getItem("plan");
-
-      if (currentPlan === "Ultimate") {
-        window.location.href = "/ultimate-dashboard";
-      } else {
-        localStorage.setItem("pendingPlan", "Ultimate");
-
-        window.open(
-          "https://rzp.io/rzp/gT6RQiD",
-          "_blank",
-          "noopener,noreferrer"
-        );
-      }
-    }}
-  >
-    Upgrade to Ultimate →
-  </button>
-</div>
-
-<div className="final-pro-cta">
-  <h2>Ready to accelerate your career?</h2>
-
-  <p>Join 100K+ professionals who are already ahead.</p>
-
-  <button
-    onClick={() => {
-      const currentPlan = localStorage.getItem("plan");
-
-      if (currentPlan === "Ultimate") {
-        window.location.href = "/ultimate-dashboard";
-      } else {
-        localStorage.setItem("pendingPlan", "Ultimate");
-
-        window.open(
-          "https://rzp.io/rzp/gT6RQiD",
-          "_blank",
-          "noopener,noreferrer"
-        );
-      }
-    }}
-  >
-    Upgrade to Pro →
-  </button>
-
-  <ul>
-    <li>✅ 7-Day Free Trial</li>
-    <li>✅ No Credit Card Required</li>
-    <li>✅ 24/7 Priority Support</li>
-  </ul>
-</div>
-      </section>
-
-      {selectedFeature && (
-        <div className="feature-premium-overlay">
-          <div className="feature-premium-page">
+            {/* Temporary Testing Button */}
             <button
-              className="feature-close-btn"
-              onClick={closeFeatureDetails}
+              onClick={() => {
+                const user =
+                  JSON.parse(localStorage.getItem("user")) || {};
+
+                localStorage.setItem(
+                  "user",
+                  JSON.stringify({
+                    ...user,
+                    plan: "Ultimate",
+                    subscriptionStatus: "active",
+                  })
+                );
+
+                localStorage.setItem("plan", "Ultimate");
+                localStorage.setItem(
+                  "subscriptionStatus",
+                  "active"
+                );
+
+                window.location.href = "/ultimate-dashboard";
+              }}
             >
-              ×
+              👑 Open Ultimate Dashboard
             </button>
 
-            <section className="feature-premium-hero">
-              <div className="feature-left-panel">
-                <button
-                  className="back-feature-btn"
-                  onClick={closeFeatureDetails}
-                >
-                  ← Back to all features
-                </button>
+            <button
+              onClick={() => {
+                const section =
+                  document.getElementById("all-features");
 
-                <span className="feature-pill">
-                  ⚡ {selectedFeature.tag}
-                </span>
+                if (section) {
+                  section.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }
+              }}
+            >
+              Explore All Features →
+            </button>
 
-                <h1>{selectedFeature.title}</h1>
+          </div>
 
-                <p>{selectedFeature.desc}</p>
+            <div className="hero-trust-row">
+              <span>✅ AI-Powered</span>
+              <span>✅ Verified & Trusted</span>
+              <span>✅ Privacy First</span>
+              <span>✅ Secure & Reliable</span>
+            </div>
+          </div>
 
-                <div className="feature-mini-benefits">
-                  {(featureDetails[selectedFeature.title]?.benefits || [
-                    "Save time",
-                    "Apply faster",
-                    "Improve visibility",
-                    "Track progress",
-                  ]).map((item, index) => (
-                    <div key={index}>
-                      <span>
-                        {index === 0 && "⚡"}
-                        {index === 1 && "🎯"}
-                        {index === 2 && "🛡"}
-                        {index === 3 && "📈"}
-                      </span>
+          <div className="pro-dashboard-preview">
+            <aside className="dash-sidebar">
+              <div className="dash-logo">N</div>
+              <p className="active">Overview</p>
+              <p>Applications</p>
+              <p>Auto Apply</p>
+              <p>Alerts</p>
+              <p>Resume</p>
+              <p>Interview Prep</p>
+            </aside>
 
-                      <p>{item}</p>
-                    </div>
-                  ))}
+            <section className="dash-main">
+              <div className="dash-head">
+                <div>
+                  <h3>Welcome back, Venkatesha! 👋</h3>
+                  <small>Smart career overview</small>
                 </div>
 
-    <div className="feature-actions">
-  <button
-    onClick={() => {
-      localStorage.setItem("pendingPlan", "Ultimate");
-
-      window.open(
-        "https://rzp.io/rzp/gT6RQiD",
-        "_blank",
-        "noopener,noreferrer"
-      );
-
-      setTimeout(() => {
-        window.location.href = "/ultimate-dashboard";
-      }, 5000);
-    }}
-  >
-    Start Using Feature →
-  </button>
-
-  <button onClick={closeFeatureDetails}>
-    Back to Services
-  </button>
-</div>
+                <div className="trust-chip">🛡 Verified</div>
               </div>
 
-              <div className="feature-right-preview">
-                <img
-                  src={selectedFeature.img}
-                  alt={selectedFeature.title}
-                />
-              </div>
-            </section>
-
-            <section className="feature-bottom-grid">
-              <div className="feature-how-card">
-                <h2>How it works</h2>
-
-                <div className="feature-steps-row">
-                  {(featureDetails[selectedFeature.title]?.steps || [
-                    "AI analyzes your profile.",
-                    "System finds suitable career opportunities.",
-                    "You take action from dashboard.",
-                    "Progress is tracked automatically.",
-                  ]).map((step, index) => (
-                    <div className="feature-step-item" key={index}>
-                      <div className="step-icon">
-                        {index === 0 && "🤖"}
-                        {index === 1 && "🎯"}
-                        {index === 2 && "🚀"}
-                        {index === 3 && "📈"}
-                      </div>
-
-                      <small>Step {String(index + 1).padStart(2, "0")}</small>
-
-                      <h3>
-                        {index === 0 && "Profile Analysis"}
-                        {index === 1 && "Smart Matching"}
-                        {index === 2 && "Take Action"}
-                        {index === 3 && "Track Results"}
-                      </h3>
-
-                      <p>{step}</p>
-                    </div>
-                  ))}
+              <div className="dash-grid">
+                <div className="dash-card score-card">
+                  <p>AI Match Score</p>
+                  <h2>92</h2>
+                  <span>Excellent Match</span>
                 </div>
-              </div>
 
-              <div className="feature-benefit-card">
-                <h2>Key Benefits</h2>
+                <div className="dash-card applications">
+                  <div>
+                    <p>Applications</p>
+                    <h3>24</h3>
+                    <small>Applied</small>
+                  </div>
 
-                <div className="benefit-grid">
-                  {(featureDetails[selectedFeature.title]?.benefits || [
-                    "Save time",
-                    "Improve visibility",
-                    "Better job matching",
-                    "Track applications",
-                  ]).map((benefit, index) => (
-                    <div className="benefit-item" key={index}>
-                      <span>
-                        {index === 0 && "📈"}
-                        {index === 1 && "🖥"}
-                        {index === 2 && "🎯"}
-                        {index === 3 && "💎"}
-                      </span>
+                  <div>
+                    <h3>12</h3>
+                    <small>Interviewing</small>
+                  </div>
+                </div>
 
-                      <div>
-                        <h3>{benefit}</h3>
+                <div className="dash-card strength">
+                  <p>Profile Strength</p>
+                  <h2>82%</h2>
+                  <span>Strong</span>
+                </div>
 
-                        <p>
-                          Improve your career workflow with smarter AI-powered
-                          automation.
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                <div className="dash-card auto">
+                  <p>Auto Apply</p>
+                  <h2>125</h2>
+                  <span>Applied</span>
+                </div>
+
+                <div className="dash-card activity">
+                  <p>Recent Activity</p>
+                  <span>Applied for Senior Data Engineer</span>
+                  <span>Interview scheduled - Tech Mahindra</span>
+                  <span>Profile viewed by 5 recruiters</span>
                 </div>
               </div>
             </section>
           </div>
-        </div>
-      )}
-    </main>
-  </>
-);}
+        </section>
+
+        <section className="pro-stats-strip">
+          <div>👥 <b>100K+</b><span>Active Professionals</span></div>
+          <div>☑️ <b>3M+</b><span>Jobs Analysed Daily</span></div>
+          <div>🏢 <b>500+</b><span>Top Companies</span></div>
+          <div>⭐ <b>98%</b><span>User Satisfaction</span></div>
+          <div>🌟 <b>4.8/5</b><span>Average Rating</span></div>
+        </section>
+
+        <section id="all-features" className="pro-feature-section">
+          <div className="pro-section-title">
+            <span>POWERFUL FEATURES</span>
+
+            <h2>Everything NoPromptPro has, plus your own AI trust layer</h2>
+
+            <p>
+              8 powerful tools to automate, analyze and accelerate your career
+              journey.
+            </p>
+          </div>
+
+          <div className="pro-feature-grid">
+            {featureCards.map((item) => (
+              <article className="pro-feature-card" key={item.title}>
+                <span className="feature-tag">+ {item.tag}</span>
+
+                <img
+                  src={item.img}
+                  alt={item.title}
+                  className="feature-image"
+                />
+
+                <button
+                  className="feature-btn"
+                  onClick={() => openFeatureDetails(item)}
+                >
+                  Explore →
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="pro-bottom-grid">
+          <div className="trust-passport-banner">
+            <div>
+              <h2>Candidate Trust Passport</h2>
+
+              <p>
+                Your verified identity and professional credibility that opens
+                doors to better opportunities.
+              </p>
+
+              <button onClick={goProfile}>Explore Trust Passport →</button>
+            </div>
+
+            <div className="trust-list">
+              <span>✅ Identity Verified</span>
+              <span>✅ Resume Verified</span>
+              <span>✅ Skill Certifications</span>
+              <span>✅ LinkedIn Verification</span>
+              <span>✅ Resume Tested</span>
+              <span>✅ Real User Videos</span>
+              <span>✅ Status Verification</span>
+              <span>✅ Strong Role Intent</span>
+            </div>
+          </div>
+
+          <div className="career-roadmap-card">
+            <h3>From profile gap to interview-ready candidate</h3>
+
+            <div className="roadmap-flow">
+              {[
+                "Current Skills",
+                "Skill Gaps",
+                "Projects",
+                "Certifications",
+                "Mock Interviews",
+                "Target Salary",
+              ].map((x) => (
+                <div key={x}>
+                  🎯<span>{x}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="pricing-cta-grid">
+          <div className="price-card">
+            <h3>Basic</h3>
+            <h2>₹0</h2>
+            <p>For basic job seekers</p>
+
+            <span>✓ Basic profile</span>
+            <span>✓ Job alerts</span>
+            <span>✓ Basic resume upload</span>
+
+            <button onClick={startFreePlan}>Get Started</button>
+          </div>
+
+          <div className="price-card popular">
+            <b>Most Popular</b>
+
+            <h3>Pro</h3>
+            <h2>₹899/month</h2>
+            <p>For serious job seekers</p>
+
+            <span>✓ Auto Apply</span>
+            <span>✓ Job Alerts</span>
+            <span>✓ AI Resume Studio</span>
+            <span>✓ Trust Passport</span>
+            <span>✓ Interview Practice</span>
+            <span>✓ Salary Predictor</span>
+
+            {isUltimateUser() ? (
+              <button onClick={goUltimateDashboard}>
+                👑 Ultimate Dashboard
+              </button>
+            ) : (
+              <button onClick={() => openPayment("Ultimate")}>
+                Start Pro →
+              </button>
+            )}
+          </div>
+
+          <div className="price-card">
+            <h3>Ultimate</h3>
+            <h2>₹1999/month</h2>
+            <p>For career accelerators</p>
+
+            <span>✓ Everything in Pro</span>
+            <span>✓ Priority recruiter visibility</span>
+            <span>✓ AI Career Coach</span>
+            <span>✓ Advanced insights</span>
+
+            {isUltimateUser() ? (
+              <button onClick={goUltimateDashboard}>
+                👑 Ultimate Dashboard
+              </button>
+            ) : (
+              <button onClick={() => openPayment("Ultimate")}>
+                Upgrade to Ultimate →
+              </button>
+            )}
+          </div>
+
+          <div className="final-pro-cta">
+            <h2>Ready to accelerate your career?</h2>
+
+            <p>Join 100K+ professionals who are already ahead.</p>
+
+            {isUltimateUser() ? (
+              <button onClick={goUltimateDashboard}>
+                👑 Ultimate Dashboard
+              </button>
+            ) : (
+              <button onClick={() => openPayment("Ultimate")}>
+                Upgrade to Pro →
+              </button>
+            )}
+
+            <ul>
+              <li>✅ 7-Day Free Trial</li>
+              <li>✅ No Credit Card Required</li>
+              <li>✅ 24/7 Priority Support</li>
+            </ul>
+          </div>
+        </section>
+
+        {selectedFeature && (
+          <div className="feature-premium-overlay">
+            <div className="feature-premium-page">
+              <button
+                className="feature-close-btn"
+                onClick={closeFeatureDetails}
+              >
+                ×
+              </button>
+
+              <section className="feature-premium-hero">
+                <div className="feature-left-panel">
+                  <button
+                    className="back-feature-btn"
+                    onClick={closeFeatureDetails}
+                  >
+                    ← Back to all features
+                  </button>
+
+                  <span className="feature-pill">
+                    ⚡ {selectedFeature.tag}
+                  </span>
+
+                  <h1>{selectedFeature.title}</h1>
+
+                  <p>{selectedFeature.desc}</p>
+
+                  <div className="feature-mini-benefits">
+                    {(featureDetails[selectedFeature.title]?.benefits || [
+                      "Save time",
+                      "Apply faster",
+                      "Improve visibility",
+                      "Track progress",
+                    ]).map((item, index) => (
+                      <div key={index}>
+                        <span>
+                          {index === 0 && "⚡"}
+                          {index === 1 && "🎯"}
+                          {index === 2 && "🛡"}
+                          {index === 3 && "📈"}
+                        </span>
+
+                        <p>{item}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="feature-actions">
+                    {isUltimateUser() ? (
+                      <button onClick={goUltimateDashboard}>
+                        👑 Open Ultimate Dashboard
+                      </button>
+                    ) : (
+                      <button onClick={() => openPayment("Ultimate")}>
+                        Start Using Feature →
+                      </button>
+                    )}
+
+                    <button onClick={closeFeatureDetails}>
+                      Back to Services
+                    </button>
+                  </div>
+                </div>
+
+                <div className="feature-right-preview">
+                  <img
+                    src={selectedFeature.img}
+                    alt={selectedFeature.title}
+                  />
+                </div>
+              </section>
+
+              <section className="feature-bottom-grid">
+                <div className="feature-how-card">
+                  <h2>How it works</h2>
+
+                  <div className="feature-steps-row">
+                    {(featureDetails[selectedFeature.title]?.steps || [
+                      "AI analyzes your profile.",
+                      "System finds suitable career opportunities.",
+                      "You take action from dashboard.",
+                      "Progress is tracked automatically.",
+                    ]).map((step, index) => (
+                      <div className="feature-step-item" key={index}>
+                        <div className="step-icon">
+                          {index === 0 && "🤖"}
+                          {index === 1 && "🎯"}
+                          {index === 2 && "🚀"}
+                          {index === 3 && "📈"}
+                        </div>
+
+                        <small>
+                          Step {String(index + 1).padStart(2, "0")}
+                        </small>
+
+                        <h3>
+                          {index === 0 && "Profile Analysis"}
+                          {index === 1 && "Smart Matching"}
+                          {index === 2 && "Take Action"}
+                          {index === 3 && "Track Results"}
+                        </h3>
+
+                        <p>{step}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="feature-benefit-card">
+                  <h2>Key Benefits</h2>
+
+                  <div className="benefit-grid">
+                    {(featureDetails[selectedFeature.title]?.benefits || [
+                      "Save time",
+                      "Improve visibility",
+                      "Better job matching",
+                      "Track applications",
+                    ]).map((benefit, index) => (
+                      <div className="benefit-item" key={index}>
+                        <span>
+                          {index === 0 && "📈"}
+                          {index === 1 && "🖥"}
+                          {index === 2 && "🎯"}
+                          {index === 3 && "💎"}
+                        </span>
+
+                        <div>
+                          <h3>{benefit}</h3>
+
+                          <p>
+                            Improve your career workflow with smarter
+                            AI-powered automation.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        )}
+      </main>
+    </>
+  );
+}
 function NotificationsPage() {
   const notifications = [
     {
@@ -1774,6 +1879,617 @@ function NotificationsPage() {
         </div>
       </div>
     </>
+  );
+}
+function ResumeStudioPage() {
+  const [selectedTemplate, setSelectedTemplate] = useState("Modern ATS");
+  const [resumeText, setResumeText] = useState("");
+  const [optimizedResume, setOptimizedResume] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const templates = [
+    {
+      name: "Modern ATS",
+      role: "Software Developer",
+      score: "94%",
+    },
+    {
+      name: "Data Engineer",
+      role: "Python / SQL / Cloud",
+      score: "91%",
+    },
+    {
+      name: "Business Analyst",
+      role: "Analytics / Reporting",
+      score: "89%",
+    },
+  ];
+
+  const improveResume = async () => {
+    if (!resumeText.trim()) {
+      alert("Please paste your current resume content");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setOptimizedResume("");
+
+      const response = await axios.post(`${API_URL}/api/ai/resume-analyze`, {
+        resumeText,
+        template: selectedTemplate,
+      });
+
+      setOptimizedResume(response.data.optimizedResume);
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+      alert("AI resume analysis failed. Check backend and Ollama.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="resume-studio-page">
+      <aside className="resume-studio-sidebar">
+        <img src="/logo.png" alt="NoPromptJobs" />
+
+        <h2>AI Resume Studio</h2>
+        <p>Build ATS-ready resumes</p>
+
+        <button onClick={() => (window.location.href = "/ultimate-dashboard")}>
+          ← Back to Ultimate
+        </button>
+      </aside>
+
+      <section className="resume-studio-main">
+        <div className="resume-studio-hero">
+          <span>📄 PREMIUM RESUME BUILDER</span>
+
+          <h1>Create ATS optimized resumes using AI</h1>
+
+          <p>
+            Select a resume style, paste your current resume, and generate an
+            improved ATS-friendly resume using local AI.
+          </p>
+        </div>
+
+        <section className="resume-template-grid">
+          {templates.map((item) => (
+            <div
+              key={item.name}
+              className={
+                selectedTemplate === item.name
+                  ? "resume-template-card active"
+                  : "resume-template-card"
+              }
+              onClick={() => setSelectedTemplate(item.name)}
+            >
+              <h3>{item.name}</h3>
+              <p>{item.role}</p>
+              <b>ATS Score {item.score}</b>
+            </div>
+          ))}
+        </section>
+
+        <section className="resume-workspace">
+          <div className="resume-input-card">
+            <h2>Your Current Resume</h2>
+
+            <textarea
+              placeholder="Paste your current resume here..."
+              value={resumeText}
+              onChange={(e) => setResumeText(e.target.value)}
+            />
+
+            <button onClick={improveResume} disabled={loading}>
+              {loading ? "AI is improving resume..." : "Improve ATS Resume →"}
+            </button>
+          </div>
+
+          <div className="resume-output-card">
+            <h2>Improved ATS Resume</h2>
+
+            {optimizedResume ? (
+              <pre>{optimizedResume}</pre>
+            ) : (
+              <div className="resume-empty-box">
+                Your AI optimized ATS resume will appear here.
+              </div>
+            )}
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+function SkillAnalyzerPage() {
+  const [currentSkills, setCurrentSkills] = useState("");
+  const [targetRole, setTargetRole] = useState("Data Engineer");
+  const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState("");
+
+  const analyzeSkills = async () => {
+    if (!currentSkills.trim()) {
+      alert("Please enter your current skills");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setAnalysis("");
+
+      const response = await axios.post(`${API_URL}/api/ai/skill-analyze`, {
+        currentSkills,
+        targetRole,
+      });
+
+      setAnalysis(response.data.analysis);
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+      alert("AI Skill Analyzer failed. Check backend and Ollama.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="skill-ai-page">
+      <aside className="skill-ai-sidebar">
+        <img src="/logo.png" alt="NoPromptJobs" />
+        <h2>Skill Analyzer</h2>
+        <p>AI Career Gap Roadmap</p>
+
+        <button onClick={() => (window.location.href = "/ultimate-dashboard")}>
+          ← Back to Ultimate
+        </button>
+      </aside>
+
+      <section className="skill-ai-main">
+        <div className="skill-ai-hero">
+          <span>🧠 AI SKILL GAP ANALYZER</span>
+          <h1>Find your missing skills and build a career roadmap</h1>
+          <p>
+            Enter your current skills and target role. AI will identify missing
+            skills, priority topics, projects and learning roadmap.
+          </p>
+        </div>
+
+        <section className="skill-ai-grid">
+          <div className="skill-input-card">
+            <h2>Your Current Skills</h2>
+
+            <input
+              value={targetRole}
+              onChange={(e) => setTargetRole(e.target.value)}
+              placeholder="Target Role e.g Data Engineer"
+            />
+
+            <textarea
+              value={currentSkills}
+              onChange={(e) => setCurrentSkills(e.target.value)}
+              placeholder="Example: Python, SQL, PySpark, Hadoop, Azure, Git..."
+            />
+
+            <button onClick={analyzeSkills} disabled={loading}>
+              {loading ? "AI is analyzing skills..." : "Analyze Skill Gap →"}
+            </button>
+          </div>
+
+          <div className="skill-output-card">
+            <h2>AI Skill Roadmap</h2>
+
+            {analysis ? (
+              <pre>{analysis}</pre>
+            ) : (
+              <div className="skill-empty-box">
+                Your AI skill gap analysis will appear here.
+              </div>
+            )}
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}
+function TrustPassportPage() {
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const candidateId = user?.candidateId || user?._id || user?.id;
+
+  const [candidate, setCandidate] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [trustResult, setTrustResult] = useState(null);
+
+  useEffect(() => {
+    const loadCandidate = async () => {
+      if (!candidateId) return;
+
+      try {
+        const res = await axios.get(`${API_URL}/api/candidates/${candidateId}`);
+        setCandidate(res.data.candidate || res.data.data || res.data);
+      } catch (err) {
+        console.log(err.response?.data || err.message);
+      }
+    };
+
+    loadCandidate();
+  }, [candidateId]);
+
+  const calculateLocalScore = () => {
+    let score = 30;
+
+    if (candidate?.resumeUrl) score += 15;
+    if (candidate?.profileImageUrl) score += 10;
+    if (candidate?.selfIntroVideoUrl) score += 15;
+    if (candidate?.projectVideoUrl) score += 15;
+    if (candidate?.skills?.length) score += 10;
+    if (candidate?.profileSummary) score += 5;
+
+    return Math.min(score, 100);
+  };
+
+  const analyzeTrustPassport = async () => {
+    if (!candidate) {
+      alert("Candidate profile not found");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await axios.post(`${API_URL}/api/ai/trust-passport`, {
+        candidate,
+        localScore: calculateLocalScore(),
+      });
+
+      setTrustResult(res.data);
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+      alert("AI Trust Passport analysis failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const score = trustResult?.trustScore || calculateLocalScore();
+
+  return (
+    <main className="trust-passport-page">
+      <aside className="trust-passport-sidebar">
+        <img src="/logo.png" alt="NoPromptJobs" />
+
+        <h2>Trust Passport</h2>
+        <p>AI verified candidate credibility</p>
+
+        <button onClick={() => (window.location.href = "/ultimate-dashboard")}>
+          ← Back to Ultimate
+        </button>
+      </aside>
+
+      <section className="trust-passport-main">
+        <section className="trust-passport-hero">
+          <span>🛡 AI TRUST PASSPORT</span>
+
+          <h1>Candidate credibility score based on real profile signals</h1>
+
+          <p>
+            AI checks resume, profile, skills, project proof, self-intro video
+            and verification signals to calculate recruiter confidence.
+          </p>
+        </section>
+
+        <section className="trust-score-grid">
+          <div className="trust-score-card">
+            <h2>Trust Score</h2>
+
+            <div className="trust-score-circle">{score}%</div>
+
+            <p>
+              {score >= 85
+                ? "Excellent recruiter confidence"
+                : score >= 70
+                ? "Good profile credibility"
+                : "Profile needs improvement"}
+            </p>
+
+            <button onClick={analyzeTrustPassport} disabled={loading}>
+              {loading ? "AI is analyzing..." : "Analyze Trust Passport →"}
+            </button>
+          </div>
+
+          <div className="trust-check-card">
+            <h2>Verification Signals</h2>
+
+            <div className="trust-check-row">
+              <span>Resume</span>
+              <b>{candidate?.resumeUrl ? "✅ Added" : "❌ Missing"}</b>
+            </div>
+
+            <div className="trust-check-row">
+              <span>Profile Image</span>
+              <b>{candidate?.profileImageUrl ? "✅ Added" : "❌ Missing"}</b>
+            </div>
+
+            <div className="trust-check-row">
+              <span>Self Intro Video</span>
+              <b>{candidate?.selfIntroVideoUrl ? "✅ Added" : "❌ Missing"}</b>
+            </div>
+
+            <div className="trust-check-row">
+              <span>Project Proof Video</span>
+              <b>{candidate?.projectVideoUrl ? "✅ Added" : "❌ Missing"}</b>
+            </div>
+
+            <div className="trust-check-row">
+              <span>Skills</span>
+              <b>{candidate?.skills?.length ? "✅ Added" : "❌ Missing"}</b>
+            </div>
+
+            <div className="trust-check-row">
+              <span>Profile Summary</span>
+              <b>{candidate?.profileSummary ? "✅ Added" : "❌ Missing"}</b>
+            </div>
+          </div>
+        </section>
+
+        <section className="trust-ai-output">
+          <h2>AI Recruiter Confidence Report</h2>
+
+          {trustResult?.analysis ? (
+            <pre>{trustResult.analysis}</pre>
+          ) : (
+            <div className="trust-empty-box">
+              AI trust analysis will appear here.
+            </div>
+          )}
+        </section>
+      </section>
+    </main>
+  );
+}
+function SalaryPredictorPage() {
+
+  const [role, setRole] = useState("");
+  const [skills, setSkills] = useState("");
+  const [experience, setExperience] = useState("");
+  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const predictSalary = async () => {
+
+    if (!role || !skills || !experience) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      const response = await axios.post(
+        `${API_URL}/api/ai/salary-predict`,
+        {
+          role,
+          skills,
+          experience
+        }
+      );
+
+      setResult(response.data.analysis);
+
+    } catch (err) {
+
+      console.log(err);
+
+      alert("Salary prediction failed");
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+  return (
+    <main className="salary-page">
+
+      <aside className="salary-sidebar">
+
+        <img src="/logo.png" alt="" />
+
+        <h2>Salary Predictor</h2>
+
+        <button
+          onClick={() =>
+            (window.location.href="/ultimate-dashboard")
+          }
+        >
+          ← Back
+        </button>
+
+      </aside>
+
+      <section className="salary-main">
+
+        <div className="salary-card">
+
+          <h1>AI Salary Predictor</h1>
+
+          <input
+            placeholder="Target Role"
+            value={role}
+            onChange={(e)=>setRole(e.target.value)}
+          />
+
+          <textarea
+            placeholder="Skills"
+            value={skills}
+            onChange={(e)=>setSkills(e.target.value)}
+          />
+
+          <input
+            placeholder="Years of Experience"
+            value={experience}
+            onChange={(e)=>setExperience(e.target.value)}
+          />
+
+          <button onClick={predictSalary}>
+
+            {loading
+              ? "AI Predicting..."
+              : "Predict Salary →"}
+
+          </button>
+
+        </div>
+
+        <div className="salary-output">
+
+          <h2>Predicted Salary Report</h2>
+
+          {result ? (
+            <pre>{result}</pre>
+          ) : (
+            <div>
+              AI salary prediction will appear here
+            </div>
+          )}
+
+        </div>
+
+      </section>
+
+    </main>
+  );
+}
+function HiddenOpportunitiesPage() {
+
+  const opportunities = [
+    {
+      company: "Google",
+      salary: "45 LPA",
+      type: "Recruiter Private",
+      location: "Bangalore",
+      confidence: "96%"
+    },
+    {
+      company: "Microsoft",
+      salary: "38 LPA",
+      type: "Hidden Opening",
+      location: "Hyderabad",
+      confidence: "94%"
+    },
+    {
+      company: "Amazon",
+      salary: "42 LPA",
+      type: "Premium Referral",
+      location: "Chennai",
+      confidence: "92%"
+    }
+  ];
+
+  return (
+    <main className="hidden-page">
+
+      <aside className="hidden-sidebar">
+
+        <img src="/logo.png" />
+
+        <h2>Hidden Opportunities</h2>
+
+        <button
+          onClick={() =>
+            (window.location.href = "/ultimate-dashboard")
+          }
+        >
+          ← Back
+        </button>
+
+      </aside>
+
+
+      <section className="hidden-main">
+
+        <div className="hidden-hero">
+
+          <span>💎 PREMIUM ACCESS</span>
+
+          <h1>
+            Hidden Opportunities Workspace
+          </h1>
+
+          <p>
+            Access recruiter-only openings, referrals,
+            confidential positions and premium hiring campaigns.
+          </p>
+
+        </div>
+
+        <div className="hidden-stats">
+
+          <div className="hidden-stat-card">
+            <h2>24</h2>
+            <p>Private Jobs</p>
+          </div>
+
+          <div className="hidden-stat-card">
+            <h2>9</h2>
+            <p>Referral Openings</p>
+          </div>
+
+          <div className="hidden-stat-card">
+            <h2>17</h2>
+            <p>High Salary Jobs</p>
+          </div>
+
+          <div className="hidden-stat-card">
+            <h2>96%</h2>
+            <p>Match Accuracy</p>
+          </div>
+
+        </div>
+
+        <div className="premium-jobs-grid">
+
+          {opportunities.map((item,index)=>(
+
+            <div
+              className="premium-job-card"
+              key={index}
+            >
+
+              <span className="premium-tag">
+                {item.type}
+              </span>
+
+              <h2>{item.company}</h2>
+
+              <h3>{item.salary}</h3>
+
+              <p>{item.location}</p>
+
+              <div className="confidence">
+
+                Match Score
+
+                <b>{item.confidence}</b>
+
+              </div>
+
+              <button>
+                Unlock Opportunity →
+              </button>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </section>
+
+    </main>
   );
 }
 function App() {
@@ -1835,6 +2551,16 @@ function App() {
   if (path === "/jobs") return <JobsPage />;
   if (path === "/services") return <ServicesPage />;
   if (path === "/notifications") return <NotificationsPage />;
+  if (path === "/resume-studio") return <ResumeStudioPage />;
+  if (path === "/skill-analyzer") return <SkillAnalyzerPage />;
+  if (path === "/trust-passport") return <TrustPassportPage />;
+  if (path === "/salary-predictor")
+  return <SalaryPredictorPage />;
+  if (path === "/hidden-opportunities")
+  return <HiddenOpportunitiesPage />;
+  if (path === "/ai-interview-prep")
+  return <AIInterviewPrepPage />;
+  
 
   return <LandingPage />;
 }
@@ -3203,7 +3929,7 @@ function CandidateProfile() {
         </div>
 
         <div className="candidate-pro-dark">
-          <h3>👑 NoProxy Pro</h3>
+          <h3>👑 NoPompt Pro</h3>
           <p>Stand out from normal job portals.</p>
           <ul>
             <li>AI Resume Optimization</li>
@@ -5344,241 +6070,485 @@ function RecruiterApplicationsPage() {
 }
 function UltimateDashboard() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
+  const name = user?.name || "Venkatesha A";
 
-  const isUltimate =
-    user?.plan === "Ultimate" ||
-    user?.plan === "ultimate" ||
-    user?.subscriptionStatus === "active";
+  const [activeTool, setActiveTool] = useState(null);
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [autoApplyConsent, setAutoApplyConsent] = useState(
+    localStorage.getItem("autoApplyConsent") === "true"
+  );
+  const [autoApplyLoading, setAutoApplyLoading] = useState(false);
+  const [autoApplyResult, setAutoApplyResult] = useState(null);
 
-  const activateUltimateForTesting = () => {
-    const updatedUser = {
-      ...user,
-      plan: "Ultimate",
-      subscriptionStatus: "active",
-      subscriptionDate: new Date().toISOString(),
-    };
+  const candidateId = user?.candidateId || user?._id || user?.id;
 
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    localStorage.removeItem("pendingPlan");
+  const stats = [
+    ["📄", "Resume Score", "92%", "ATS Optimized", "+14% this week"],
+    ["🎯", "Job Match Score", "90%", "High Fit Roles", "+22% this week"],
+    ["🛡", "Trust Score", "96%", "Verified Profile", "+8% this week"],
+    ["💼", "Applications", "28", "Active Applications", "+5 new today"],
+    ["⚡", "Auto Apply", "124", "Applications Sent", "+18 this week"],
+  ];
 
-    window.location.reload();
+  const tools = [
+    ["⚡", "Auto Apply Engine", "Smart Apply to Jobs"],
+    ["📄", "AI Resume Studio", "Build ATS Resume"],
+    ["🎯", "AI Match Score", "Check Job Fit"],
+    ["🧠", "Skill Gap Analyzer", "Find Missing Skills"],
+    ["🎤", "Interview Prep Hub", "Practice Interviews"],
+    ["💰", "Salary Predictor", "Predict Salary Range"],
+    ["🛡", "Trust Passport", "Verify Your Profile"],
+    ["🔔", "Instant Job Alerts", "Real-time Alerts"],
+    ["💎", "Hidden Opportunities", "Exclusive Jobs"],
+  ];
+
+  const goToJobs = () => {
+    window.location.href = "/jobs";
   };
 
-  const openTool = (toolName) => {
-    if (!isUltimate) {
-      alert("Please activate Ultimate plan to use this feature.");
+  const goToProfile = () => {
+    window.location.href = candidateId ? `/profile/${candidateId}` : "/candidate-login";
+  };
+
+  const goToNotifications = () => {
+    window.location.href = "/notifications";
+  };
+
+  const scrollToWorkspace = () => {
+    document
+      .getElementById("ultimate-ai-workspace")
+      ?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const openToolModal = (toolName) => {
+    setActiveTool(toolName);
+  };
+
+  const generateAIAnswer = () => {
+    if (!aiQuestion.trim()) {
+      alert("Please enter your career question");
       return;
     }
 
-    alert(`${toolName} opening soon with AI integration`);
+    alert("AI answer frontend is ready. Backend AI API will be connected next.");
   };
 
-  const tools = [
-    {
-      icon: "🤖",
-      title: "Auto Apply Engine",
-      desc: "Automatically apply to matching jobs with your permission.",
-      action: "Start Auto Apply",
-    },
-    {
-      icon: "📄",
-      title: "AI Resume Studio",
-      desc: "Generate ATS-ready resumes and improve resume score.",
-      action: "Build Resume",
-    },
-    {
-      icon: "🎯",
-      title: "AI Match Score",
-      desc: "Check how well your profile matches each job.",
-      action: "Calculate Score",
-    },
-    {
-      icon: "🧠",
-      title: "Skill Gap Analyzer",
-      desc: "Find missing skills and get a learning roadmap.",
-      action: "Analyze Skills",
-    },
-    {
-      icon: "🎤",
-      title: "Interview Preparation Hub",
-      desc: "Practice HR and technical interview questions.",
-      action: "Start Practice",
-    },
-    {
-      icon: "💰",
-      title: "Salary Predictor",
-      desc: "Predict expected salary based on skills and experience.",
-      action: "Predict Salary",
-    },
-    {
-      icon: "🛡",
-      title: "Candidate Trust Passport",
-      desc: "Verify identity, resume, projects and professional credibility.",
-      action: "Open Passport",
-    },
-    {
-      icon: "🔔",
-      title: "Instant Job Alerts",
-      desc: "Get real-time alerts for best matching jobs.",
-      action: "Enable Alerts",
-    },
-    {
-      icon: "💎",
-      title: "Hidden Opportunities",
-      desc: "Access recruiter-only premium opportunities.",
-      action: "View Jobs",
-    },
-  ];
+  const giveAutoApplyConsent = () => {
+    if (!candidateId) {
+      alert("Please login as candidate");
+      window.location.href = "/candidate-login";
+      return;
+    }
+
+    localStorage.setItem("autoApplyConsent", "true");
+    setAutoApplyConsent(true);
+    alert("Consent saved. Auto Apply is enabled.");
+  };
+
+  const startAutoApply = async () => {
+    if (!candidateId) {
+      alert("Please login as candidate");
+      window.location.href = "/candidate-login";
+      return;
+    }
+
+    if (!autoApplyConsent) {
+      alert("Please give consent first.");
+      return;
+    }
+
+    try {
+      setAutoApplyLoading(true);
+
+      const res = await axios.post(
+        `${API_URL}/api/auto-apply/run/${candidateId}`
+      );
+
+      setAutoApplyResult(res.data);
+
+      alert(
+        res.data?.message ||
+          `Auto Apply completed. ${res.data?.appliedCount || 0} jobs applied.`
+      );
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+      alert(err.response?.data?.message || "Auto Apply failed");
+    } finally {
+      setAutoApplyLoading(false);
+    }
+  };
+
+  const toolActions = {
+  "Auto Apply Engine": () => openToolModal("Auto Apply Engine"),
+
+  "AI Resume Studio": () => {
+    window.location.href = "/resume-studio";
+  },
+
+  "AI Match Score": goToJobs,
+
+ "Skill Gap Analyzer": () => {
+  window.location.href = "/skill-analyzer";
+},
+
+  "Interview Prep Hub": () => {
+    window.location.href = "/interview-prep";
+  },
+
+  "Salary Predictor": () => {
+    window.location.href = "/salary-predictor";
+  },
+
+  "Trust Passport": () => {
+    window.location.href = "/trust-passport";
+  },
+
+  "Instant Job Alerts": goToNotifications,
+
+  "Hidden Opportunities": () => {
+  window.location.href = "/hidden-opportunities";
+},
+};
 
   return (
     <>
       <Navbar />
 
-      <main className="ultimate-page">
-        <section className="ultimate-hero">
-          <div>
-            <span className="ultimate-pill">👑 NoPromptJobs Ultimate</span>
+      <main className="ultimate-dark-page">
+        <aside className="ultimate-sidebar">
+          <div className="ultimate-brand">
+            <img src="/logo.png" alt="NoPromptJobs" />
 
-            <h1>
-              Your AI Career Command Center
-            </h1>
-
-            <p>
-              Unlock premium AI tools for resume building, job matching,
-              interview preparation, salary prediction and verified career
-              growth.
-            </p>
-
-            <div className="ultimate-actions">
-              {!isUltimate ? (
-                <>
-                  <button onClick={activateUltimateForTesting}>
-                    I Completed Payment - Activate Ultimate
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      localStorage.setItem("pendingPlan", "Ultimate");
-                      window.open(
-                        "https://rzp.io/rzp/gT6RQiD",
-                        "_blank",
-                        "noopener,noreferrer"
-                      );
-                    }}
-                  >
-                    Pay ₹1999 Now →
-                  </button>
-                </>
-              ) : (
-                <button onClick={() => openTool("AI Career Assistant")}>
-                  Start AI Career Assistant →
-                </button>
-              )}
+            <div>
+              <h2>NoPromptJobs</h2>
+              <span>ULTIMATE</span>
             </div>
           </div>
 
-          <div className="ultimate-score-card">
-            <h2>{isUltimate ? "Active" : "Locked"}</h2>
-            <p>Ultimate Plan</p>
-            <span>{isUltimate ? "All tools unlocked" : "Payment required"}</span>
+          <nav>
+            <a className="active" onClick={scrollToWorkspace}>
+              ⌂ Dashboard
+            </a>
+
+            <a onClick={scrollToWorkspace}>✦ AI Workspace</a>
+            <a onClick={goToJobs}>▣ Applications <b>28</b></a>
+            <a onClick={() => openToolModal("Auto Apply Engine")}>
+              ⚡ Auto Apply <b>124</b>
+            </a>
+            <a onClick={goToNotifications}>🔔 Job Alerts <b>12</b></a>
+            <a onClick={() => (window.location.href = "/resume-studio")}>
+  📄 Resume Studio
+</a>
+<a onClick={() => (window.location.href = "/ai-interview-prep")}>
+  🎤 Interview Prep
+</a>
+            <a onClick={() => (window.location.href = "/skill-analyzer")}>
+  ▦ Skill Analyzer
+</a>
+            <a onClick={() => (window.location.href = "/trust-passport")}>
+  🛡 Trust Passport
+</a>
+            <a onClick={() => (window.location.href = "/salary-predictor")}>
+  💼 Salary Predictor
+</a>
+            <a onClick={goToJobs}>💎 Hidden Opportunities</a>
+            <a onClick={() => openToolModal("Career Roadmap")}>
+              📊 Career Roadmap
+            </a>
+          </nav>
+
+          <div className="ultimate-plan-box">
+            <span>👑</span>
+            <p>Upgrade Status</p>
+            <h3>Ultimate Plan</h3>
+            <b>Active</b>
+            <small>Valid till 17 Jul, 2026</small>
           </div>
-        </section>
+        </aside>
 
-        <section className="ultimate-stats">
-          <div>
-            <span>AI Tools</span>
-            <h2>9</h2>
-            <p>Premium features</p>
-          </div>
+        <section className="ultimate-main">
+          <div className="ultimate-top-search">
+            <input placeholder="Search jobs, skills, companies..." />
 
-          <div>
-            <span>Resume Score</span>
-            <h2>92%</h2>
-            <p>ATS optimized</p>
-          </div>
-
-          <div>
-            <span>Job Match</span>
-            <h2>90%</h2>
-            <p>AI calculated</p>
-          </div>
-
-          <div>
-            <span>Trust Score</span>
-            <h2>96%</h2>
-            <p>Verified profile</p>
-          </div>
-        </section>
-
-        <section className="ultimate-tools-section">
-          <div className="ultimate-section-head">
-            <span>AI WORKSPACE</span>
-            <h2>All Ultimate Features</h2>
-            <p>
-              Every tool below will be connected to backend AI APIs step by step.
-            </p>
-          </div>
-
-          <div className="ultimate-tools-grid">
-            {tools.map((tool) => (
-              <article
-                className={`ultimate-tool-card ${!isUltimate ? "locked" : ""}`}
-                key={tool.title}
-              >
-                <div className="ultimate-tool-icon">{tool.icon}</div>
-
-                <h3>{tool.title}</h3>
-                <p>{tool.desc}</p>
-
-                <button onClick={() => openTool(tool.title)}>
-                  {isUltimate ? `${tool.action} →` : "Locked 🔒"}
-                </button>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="ultimate-bottom-grid">
-          <div className="ultimate-ai-assistant">
-            <span>✨ AI Career Assistant</span>
-            <h2>Ask anything about your career</h2>
-
-            <textarea placeholder="Example: How can I become a Data Engineer in 6 months?" />
-
-            <button onClick={() => openTool("AI Career Assistant")}>
-              Generate AI Answer →
+            <button onClick={() => openToolModal("AI Career Assistant")}>
+              ✦ AI Assistant
             </button>
-          </div>
 
-          <div className="ultimate-roadmap">
-            <h3>Your AI Roadmap</h3>
+            <span onClick={goToNotifications}>🔔</span>
 
-            <div>
-              <b>Step 1</b>
-              <span>Improve Resume Score</span>
-            </div>
-
-            <div>
-              <b>Step 2</b>
-              <span>Complete Trust Passport</span>
-            </div>
-
-            <div>
-              <b>Step 3</b>
-              <span>Apply to 90% match jobs</span>
-            </div>
-
-            <div>
-              <b>Step 4</b>
-              <span>Practice interviews</span>
+            <div className="ultimate-avatar">
+              {name.charAt(0).toUpperCase()}
             </div>
           </div>
+
+          <section className="ultimate-hero-dark">
+            <div>
+              <p>Welcome back, {name}! 👋</p>
+
+              <h1>
+                Your <span>Ultimate</span>
+                <br />
+                AI Career Command Center
+              </h1>
+
+              <p>
+                All premium AI tools, insights and opportunities — powered to
+                accelerate your career.
+              </p>
+
+              <div className="ultimate-hero-buttons">
+                <button onClick={scrollToWorkspace}>
+                  Launch AI Workspace →
+                </button>
+
+                <button className="ghost" onClick={scrollToWorkspace}>
+                  Explore All Tools
+                </button>
+              </div>
+            </div>
+
+            <div className="ultimate-access-card">
+              <div className="crown">👑</div>
+              <h2>Ultimate Access</h2>
+              <p>All 9 AI Tools Unlocked</p>
+              <span>● Active</span>
+            </div>
+          </section>
+
+          <section className="ultimate-stats-row">
+            {stats.map((item) => (
+              <div className="ultimate-stat-card" key={item[1]}>
+                <div className="stat-icon">{item[0]}</div>
+                <p>{item[1]}</p>
+                <h2>{item[2]}</h2>
+                <span>{item[3]}</span>
+                <b>↑ {item[4]}</b>
+              </div>
+            ))}
+          </section>
+
+          <section className="ultimate-grid-layout">
+            <div className="ultimate-panel large" id="ultimate-ai-workspace">
+              <div className="panel-head">
+                <div>
+                  <h2>AI Workspace</h2>
+                  <p>Powerful AI tools to supercharge your career</p>
+                </div>
+
+                <button onClick={scrollToWorkspace}>View All Tools →</button>
+              </div>
+
+              <div className="ultimate-tool-grid">
+                {tools.map((tool) => (
+                  <button
+                    className="ultimate-tool-mini"
+                    key={tool[1]}
+                    onClick={toolActions[tool[1]]}
+                  >
+                    <span>{tool[0]}</span>
+
+                    <div>
+                      <h4>{tool[1]}</h4>
+                      <p>{tool[2]}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="ultimate-panel">
+              <h2>AI Career Assistant</h2>
+              <p>Ask anything about your career</p>
+
+              <div className="ultimate-ai-input">
+                <input
+                  placeholder="Example: How can I become a Data Engineer in 6 months?"
+                  value={aiQuestion}
+                  onChange={(e) => setAiQuestion(e.target.value)}
+                />
+
+                <button onClick={generateAIAnswer}>➤</button>
+              </div>
+
+              <div className="quick-tags">
+                <button onClick={() => setAiQuestion("How can I improve my resume?")}>
+                  Improve my resume
+                </button>
+
+                <button onClick={() => setAiQuestion("Find high paying jobs for my profile")}>
+                  Find high paying jobs
+                </button>
+
+                <button onClick={() => setAiQuestion("Give me interview preparation tips")}>
+                  Interview tips
+                </button>
+
+                <button onClick={() => setAiQuestion("Create my skill roadmap")}>
+                  Skill roadmap
+                </button>
+              </div>
+            </div>
+
+            <div className="ultimate-panel">
+              <div className="panel-head">
+                <div>
+                  <h2>Your AI Roadmap</h2>
+                  <p>Personalized steps to achieve your dream career</p>
+                </div>
+
+                <button onClick={() => openToolModal("Career Roadmap")}>
+                  View Full Roadmap →
+                </button>
+              </div>
+
+              <div className="roadmap-dark">
+                <div className="done">
+                  ✓ Step 1 <b>Improve Resume Score</b>
+                </div>
+
+                <div>
+                  ▣ Step 2 <b>Complete Trust Passport</b>
+                </div>
+
+                <div>
+                  ✦ Step 3 <b>Apply to 90% Match Jobs</b>
+                </div>
+
+                <div>
+                  ◉ Step 4 <b>Practice Interviews</b>
+                </div>
+              </div>
+            </div>
+
+            <div className="ultimate-panel">
+              <h2>Recent Activity</h2>
+
+              <div className="activity-dark">
+                ✦ Auto applied to 15 new jobs <span>2 min ago</span>
+              </div>
+
+              <div className="activity-dark">
+                ↻ Resume score improved to 92% <span>1 hour ago</span>
+              </div>
+            </div>
+
+            <div className="ultimate-panel">
+              <h2>Top Job Matches</h2>
+
+              <div className="job-match-dark" onClick={goToJobs}>
+                <div>💼</div>
+
+                <div>
+                  <h4>Senior Data Engineer</h4>
+                  <p>Tech Mahindra</p>
+                </div>
+
+                <b>95% Match</b>
+              </div>
+            </div>
+
+            <div className="ultimate-panel">
+              <h2>Skills Analysis</h2>
+
+              <div className="skill-circle">86%</div>
+
+              <p>In Demand: 28</p>
+              <p>Good: 12</p>
+              <p>Need Improvement: 4</p>
+
+              <button
+                className="skills-action-btn"
+                onClick={() => openToolModal("Skills Analysis")}
+              >
+                View Details →
+              </button>
+            </div>
+          </section>
+
+          {activeTool && (
+            <div className="ultimate-modal-overlay">
+              <div className="ultimate-tool-modal">
+                <button
+                  className="modal-close"
+                  onClick={() => setActiveTool(null)}
+                >
+                  ×
+                </button>
+
+                <h2>{activeTool}</h2>
+
+                {activeTool === "Auto Apply Engine" ? (
+                  <div className="auto-apply-box">
+                    <h3>One-Time Auto Apply Consent</h3>
+
+                    <p>
+                      Give permission once. NoPromptJobs will automatically
+                      apply for suitable and recommended jobs based on your
+                      skills, profile, location, experience and job preference.
+                    </p>
+
+                    <label className="auto-consent-check">
+                      <input
+                        type="checkbox"
+                        checked={autoApplyConsent}
+                        onChange={(e) => {
+                          setAutoApplyConsent(e.target.checked);
+                          localStorage.setItem(
+                            "autoApplyConsent",
+                            e.target.checked
+                          );
+                        }}
+                      />
+                      I allow NoPromptJobs to auto-apply for suitable jobs on my
+                      behalf.
+                    </label>
+
+                    {!autoApplyConsent ? (
+                      <button onClick={giveAutoApplyConsent}>
+                        Give Consent
+                      </button>
+                    ) : (
+                      <button
+                        onClick={startAutoApply}
+                        disabled={autoApplyLoading}
+                      >
+                        {autoApplyLoading
+                          ? "Applying to suitable jobs..."
+                          : "Start Auto Apply Now"}
+                      </button>
+                    )}
+
+                    {autoApplyResult && (
+                      <div className="auto-result-box">
+                        <b>{autoApplyResult.appliedCount || 0}</b>
+                        <span>Jobs Applied Successfully</span>
+                        <small>
+                          Matched Jobs: {autoApplyResult.totalMatchedJobs || 0}
+                        </small>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <p>
+                      This feature is unlocked in Ultimate Plan. Frontend flow is
+                      ready. Backend AI API connection will be added step by
+                      step.
+                    </p>
+
+                    <button onClick={() => setActiveTool(null)}>
+                      Continue Setup →
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </>
   );
-}
-function RecruiterReportsPage() {
+}function RecruiterReportsPage() {
   const [activeReport, setActiveReport] = useState("Overview");
 
   return (
