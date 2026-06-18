@@ -2560,7 +2560,9 @@ function App() {
   return <HiddenOpportunitiesPage />;
   if (path === "/ai-interview-prep")
   return <AIInterviewPrepPage />;
-  
+  if (path === "/settings") return <SettingsPage />;
+  if (path === "/candidate-settings") return <SettingsPage />;
+
 
   return <LandingPage />;
 }
@@ -6688,7 +6690,118 @@ function UltimateDashboard() {
     </>
   );
 }
-function RecruiterSettingsPage(){
+function SettingsPage() {
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+
+  const logout = () => {
+    localStorage.removeItem("user");
+    window.location.href = "/";
+  };
+
+  return (
+    <>
+      <Navbar />
+
+      <main className="settings-saas-page">
+        <section className="settings-saas-hero">
+          <div>
+            <span>⚙️ Candidate Control Center</span>
+            <h1>Account Settings</h1>
+            <p>
+              Manage your profile security, notification preferences,
+              subscription, privacy and account experience.
+            </p>
+          </div>
+
+          <div className="settings-profile-card">
+            <div className="settings-avatar">
+              {(user.name || user.email || "V").charAt(0).toUpperCase()}
+            </div>
+            <h3>{user.name || "VENKATESHA A"}</h3>
+            <p>{user.email || "venkateshisbm01@gmail.com"}</p>
+            <b>✅ Verified Candidate</b>
+          </div>
+        </section>
+
+        <section className="settings-layout">
+          <aside className="settings-left-panel">
+            <button className="active">👤 Account</button>
+            <button>🔒 Security</button>
+            <button>🔔 Notifications</button>
+            <button>🛡 Privacy</button>
+            <button>💳 Subscription</button>
+            <button onClick={logout} className="danger">🚪 Logout</button>
+          </aside>
+
+          <section className="settings-main-panel">
+            <div className="settings-panel-header">
+              <div>
+                <h2>Account Preferences</h2>
+                <p>Update how your NoPromptJobs account works.</p>
+              </div>
+              <button>Save Changes</button>
+            </div>
+
+            <div className="settings-card-grid">
+              <div className="saas-setting-card">
+                <div className="setting-icon">🌙</div>
+                <h3>Appearance</h3>
+                <p>Choose your dashboard theme and visual preference.</p>
+                <div className="setting-action-row">
+                  <span>Dark Mode</span>
+                  <label className="toggle-switch">
+                    <input type="checkbox" />
+                    <b></b>
+                  </label>
+                </div>
+              </div>
+
+              <div className="saas-setting-card">
+                <div className="setting-icon">🔐</div>
+                <h3>Password & Security</h3>
+                <p>Change password and protect your account access.</p>
+                <button>Change Password</button>
+              </div>
+
+              <div className="saas-setting-card">
+                <div className="setting-icon">🔔</div>
+                <h3>Job Notifications</h3>
+                <p>Control job alerts, recruiter views and interview reminders.</p>
+                <button>Manage Alerts</button>
+              </div>
+
+              <div className="saas-setting-card">
+                <div className="setting-icon">🛡</div>
+                <h3>Profile Privacy</h3>
+                <p>Manage recruiter visibility and public profile access.</p>
+                <button>Privacy Settings</button>
+              </div>
+
+              <div className="saas-setting-card wide">
+                <div className="setting-icon">💎</div>
+                <h3>NoPromptJobs Pro</h3>
+                <p>
+                  Upgrade to unlock auto apply, AI resume studio, salary
+                  predictor, hidden opportunities and premium recruiter reach.
+                </p>
+                <button onClick={() => (window.location.href = "/services")}>
+                  View Plans
+                </button>
+              </div>
+
+              <div className="saas-setting-card wide danger-zone">
+                <div className="setting-icon">⚠️</div>
+                <h3>Danger Zone</h3>
+                <p>Logout from this device or manage account deletion later.</p>
+                <button onClick={logout}>Logout Account</button>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </>
+  );
+}function RecruiterSettingsPage(){
 
 const setTheme=(theme)=>{
 
