@@ -16045,4 +16045,408 @@ body {
     gap:12px;
   }
 
+}/* =========================================================
+   GLOBAL MOBILE RESPONSIVE FIX - NoPromptJobs
+   Add this at the VERY BOTTOM of your main CSS file
+========================================================= */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Tablet */
+@media (max-width: 1100px) {
+  .modern-profile-layout,
+  .new-dashboard,
+  .premium-dashboard,
+  .hr-dashboard,
+  .advanced-post-layout,
+  .talent-search-layout,
+  .shortlisted-layout,
+  .recruiter-candidate-page,
+  .applications-layout {
+    grid-template-columns: 1fr !important;
+    padding: 18px !important;
+  }
+
+  .dash-left,
+  .dash-right,
+  .premium-left,
+  .premium-right,
+  .hr-right {
+    width: 100%;
+  }
+
+  .modern-quick-links,
+  .advanced-recruiter-sidebar {
+    position: static !important;
+    min-height: auto !important;
+  }
+
+  .modern-job-grid,
+  .metric-row,
+  .hr-stats,
+  .reports-grid,
+  .billing-plan-grid,
+  .billing-bottom-grid,
+  .applications-summary,
+  .shortlisted-summary,
+  .advanced-filter-grid,
+  .verify-grid-new,
+  .insight-row,
+  .profile-two-col,
+  .basic-grid,
+  .clean-grid-3,
+  .clean-grid-2,
+  .recruiter-profile-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  body {
+    background: #f4f7fb;
+  }
+
+  .topbar,
+  .recruiter-topbar {
+    height: auto !important;
+    padding: 14px !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    position: sticky;
+    top: 0;
+  }
+
+  .brand,
+  .recruiter-navbar-brand {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .site-logo {
+    max-height: 48px;
+    object-fit: contain;
+  }
+
+  .candidate-search-wrap {
+    width: 100%;
+    order: 2;
+  }
+
+  .top-search {
+    width: 100%;
+    max-width: 100%;
+    height: 48px;
+    font-size: 14px;
+  }
+
+  .nav-menu,
+  .candidate-nav-menu,
+  .recruiter-nav-tabs {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px !important;
+    order: 3;
+  }
+
+  .nav-menu a,
+  .candidate-nav-menu a,
+  .recruiter-nav-tabs a {
+    background: rgba(255, 255, 255, 0.14);
+    padding: 11px 12px !important;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 13px !important;
+  }
+
+  .profile-menu-wrap,
+  .recruiter-profile-wrap {
+    margin-left: 0 !important;
+    width: 100%;
+    justify-content: center;
+    order: 4;
+  }
+
+  .profile-menu-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .profile-dropdown {
+    right: 50% !important;
+    transform: translateX(50%);
+    width: calc(100vw - 28px) !important;
+    top: 58px !important;
+  }
+
+  .modern-profile-layout,
+  .new-dashboard,
+  .premium-dashboard,
+  .hr-dashboard,
+  .advanced-post-layout,
+  .talent-search-layout,
+  .shortlisted-layout,
+  .recruiter-candidate-page,
+  .applications-layout {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    padding: 14px !important;
+    gap: 16px !important;
+  }
+
+  .modern-job-grid,
+  .metric-row,
+  .hr-stats,
+  .reports-grid,
+  .billing-plan-grid,
+  .billing-bottom-grid,
+  .applications-summary,
+  .shortlisted-summary,
+  .advanced-filter-grid,
+  .verify-grid-new,
+  .insight-row,
+  .profile-two-col,
+  .basic-grid,
+  .clean-grid-3,
+  .clean-grid-2,
+  .recruiter-profile-grid,
+  .insight-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .welcome-banner,
+  .premium-hero,
+  .hr-welcome,
+  .applications-hero,
+  .shortlisted-hero,
+  .talent-search-hero,
+  .clean-job-hero,
+  .billing-hero-premium,
+  .recruiter-candidate-hero,
+  .hero-left {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left;
+    padding: 22px !important;
+    gap: 16px !important;
+  }
+
+  .welcome-banner h1,
+  .premium-hero h1,
+  .applications-hero h1,
+  .shortlisted-hero h1,
+  .talent-search-hero h1,
+  .billing-hero-premium h1,
+  .choice-header h1 {
+    font-size: 28px !important;
+    line-height: 1.2 !important;
+  }
+
+  .welcome-banner p,
+  .premium-hero p,
+  .applications-hero p,
+  .shortlisted-hero p,
+  .talent-search-hero p,
+  .billing-hero-premium p {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+  }
+
+  .hero-actions,
+  .banner-actions,
+  .clean-post-actions,
+  .modal-actions,
+  .applications-tabs,
+  .shortlisted-tabs {
+    flex-direction: column !important;
+    width: 100%;
+    gap: 10px !important;
+  }
+
+  .hero-actions a,
+  .hero-actions button,
+  .banner-actions button,
+  .clean-post-actions button,
+  .applications-tabs button,
+  .shortlisted-tabs button {
+    width: 100% !important;
+    text-align: center;
+  }
+
+  .profile-card-new,
+  .premium-profile-card,
+  .passport-card,
+  .resume-strength-card,
+  .premium-card,
+  .dashboard-card,
+  .notification-panel,
+  .hr-card,
+  .hr-stat,
+  .applications-hero,
+  .application-card,
+  .shortlisted-card,
+  .advanced-candidate-card,
+  .talent-search-hero,
+  .advanced-filter-panel,
+  .report-card,
+  .billing-plan-card,
+  .billing-info-card,
+  .profile-settings-card,
+  .recruiter-profile-card,
+  .ai-assistant-card,
+  .ai-output-card,
+  .stage-card {
+    border-radius: 22px !important;
+    padding: 18px !important;
+  }
+
+  .application-card,
+  .shortlisted-card,
+  .advanced-candidate-card,
+  .hr-job-row,
+  .hr-application-row,
+  .notification-card-pro {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .application-profile,
+  .shortlisted-profile,
+  .candidate-left-block {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .trust-meter,
+  .hr-circle,
+  .mini-score {
+    width: 130px !important;
+    height: 130px !important;
+    margin: 18px auto !important;
+  }
+
+  .trust-meter h2,
+  .hr-circle,
+  .mini-score span {
+    font-size: 30px !important;
+  }
+
+  .premium-avatar,
+  .avatar-ring,
+  .candidate-big-avatar,
+  .modern-photo-wrap label,
+  .modern-photo-wrap img {
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .choice-navbar {
+    height: auto !important;
+    padding: 16px !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .choice-cards,
+  .choice-features {
+    grid-template-columns: 1fr !important;
+  }
+
+  .choice-card,
+  .landing-card,
+  .auth-card,
+  .auth-box {
+    width: 100% !important;
+    padding: 24px !important;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 15px !important;
+  }
+
+  table {
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .topbar,
+  .recruiter-topbar {
+    padding: 12px !important;
+  }
+
+  .nav-menu,
+  .candidate-nav-menu,
+  .recruiter-nav-tabs {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modern-profile-layout,
+  .new-dashboard,
+  .premium-dashboard,
+  .hr-dashboard,
+  .advanced-post-layout,
+  .talent-search-layout,
+  .shortlisted-layout,
+  .recruiter-candidate-page,
+  .applications-layout {
+    padding: 10px !important;
+  }
+
+  .welcome-banner h1,
+  .premium-hero h1,
+  .applications-hero h1,
+  .shortlisted-hero h1,
+  .talent-search-hero h1,
+  .billing-hero-premium h1,
+  .choice-header h1 {
+    font-size: 24px !important;
+  }
+
+  .profile-card-new,
+  .premium-profile-card,
+  .passport-card,
+  .resume-strength-card,
+  .premium-card,
+  .dashboard-card,
+  .notification-panel,
+  .hr-card,
+  .hr-stat,
+  .application-card,
+  .shortlisted-card,
+  .advanced-candidate-card,
+  .report-card,
+  .billing-plan-card,
+  .profile-settings-card {
+    padding: 16px !important;
+  }
+
+  .section-head,
+  .hr-section-head,
+  .filter-header,
+  .talent-results-head,
+  .section-row,
+  .plan-card-top,
+  .billing-info-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
 }

@@ -3,6 +3,7 @@ import axios from "axios";
 import "./index.css";
 import JobDetailsPage from "./pages/JobDetailsPage";
 import AIInterviewPrepPage from "./pages/AIInterviewPrepPage";
+import MobileCandidateDashboard from "./pages/MobileCandidateDashboard";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
