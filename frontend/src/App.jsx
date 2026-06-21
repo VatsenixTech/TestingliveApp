@@ -1142,41 +1142,58 @@ function JobsPage() {
     );
   };
 
-  // const openPayment = (plan) => {
-  //   if (isUltimateUser()) {
-  //     window.location.href = "/ultimate-dashboard";
-  //     return;
-  //   }
+  // Razorpay Payment
+  const openPayment = (plan) => {
+    if (isUltimateUser()) {
+      window.open(
+        "/ultimate-dashboard",
+        "NoPromptUltimateDashboard",
+        "width=1600,height=950,left=80,top=40"
+      );
+      return;
+    }
 
-  //   localStorage.setItem("pendingPlan", plan);
+    localStorage.setItem("pendingPlan", plan);
 
-  //   const paymentLink =
-  //     plan === "Ultimate" ? ULTIMATE_PAYMENT_LINK : RAZORPAY_PRO_LINK;
+    const paymentLink =
+      plan === "Ultimate"
+        ? ULTIMATE_PAYMENT_LINK
+        : RAZORPAY_PRO_LINK;
 
-  //   window.open(paymentLink, "_blank", "noopener,noreferrer");
-  // };
-  // Temporary testing code (remove after Razorpay integration)
+    window.open(paymentLink, "_blank", "noopener,noreferrer");
+  };
 
-const openPayment = () => {
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  // Temporary testing code
+  /*
+  const openPayment = () => {
+    const user = JSON.parse(localStorage.getItem("user")) || {};
 
-  localStorage.setItem(
-    "user",
-    JSON.stringify({
-      ...user,
-      plan: "Ultimate",
-      subscriptionStatus: "active",
-    })
-  );
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        ...user,
+        plan: "Ultimate",
+        subscriptionStatus: "active",
+      })
+    );
 
-  localStorage.setItem("plan", "Ultimate");
-  localStorage.setItem("subscriptionStatus", "active");
+    localStorage.setItem("plan", "Ultimate");
+    localStorage.setItem("subscriptionStatus", "active");
 
-  window.location.href = "/ultimate-dashboard";
-};
+    window.open(
+      "/ultimate-dashboard",
+      "NoPromptUltimateDashboard",
+      "width=1600,height=950,left=80,top=40"
+    );
+  };
+  */
 
   const goUltimateDashboard = () => {
-    window.location.href = "/ultimate-dashboard";
+    window.open(
+      "/ultimate-dashboard",
+      "NoPromptUltimateDashboard",
+      "width=1600,height=950,left=80,top=40"
+    );
   };
 
   const goProfile = () => {
@@ -1931,16 +1948,62 @@ function ResumeStudioPage() {
 
   return (
     <main className="resume-studio-page">
-      <aside className="resume-studio-sidebar">
-        <img src="/logo.png" alt="NoPromptJobs" />
+   <aside className="resume-ultimate-sidebar">
+  <div className="resume-side-brand">
+    <img src="/logo.png" alt="NoPromptJobs" />
+    <div>
+      <h2>NoPromptJobs</h2>
+      <span>ULTIMATE</span>
+    </div>
+  </div>
 
-        <h2>AI Resume Studio</h2>
-        <p>Build ATS-ready resumes</p>
+  <div className="resume-side-title">AI Workspace</div>
 
-        <button onClick={() => (window.location.href = "/ultimate-dashboard")}>
-          ← Back to Ultimate
-        </button>
-      </aside>
+  <nav className="resume-side-nav">
+    <a onClick={() => (window.location.href = "/ultimate-dashboard")}>
+      ⌂ Dashboard
+    </a>
+
+    <a className="active">
+      ✨ AI Resume Studio <b>Premium</b>
+      <small>Build ATS-ready resumes</small>
+    </a>
+
+    <a onClick={() => (window.location.href = "/ai-interview-prep")}>
+      🎤 Interview Prep
+    </a>
+
+    <a onClick={() => (window.location.href = "/skill-analyzer")}>
+      🧠 Skill Analyzer
+    </a>
+
+    <a onClick={() => (window.location.href = "/trust-passport")}>
+      🛡 Trust Passport
+    </a>
+
+    <a onClick={() => (window.location.href = "/salary-predictor")}>
+      💼 Salary Predictor
+    </a>
+  </nav>
+
+  <div className="resume-access-card">
+    <span>👑</span>
+    <h3>Ultimate Access</h3>
+    <p>All 9 AI tools unlocked</p>
+    <b>● Active</b>
+
+    <button onClick={() => (window.location.href = "/ultimate-dashboard")}>
+      View All Tools →
+    </button>
+  </div>
+
+  <div className="resume-credit-card">
+    <p>AI Credits</p>
+    <h3>Unlimited ∞</h3>
+    <div></div>
+    <small>Resets on 18 Aug, 2026</small>
+  </div>
+</aside>
 
       <section className="resume-studio-main">
         <div className="resume-studio-hero">
@@ -4121,7 +4184,7 @@ function CandidateDashboard() {
   handleSearch={handleSearch}
 />
 
-      <div className="premium-dashboard">
+      <div className="premium-dashboard target-saas-dashboard">
         <aside className="premium-left">
           <div className="premium-profile-card">
             <div className="premium-avatar">
@@ -4190,7 +4253,7 @@ function CandidateDashboard() {
         </aside>
 
         <main className="premium-center">
-          <section className="premium-hero">
+          <section className="premium-hero saas-hero-glass">
             <div>
               <h1>Good Evening, {candidate.name} 👋</h1>
               <p>
@@ -6211,485 +6274,364 @@ function UltimateDashboard() {
   window.location.href = "/hidden-opportunities";
 },
 };
+return (
+  <main className="ultimate-dark-page">
+    <aside className="ultimate-sidebar">
+      <div className="ultimate-brand">
+        <img src="/logo.png" alt="NoPromptJobs" />
+        <div>
+          <h2>NoPromptJobs</h2>
+          <span>ULTIMATE</span>
+        </div>
+      </div>
 
-  return (
-    <>
-      <Navbar />
+      <nav>
+        <a className="active" onClick={scrollToWorkspace}>⌂ Dashboard</a>
+        <a onClick={scrollToWorkspace}>✦ AI Workspace</a>
+        <a onClick={goToJobs}>▣ Applications <b>28</b></a>
+        <a onClick={() => openToolModal("Auto Apply Engine")}>⚡ Auto Apply <b>124</b></a>
+        <a onClick={() => openToolModal("Premium Job Alerts")}>
+  🔔 Job Alerts <b>12</b>
+</a>
+        <a onClick={() => (window.location.href = "/resume-studio")}>📄 Resume Studio</a>
+        <a onClick={() => (window.location.href = "/ai-interview-prep")}>🎤 Interview Prep</a>
+        <a onClick={() => (window.location.href = "/skill-analyzer")}>▦ Skill Analyzer</a>
+        <a onClick={() => (window.location.href = "/trust-passport")}>🛡 Trust Passport</a>
+        <a onClick={() => (window.location.href = "/salary-predictor")}>💼 Salary Predictor</a>
+        <a onClick={goToJobs}>💎 Hidden Opportunities</a>
+        <a onClick={() => openToolModal("Career Roadmap")}>📊 Career Roadmap</a>
+      </nav>
 
-      <main className="ultimate-dark-page">
-        <aside className="ultimate-sidebar">
-          <div className="ultimate-brand">
-            <img src="/logo.png" alt="NoPromptJobs" />
+      <div className="ultimate-plan-box">
+        <span>👑</span>
+        <p>Upgrade Status</p>
+        <h3>Ultimate Plan</h3>
+        <b>Active</b>
+        <small>Valid till 17 Jul, 2026</small>
+      </div>
+    </aside>
 
+    <section className="ultimate-main">
+      <div className="ultimate-top-search">
+        <input placeholder="Search jobs, skills, companies..." />
+        <button onClick={() => openToolModal("AI Career Assistant")}>
+          ✦ AI Assistant
+        </button>
+        <span onClick={goToNotifications}>🔔</span>
+        <div className="ultimate-avatar">{name.charAt(0).toUpperCase()}</div>
+      </div>
+
+      <section className="ultimate-hero-dark">
+        <div>
+          <p>Welcome back, {name}! 👋</p>
+          <h1>
+            Your <span>Ultimate</span>
+            <br />
+            AI Career Command Center
+          </h1>
+          <p>
+            All premium AI tools, insights and opportunities — powered to
+            accelerate your career.
+          </p>
+
+          <div className="ultimate-hero-buttons">
+            <button onClick={scrollToWorkspace}>Launch AI Workspace →</button>
+            <button className="ghost" onClick={scrollToWorkspace}>
+              Explore All Tools
+            </button>
+          </div>
+        </div>
+
+        <div className="ultimate-access-card">
+          <div className="crown">👑</div>
+          <h2>Ultimate Access</h2>
+          <p>All 9 AI Tools Unlocked</p>
+          <span>● Active</span>
+        </div>
+      </section>
+
+      <section className="ultimate-stats-row">
+        {stats.map((item) => (
+          <div className="ultimate-stat-card" key={item[1]}>
+            <div className="stat-icon">{item[0]}</div>
+            <p>{item[1]}</p>
+            <h2>{item[2]}</h2>
+            <span>{item[3]}</span>
+            <b>↑ {item[4]}</b>
+          </div>
+        ))}
+      </section>
+
+      <section className="ultimate-grid-layout">
+        <div className="ultimate-panel large" id="ultimate-ai-workspace">
+          <div className="panel-head">
             <div>
-              <h2>NoPromptJobs</h2>
-              <span>ULTIMATE</span>
+              <h2>AI Workspace</h2>
+              <p>Powerful AI tools to supercharge your career</p>
             </div>
+            <button onClick={scrollToWorkspace}>View All Tools →</button>
           </div>
 
-          <nav>
-            <a className="active" onClick={scrollToWorkspace}>
-              ⌂ Dashboard
-            </a>
-
-            <a onClick={scrollToWorkspace}>✦ AI Workspace</a>
-            <a onClick={goToJobs}>▣ Applications <b>28</b></a>
-            <a onClick={() => openToolModal("Auto Apply Engine")}>
-              ⚡ Auto Apply <b>124</b>
-            </a>
-            <a onClick={goToNotifications}>🔔 Job Alerts <b>12</b></a>
-            <a onClick={() => (window.location.href = "/resume-studio")}>
-  📄 Resume Studio
-</a>
-<a onClick={() => (window.location.href = "/ai-interview-prep")}>
-  🎤 Interview Prep
-</a>
-            <a onClick={() => (window.location.href = "/skill-analyzer")}>
-  ▦ Skill Analyzer
-</a>
-            <a onClick={() => (window.location.href = "/trust-passport")}>
-  🛡 Trust Passport
-</a>
-            <a onClick={() => (window.location.href = "/salary-predictor")}>
-  💼 Salary Predictor
-</a>
-            <a onClick={goToJobs}>💎 Hidden Opportunities</a>
-            <a onClick={() => openToolModal("Career Roadmap")}>
-              📊 Career Roadmap
-            </a>
-          </nav>
-
-          <div className="ultimate-plan-box">
-            <span>👑</span>
-            <p>Upgrade Status</p>
-            <h3>Ultimate Plan</h3>
-            <b>Active</b>
-            <small>Valid till 17 Jul, 2026</small>
+          <div className="ultimate-tool-grid">
+            {tools.map((tool) => (
+              <button
+                className="ultimate-tool-mini"
+                key={tool[1]}
+                onClick={toolActions[tool[1]]}
+              >
+                <span>{tool[0]}</span>
+                <div>
+                  <h4>{tool[1]}</h4>
+                  <p>{tool[2]}</p>
+                </div>
+              </button>
+            ))}
           </div>
-        </aside>
+        </div>
 
-        <section className="ultimate-main">
-          <div className="ultimate-top-search">
-            <input placeholder="Search jobs, skills, companies..." />
+        <div className="ultimate-panel">
+          <h2>AI Career Assistant</h2>
+          <p>Ask anything about your career</p>
 
-            <button onClick={() => openToolModal("AI Career Assistant")}>
-              ✦ AI Assistant
+          <div className="ultimate-ai-input">
+            <input
+              placeholder="Example: How can I become a Data Engineer in 6 months?"
+              value={aiQuestion}
+              onChange={(e) => setAiQuestion(e.target.value)}
+            />
+            <button onClick={generateAIAnswer}>➤</button>
+          </div>
+
+          <div className="quick-tags">
+            <button onClick={() => setAiQuestion("How can I improve my resume?")}>
+              Improve my resume
+            </button>
+            <button onClick={() => setAiQuestion("Find high paying jobs for my profile")}>
+              Find high paying jobs
+            </button>
+            <button onClick={() => setAiQuestion("Give me interview preparation tips")}>
+              Interview tips
+            </button>
+            <button onClick={() => setAiQuestion("Create my skill roadmap")}>
+              Skill roadmap
+            </button>
+          </div>
+        </div>
+
+        <div className="ultimate-panel">
+          <div className="panel-head">
+            <div>
+              <h2>Your AI Roadmap</h2>
+              <p>Personalized steps to achieve your dream career</p>
+            </div>
+            <button onClick={() => openToolModal("Career Roadmap")}>
+              View Full Roadmap →
+            </button>
+          </div>
+
+          <div className="roadmap-dark">
+            <div className="done">✓ Step 1 <b>Improve Resume Score</b></div>
+            <div>▣ Step 2 <b>Complete Trust Passport</b></div>
+            <div>✦ Step 3 <b>Apply to 90% Match Jobs</b></div>
+            <div>◉ Step 4 <b>Practice Interviews</b></div>
+          </div>
+        </div>
+
+        <div className="ultimate-panel">
+          <h2>Recent Activity</h2>
+          <div className="activity-dark">
+            ✦ Auto applied to 15 new jobs <span>2 min ago</span>
+          </div>
+          <div className="activity-dark">
+            ↻ Resume score improved to 92% <span>1 hour ago</span>
+          </div>
+        </div>
+
+        <div className="ultimate-panel">
+          <h2>Top Job Matches</h2>
+          <div className="job-match-dark" onClick={goToJobs}>
+            <div>💼</div>
+            <div>
+              <h4>Senior Data Engineer</h4>
+              <p>Tech Mahindra</p>
+            </div>
+            <b>95% Match</b>
+          </div>
+        </div>
+
+        <div className="ultimate-panel">
+          <h2>Skills Analysis</h2>
+          <div className="skill-circle">86%</div>
+          <p>In Demand: 28</p>
+          <p>Good: 12</p>
+          <p>Need Improvement: 4</p>
+          <button
+            className="skills-action-btn"
+            onClick={() => openToolModal("Skills Analysis")}
+          >
+            View Details →
+          </button>
+        </div>
+      </section>
+
+      {activeTool && (
+        <div className="ultimate-modal-overlay">
+          <div className="ultimate-tool-modal">
+            <button className="modal-close" onClick={() => setActiveTool(null)}>
+              ×
             </button>
 
-            <span onClick={goToNotifications}>🔔</span>
+{activeTool === "Premium Job Alerts" ? (
+  <div className="premium-alerts-box">
+    <div className="auto-premium-icon">🔔</div>
 
-            <div className="ultimate-avatar">
-              {name.charAt(0).toUpperCase()}
-            </div>
+    <h3>Premium Job Alerts</h3>
+    <h4>AI-powered instant opportunity tracking</h4>
+
+    <div className="premium-alerts-grid">
+      {[
+        {
+          icon: "🚀",
+          title: "High-match Data Engineer role found",
+          desc: "96% match • Bangalore • 2 min ago",
+          action: () => {
+            setActiveTool(null);
+            window.location.href = "/jobs";
+          },
+        },
+
+        {
+          icon: "💎",
+          title: "Hidden recruiter-only opportunity",
+          desc: "Private opening • Premium access",
+          action: () => {
+            setActiveTool(null);
+            window.location.href = "/hidden-opportunities";
+          },
+        },
+
+        {
+          icon: "⚡",
+          title: "Fast apply window closing soon",
+          desc: "Apply within 24 hours",
+          action: () => {
+            setActiveTool("Auto Apply Engine");
+          },
+        },
+
+        {
+          icon: "🎯",
+          title: "Salary upgraded match",
+          desc: "₹10–18 LPA role matched",
+          action: () => {
+            setActiveTool(null);
+            window.location.href = "/salary-predictor";
+          },
+        },
+      ].map((item) => (
+        <div className="premium-alert-card" key={item.title}>
+          <span>{item.icon}</span>
+
+          <div>
+            <h5>{item.title}</h5>
+            <p>{item.desc}</p>
           </div>
 
-          <section className="ultimate-hero-dark">
-            <div>
-              <p>Welcome back, {name}! 👋</p>
+          <button onClick={item.action}>
+            View →
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+): activeTool === "Auto Apply Engine" ? (
+  <div className="auto-apply-premium-box">
+    <div className="auto-premium-icon">🚀</div>
 
-              <h1>
-                Your <span>Ultimate</span>
-                <br />
-                AI Career Command Center
-              </h1>
+    <h3>Auto Apply Engine</h3>
+    <h4>One-Time Auto Apply Consent</h4>
 
-              <p>
-                All premium AI tools, insights and opportunities — powered to
-                accelerate your career.
-              </p>
+    <p>
+      Give permission once. NoPromptJobs will automatically apply for
+      suitable and recommended jobs based on your skills, profile,
+      location, experience and job preference.
+    </p>
 
-              <div className="ultimate-hero-buttons">
-                <button onClick={scrollToWorkspace}>
-                  Launch AI Workspace →
-                </button>
-
-                <button className="ghost" onClick={scrollToWorkspace}>
-                  Explore All Tools
-                </button>
-              </div>
-            </div>
-
-            <div className="ultimate-access-card">
-              <div className="crown">👑</div>
-              <h2>Ultimate Access</h2>
-              <p>All 9 AI Tools Unlocked</p>
-              <span>● Active</span>
-            </div>
-          </section>
-
-          <section className="ultimate-stats-row">
-            {stats.map((item) => (
-              <div className="ultimate-stat-card" key={item[1]}>
-                <div className="stat-icon">{item[0]}</div>
-                <p>{item[1]}</p>
-                <h2>{item[2]}</h2>
-                <span>{item[3]}</span>
-                <b>↑ {item[4]}</b>
-              </div>
-            ))}
-          </section>
-
-          <section className="ultimate-grid-layout">
-            <div className="ultimate-panel large" id="ultimate-ai-workspace">
-              <div className="panel-head">
-                <div>
-                  <h2>AI Workspace</h2>
-                  <p>Powerful AI tools to supercharge your career</p>
-                </div>
-
-                <button onClick={scrollToWorkspace}>View All Tools →</button>
-              </div>
-
-              <div className="ultimate-tool-grid">
-                {tools.map((tool) => (
-                  <button
-                    className="ultimate-tool-mini"
-                    key={tool[1]}
-                    onClick={toolActions[tool[1]]}
-                  >
-                    <span>{tool[0]}</span>
-
-                    <div>
-                      <h4>{tool[1]}</h4>
-                      <p>{tool[2]}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="ultimate-panel">
-              <h2>AI Career Assistant</h2>
-              <p>Ask anything about your career</p>
-
-              <div className="ultimate-ai-input">
-                <input
-                  placeholder="Example: How can I become a Data Engineer in 6 months?"
-                  value={aiQuestion}
-                  onChange={(e) => setAiQuestion(e.target.value)}
-                />
-
-                <button onClick={generateAIAnswer}>➤</button>
-              </div>
-
-              <div className="quick-tags">
-                <button onClick={() => setAiQuestion("How can I improve my resume?")}>
-                  Improve my resume
-                </button>
-
-                <button onClick={() => setAiQuestion("Find high paying jobs for my profile")}>
-                  Find high paying jobs
-                </button>
-
-                <button onClick={() => setAiQuestion("Give me interview preparation tips")}>
-                  Interview tips
-                </button>
-
-                <button onClick={() => setAiQuestion("Create my skill roadmap")}>
-                  Skill roadmap
-                </button>
-              </div>
-            </div>
-
-            <div className="ultimate-panel">
-              <div className="panel-head">
-                <div>
-                  <h2>Your AI Roadmap</h2>
-                  <p>Personalized steps to achieve your dream career</p>
-                </div>
-
-                <button onClick={() => openToolModal("Career Roadmap")}>
-                  View Full Roadmap →
-                </button>
-              </div>
-
-              <div className="roadmap-dark">
-                <div className="done">
-                  ✓ Step 1 <b>Improve Resume Score</b>
-                </div>
-
-                <div>
-                  ▣ Step 2 <b>Complete Trust Passport</b>
-                </div>
-
-                <div>
-                  ✦ Step 3 <b>Apply to 90% Match Jobs</b>
-                </div>
-
-                <div>
-                  ◉ Step 4 <b>Practice Interviews</b>
-                </div>
-              </div>
-            </div>
-
-            <div className="ultimate-panel">
-              <h2>Recent Activity</h2>
-
-              <div className="activity-dark">
-                ✦ Auto applied to 15 new jobs <span>2 min ago</span>
-              </div>
-
-              <div className="activity-dark">
-                ↻ Resume score improved to 92% <span>1 hour ago</span>
-              </div>
-            </div>
-
-            <div className="ultimate-panel">
-              <h2>Top Job Matches</h2>
-
-              <div className="job-match-dark" onClick={goToJobs}>
-                <div>💼</div>
-
-                <div>
-                  <h4>Senior Data Engineer</h4>
-                  <p>Tech Mahindra</p>
-                </div>
-
-                <b>95% Match</b>
-              </div>
-            </div>
-
-            <div className="ultimate-panel">
-              <h2>Skills Analysis</h2>
-
-              <div className="skill-circle">86%</div>
-
-              <p>In Demand: 28</p>
-              <p>Good: 12</p>
-              <p>Need Improvement: 4</p>
-
-              <button
-                className="skills-action-btn"
-                onClick={() => openToolModal("Skills Analysis")}
-              >
-                View Details →
-              </button>
-            </div>
-          </section>
-
-          {activeTool && (
-            <div className="ultimate-modal-overlay">
-              <div className="ultimate-tool-modal">
-                <button
-                  className="modal-close"
-                  onClick={() => setActiveTool(null)}
-                >
-                  ×
-                </button>
-
-                <h2>{activeTool}</h2>
-
-                {activeTool === "Auto Apply Engine" ? (
-                  <div className="auto-apply-box">
-                    <h3>One-Time Auto Apply Consent</h3>
-
-                    <p>
-                      Give permission once. NoPromptJobs will automatically
-                      apply for suitable and recommended jobs based on your
-                      skills, profile, location, experience and job preference.
-                    </p>
-
-                    <label className="auto-consent-check">
-                      <input
-                        type="checkbox"
-                        checked={autoApplyConsent}
-                        onChange={(e) => {
-                          setAutoApplyConsent(e.target.checked);
-                          localStorage.setItem(
-                            "autoApplyConsent",
-                            e.target.checked
-                          );
-                        }}
-                      />
-                      I allow NoPromptJobs to auto-apply for suitable jobs on my
-                      behalf.
-                    </label>
-
-                    {!autoApplyConsent ? (
-                      <button onClick={giveAutoApplyConsent}>
-                        Give Consent
-                      </button>
-                    ) : (
-                      <button
-                        onClick={startAutoApply}
-                        disabled={autoApplyLoading}
-                      >
-                        {autoApplyLoading
-                          ? "Applying to suitable jobs..."
-                          : "Start Auto Apply Now"}
-                      </button>
-                    )}
-
-                    {autoApplyResult && (
-                      <div className="auto-result-box">
-                        <b>{autoApplyResult.appliedCount || 0}</b>
-                        <span>Jobs Applied Successfully</span>
-                        <small>
-                          Matched Jobs: {autoApplyResult.totalMatchedJobs || 0}
-                        </small>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <p>
-                      This feature is unlocked in Ultimate Plan. Frontend flow is
-                      ready. Backend AI API connection will be added step by
-                      step.
-                    </p>
-
-                    <button onClick={() => setActiveTool(null)}>
-                      Continue Setup →
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
-      </main>
-    </>
-  );
-}function RecruiterReportsPage() {
-  const [activeReport, setActiveReport] = useState("Overview");
-
-  return (
-    <>
-      <Navbar />
-
-      <div className="applications-layout">
-        <RecruiterAdvancedSidebar />
-
-        <main className="applications-main">
-          <section className="applications-hero">
-            <div>
-              <h1>📊 Hiring Reports</h1>
-              <p>
-                Track hiring performance, applications, shortlists and interview progress.
-              </p>
-            </div>
-
-            <div className="applications-summary">
-              <button>
-                <span>Total Views</span>
-                <h2>4,820</h2>
-              </button>
-
-              <button>
-                <span>Applications</span>
-                <h2>1,248</h2>
-              </button>
-
-              <button>
-                <span>Shortlisted</span>
-                <h2>328</h2>
-              </button>
-
-              <button>
-                <span>Interviews</span>
-                <h2>96</h2>
-              </button>
-            </div>
-          </section>
-
-          <section className="applications-tabs">
-            {["Overview", "Jobs", "Candidates", "Interviews"].map((tab) => (
-              <button
-                key={tab}
-                className={activeReport === tab ? "active" : ""}
-                onClick={() => setActiveReport(tab)}
-              >
-                {tab}
-              </button>
-            ))}
-          </section>
-
-          {activeReport === "Overview" && (
-            <section className="reports-grid">
-              <div className="report-card">
-                <h2>Hiring Funnel</h2>
-                <p>Applied → Screening → Interview → Offered</p>
-
-                <div className="report-bar"><span style={{ width: "85%" }}></span></div>
-                <div className="report-bar"><span style={{ width: "62%" }}></span></div>
-                <div className="report-bar"><span style={{ width: "38%" }}></span></div>
-                <div className="report-bar"><span style={{ width: "18%" }}></span></div>
-              </div>
-
-              <div className="report-card">
-                <h2>Top Skills Demand</h2>
-                <p>React, Python, SQL, AWS, Node.js</p>
-
-                <div className="application-skills">
-                  <span>React</span>
-                  <span>Python</span>
-                  <span>SQL</span>
-                  <span>AWS</span>
-                  <span>Node.js</span>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {activeReport === "Jobs" && (
-            <section className="reports-grid">
-              <div className="report-card">
-                <h2>Best Performing Jobs</h2>
-                <p>Data Engineer - 128 applications</p>
-                <p>React Developer - 96 applications</p>
-                <p>DevOps Engineer - 64 applications</p>
-              </div>
-
-              <div className="report-card">
-                <h2>Job Status</h2>
-                <p>✅ Active Jobs: 12</p>
-                <p>📝 Draft Jobs: 3</p>
-                <p>🔒 Closed Jobs: 4</p>
-              </div>
-            </section>
-          )}
-
-          {activeReport === "Candidates" && (
-            <section className="reports-grid">
-              <div className="report-card">
-                <h2>Candidate Quality</h2>
-                <p>Verified Candidates: 82%</p>
-                <p>Resume Uploaded: 76%</p>
-                <p>Video Profile Added: 41%</p>
-              </div>
-
-              <div className="report-card">
-                <h2>Top Candidate Locations</h2>
-                <p>Bangalore - 420</p>
-                <p>Hyderabad - 280</p>
-                <p>Pune - 190</p>
-              </div>
-            </section>
-          )}
-
-          {activeReport === "Interviews" && (
-            <section className="reports-grid">
-              <div className="report-card">
-                <h2>Interview Pipeline</h2>
-                <p>Screening: 64</p>
-                <p>Technical Round: 42</p>
-                <p>HR Round: 18</p>
-                <p>Selected: 9</p>
-              </div>
-
-              <div className="report-card">
-                <h2>Recruiter Insights</h2>
-                <p>✅ Interview conversion is strong</p>
-                <p>⚡ Faster response improves selection</p>
-                <p>📌 Add interview feedback notes</p>
-              </div>
-            </section>
-          )}
-        </main>
+    <div className="auto-consent-premium-card">
+      <div className="auto-shield-card">
+        <span>🛡</span>
       </div>
-    </>
-  );
-}
+
+      <label className="auto-consent-premium-check">
+        <input
+          type="checkbox"
+          checked={autoApplyConsent}
+          onChange={(e) => {
+            setAutoApplyConsent(e.target.checked);
+            localStorage.setItem("autoApplyConsent", e.target.checked);
+          }}
+        />
+
+        <div>
+          <b>
+            I allow NoPromptJobs to auto-apply for suitable jobs on
+            my behalf.
+          </b>
+          <small>
+            Your data is safe and secure. You can pause or stop
+            anytime.
+          </small>
+        </div>
+      </label>
+    </div>
+
+    {!autoApplyConsent ? (
+      <button className="auto-premium-btn" onClick={giveAutoApplyConsent}>
+        Give Consent →
+      </button>
+    ) : (
+      <button
+        className="auto-premium-btn"
+        onClick={startAutoApply}
+        disabled={autoApplyLoading}
+      >
+        {autoApplyLoading
+          ? "Applying to suitable jobs..."
+          : "Start Auto Apply Now →"}
+      </button>
+    )}
+
+    {autoApplyResult && (
+      <div className="auto-success-premium">
+        <span>✅</span>
+        <div>
+          <h2>{autoApplyResult.appliedCount || 0}</h2>
+          <p>Jobs Applied Successfully</p>
+          <small>
+            Matched Jobs: {autoApplyResult.totalMatchedJobs || 0}
+          </small>
+        </div>
+      </div>
+    )}
+  </div>
+) : (
+  <>
+    <h2>{activeTool}</h2>
+    <p>
+      This feature is unlocked in Ultimate Plan. Frontend flow is
+      ready. Backend AI API connection will be added step by step.
+    </p>
+    <button onClick={() => setActiveTool(null)}>
+      Continue Setup →
+    </button>
+  </>
+)}
+          </div>
+        </div>
+      )}
+    </section>
+  </main>
+);}
 function SettingsPage() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
@@ -6791,7 +6733,7 @@ function SettingsPage() {
 
               <div className="saas-setting-card wide danger-zone">
                 <div className="setting-icon">⚠️</div>
-                <h3>Danger Zone</h3>
+                <h3>Logout Zone</h3>
                 <p>Logout from this device or manage account deletion later.</p>
                 <button onClick={logout}>Logout Account</button>
               </div>

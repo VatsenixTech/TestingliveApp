@@ -1,0 +1,43 @@
+.secure-pdf-page {
+  min-height: 100vh;
+  background: #020617;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.secure-pdf-header {
+  height: 76px;
+  padding: 16px 28px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+
+.secure-pdf-header h2 {
+  margin: 0;
+}
+
+.secure-pdf-header p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+}
+
+.secure-pdf-frame {
+  width: 100%;
+  height: calc(100vh - 76px);
+  border: none;
+}
+
+.watermark {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  font-weight: 900;
+  color: rgba(255,255,255,.08);
+  transform: rotate(-25deg);
+  text-align: center;
+}

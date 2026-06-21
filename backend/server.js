@@ -11,6 +11,7 @@ const authRoutes = require("./routes/auth");
 const jobRoutes = require("./routes/jobs");
 const paymentRoutes = require("./routes/payments");
 const autoApplyRoutes = require("./routes/autoApplyRoutes");
+const protectedPdfRoutes = require("./routes/protectedPdfRoutes");
 
 const app = express();
 
@@ -133,6 +134,7 @@ app.use("/api/candidates", candidateRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/protected-pdf", protectedPdfRoutes);
 
 /* ✅ AI ROUTES */
 app.use("/api/ai", aiRoutes);
