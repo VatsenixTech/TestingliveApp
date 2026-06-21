@@ -15940,4 +15940,109 @@ body {
 .user-dropdown button:hover,
 .dropdown-menu button:hover {
   background: #eef2ff;
+}/* ================= MOBILE RESPONSIVE FIX ================= */
+
+@media screen and (max-width: 768px){
+
+  body{
+    overflow-x:hidden;
+  }
+
+  /* Main layouts */
+  .premium-dashboard,
+  .new-dashboard,
+  .modern-profile-layout,
+  .hr-dashboard{
+    grid-template-columns:1fr !important;
+    padding:14px;
+    gap:18px;
+  }
+
+  /* Hero section */
+  .premium-hero,
+  .welcome-banner{
+    flex-direction:column;
+    text-align:center;
+    padding:24px 18px;
+  }
+
+  .premium-hero h1,
+  .welcome-banner h1{
+    font-size:30px;
+    line-height:1.2;
+  }
+
+  /* Buttons */
+  .hero-actions{
+    flex-direction:column;
+    width:100%;
+  }
+
+  .hero-actions a,
+  .hero-actions button{
+    width:100%;
+  }
+
+  /* Metric cards */
+  .metric-row{
+    grid-template-columns:1fr 1fr;
+  }
+
+  /* Job cards */
+  .modern-job-grid{
+    grid-template-columns:1fr;
+  }
+
+  /* Insight cards */
+  .insight-grid,
+  .verify-grid-new,
+  .insight-row{
+    grid-template-columns:1fr;
+  }
+
+  /* Trust circle */
+  .trust-meter{
+    width:150px;
+    height:150px;
+    margin:auto;
+  }
+
+  .trust-meter h2{
+    font-size:38px;
+  }
+
+  /* Profile image */
+  .premium-avatar{
+    width:100px;
+    height:100px;
+  }
+
+  /* Cards */
+  .premium-profile-card,
+  .passport-card,
+  .resume-strength-card,
+  .premium-card,
+  .dashboard-card{
+    padding:18px;
+  }
+
+}
+
+/* Extra small phones */
+
+@media screen and (max-width:480px){
+
+  .metric-row{
+    grid-template-columns:1fr;
+  }
+
+  .premium-hero h1,
+  .welcome-banner h1{
+    font-size:26px;
+  }
+
+  .hero-actions{
+    gap:12px;
+  }
+
 }
