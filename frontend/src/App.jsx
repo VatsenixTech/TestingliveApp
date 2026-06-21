@@ -2581,6 +2581,8 @@ function App() {
   if (path === "/recruiter-register") return <RecruiterRegister />;
 
   if (path === "/candidate") return <CandidateUpload />;
+  if (path === "/mobile-dashboard") return <MobileCandidateDashboard />;
+
 
   if (path.startsWith("/dashboard/")) return <CandidateDashboard />;
 
