@@ -98,7 +98,7 @@ function LandingPage() {
             </div>
 
             <div className="np-confidence">
-              <span>AI Hiring Confidence</span>
+              <span>Hiring Confidence</span>
               <b>High ↗</b>
             </div>
           </div>
@@ -153,8 +153,8 @@ function LandingPage() {
 
         <div>
           <span>✨</span>
-          <h3>AI Match Score</h3>
-          <p>AI-powered matching for better hiring decisions.</p>
+          <h3>Match Score</h3>
+          <p>No-prompt powered matching for better hiring decisions.</p>
         </div>
       </section>
 
@@ -353,7 +353,7 @@ function CandidateLogin() {
           <h1>Continue Your Career Journey</h1>
 
           <p>
-            Access your verified profile, AI tools, interview preparation and
+            Access your verified profile, Noprompt tools, interview preparation and
             opportunities—all in one place.
           </p>
 
@@ -455,7 +455,7 @@ function CandidateLogin() {
   const features = [
     {
       img: "/images/ai-resume-builder.png",
-      title: "AI Resume Builder",
+      title: " Resume Builder",
       text: "Create ATS-optimized resumes instantly.",
     },
     {
@@ -470,7 +470,7 @@ function CandidateLogin() {
     },
     {
       img: "/images/ai-match-score.png",
-      title: "AI Match Score",
+      title: "Match Score",
       text: "Get matched with the best job opportunities.",
     },
   ];
@@ -563,7 +563,7 @@ function CandidateLogin() {
         </div>
 
         <div className="np-premium-hero">
-          <span>🛡 AI-Verified Hiring Network</span>
+          <span>🛡 Verified Hiring Network</span>
 
           <h1>
             Create your <b>account</b>
@@ -1258,9 +1258,9 @@ function JobsPage() {
         "Better recruiter visibility",
       ],
     },
-    "AI Match Score": {
+    " Match Score": {
       steps: [
-        "AI compares your profile with job description.",
+        " compares your profile with job description.",
         "Checks skills, experience, location and role fit.",
         "Generates match percentage.",
         "Shows best-fit jobs first.",
@@ -1271,10 +1271,10 @@ function JobsPage() {
         "Improve weak areas",
       ],
     },
-    "AI Resume Studio": {
+    " Resume Studio": {
       steps: [
         "Upload or create your resume.",
-        "AI checks ATS score, keywords and structure.",
+        "checks ATS score, keywords and structure.",
         "System recommends improvements.",
         "Download recruiter-ready resume.",
       ],
@@ -1347,13 +1347,13 @@ function JobsPage() {
     {
       img: "pro/ai-match-score.png",
       tag: "AI MATCH SCORE",
-      title: "AI Match Score",
+      title: "AIMatch Score",
       desc: "Know your chances of getting hired before you even apply.",
     },
     {
       img: "pro/resume-studio.png",
-      tag: "AI RESUME STUDIO",
-      title: "AI Resume Studio",
+      tag: " RESUME STUDIO",
+      title: "Resume Studio",
       desc: "Build ATS-ready, recruiter-friendly resumes that get more interviews.",
     },
     {
@@ -2700,188 +2700,133 @@ function Navbar({
     }
   };
 
-  if (isRecruiterPage) {
-    return (
-      <div className="topbar recruiter-topbar">
-        <div
-          className="recruiter-navbar-brand"
-          onClick={() => (window.location.href = "/recruiter-dashboard")}
-        >
-          <div className="recruiter-logo-box">
-            <img src="/logo.png" alt="NoPrompt Jobs" />
-          </div>
-        </div>
-
-        <div className="recruiter-nav-tabs">
-          <a href="/recruiter-dashboard">Dashboard</a>
-          <a href="/recruiter-post-job">Post Job</a>
-          <a href="/recruiter-search">Search Candidates</a>
-          <a href="/recruiter-shortlisted">Shortlisted</a>
-          <a href="/recruiter-applications">Applications</a>
-          <a href="/recruiter-reports">Reports</a>
-        </div>
-
-        <div className="recruiter-profile-wrap">
-          <button
-            type="button"
-            className="recruiter-bell"
-            onClick={() => (window.location.href = "/recruiter-notifications")}
-          >
-            🔔 <span>5</span>
-          </button>
-
-          <button
-            type="button"
-            className="profile-menu-btn"
-            onClick={() => setShowMenu(!showMenu)}
-          >
-            <span className="profile-avatar">
-              {user?.name?.charAt(0)?.toUpperCase() ||
-                user?.email?.charAt(0)?.toUpperCase() ||
-                "R"}
-            </span>
-
-            <span>
-              {user?.name || "Recruiter"}
-              <small>{user?.company || "Tech Solutions Inc."}</small>
-            </span>
-
-            <b>⌄</b>
-          </button>
-
-          {showMenu && (
-            <div className="profile-dropdown">
-              <button onClick={() => (window.location.href = "/recruiter-profile")}>
-                👤 Recruiter Profile
-              </button>
-
-              <button onClick={() => (window.location.href = "/company-profile")}>
-                🏢 Company Profile
-              </button>
-
-              <button onClick={() => (window.location.href = "/recruiter-settings")}>
-                ⚙️ Settings
-              </button>
-
-              <button className="logout-btn" onClick={logout}>
-                🚪 Logout
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
+if (user?.role === "recruiter") {
   return (
-    <div className="topbar candidate-topbar">
-      <a href={candidateDashboardLink} className="brand" onClick={goDashboard}>
-        <img src="/logo.png" alt="NoPrompt Jobs" className="site-logo" />
+    <header className="premium-header recruiter-premium-header">
+      <a
+        href="/recruiter-dashboard"
+        className="premium-logo"
+        onClick={() => (window.location.href = "/recruiter-dashboard")}
+      >
+        <img src="/logo.png" alt="NoPrompt Jobs" />
       </a>
 
-      <div className="candidate-search-wrap">
-  <input
-    className="top-search"
-    placeholder="Search jobs, skills, companies..."
-    value={searchText}
-    onChange={(e) => setSearchText(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") {
-        handleSearch();
-      }
-    }}
-  />
+      <nav className="premium-nav recruiter-premium-nav">
+        <a href="/recruiter-dashboard" className="active">▦ Dashboard</a>
+        <a href="/recruiter-post-job">💼 Post Job</a>
+        <a href="/recruiter-search">🔎 Search</a>
+        <a href="/recruiter-shortlisted">⭐ Shortlisted</a>
+        <a href="/recruiter-applications">📄 Applications</a>
+        <a href="/recruiter-reports">📊 Reports</a>
+      </nav>
 
-  <span
-    className="search-icon"
-    onClick={handleSearch}
-  >
-    🔍
-  </span>
-</div>
-      <div className="nav-menu candidate-nav-menu">
-        <a href={candidateDashboardLink} onClick={goDashboard}>
-          Dashboard
-        </a>
-
-        <a href="/jobs">💼 Jobs</a>
-        <a href="/companies">🏢 Companies</a>
-        <a href="/services">🛠 Services</a>
-
-        <a href="/notifications" className="notification-link">
-          🔔 Notifications
-          <span className="notify-badge">3</span>
-        </a>
-      </div>
-
-      <div className="profile-menu-wrap">
+      <div className="premium-profile-wrap">
         <button
           type="button"
-          className="profile-menu-btn"
+          className="premium-bell"
+          onClick={() => (window.location.href = "/recruiter-notifications")}
+        >
+          🔔 <span>5</span>
+        </button>
+
+        <button
+          type="button"
+          className="premium-profile"
           onClick={() => setShowMenu(!showMenu)}
         >
-          <span className="profile-avatar">
+          <span className="avatar-circle">
             {user?.name?.charAt(0)?.toUpperCase() ||
               user?.email?.charAt(0)?.toUpperCase() ||
-              "U"}
+              "R"}
           </span>
 
-          <span className="profile-label">{user?.name || "Dashboard"}</span>
+          <span className="premium-user-text">
+            {user?.name || "Recruiter"}
+            <small>{user?.company || "Tech Solutions Inc."}</small>
+          </span>
 
           <b>⌄</b>
         </button>
 
         {showMenu && (
           <div className="profile-dropdown premium-dropdown">
-            <div className="dropdown-user-top">
-              <div className="dropdown-avatar">
-                {user?.name?.charAt(0)?.toUpperCase() ||
-                  user?.email?.charAt(0)?.toUpperCase() ||
-                  "U"}
-              </div>
-
-              <div>
-                <h3>{user?.name || "Candidate"}</h3>
-                <p>{user?.email || "candidate@noproxiesjobs.com"}</p>
-                <span>✅ Verified Candidate</span>
-              </div>
-            </div>
-
-            <button type="button" onClick={goDashboard}>
-              🏠 Dashboard
+            <button onClick={() => (window.location.href = "/recruiter-profile")}>
+              👤 Recruiter Profile
             </button>
-
-            <button type="button" onClick={goProfile}>
-              👤 View Profile
+            <button onClick={() => (window.location.href = "/company-profile")}>
+              🏢 Company Profile
             </button>
-
-            <button type="button" onClick={goProfile}>
-              ✏️ Modify Profile
-            </button>
-
-            <button
-              type="button"
-              onClick={() => (window.location.href = "/services")}
-            >
-              🚀 NoPromptJobs Pro
-            </button>
-
-            <button
-              type="button"
-              onClick={() => (window.location.href = "/candidate-settings")}
-            >
+            <button onClick={() => (window.location.href = "/recruiter-settings")}>
               ⚙️ Settings
             </button>
-
-            <button type="button" className="logout-btn" onClick={logout}>
+            <button className="logout-btn" onClick={logout}>
               🚪 Logout
             </button>
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 }
+return (
+  <header className="candidate-pro-header">
+    <a href={candidateDashboardLink} className="candidate-pro-logo" onClick={goDashboard}>
+      <img src="/logo.png" alt="NoPrompt Jobs" />
+    </a>
+
+    <div className="candidate-pro-search">
+      <span>🔍</span>
+      <input
+        placeholder="Search jobs, companies..."
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+      />
+    </div>
+
+    <nav className="candidate-pro-nav">
+      <a className="active" href={candidateDashboardLink} onClick={goDashboard}>Dashboard</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/companies">Companies</a>
+      <a href="/services">Services</a>
+      <a href="/notifications">Notifications <b>3</b></a>
+    </nav>
+
+    <div className="candidate-pro-profile-wrap">
+      <button
+        type="button"
+        className="candidate-pro-profile"
+        onClick={() => setShowMenu(!showMenu)}
+      >
+        <span>
+          {user?.name?.charAt(0)?.toUpperCase() ||
+            user?.email?.charAt(0)?.toUpperCase() ||
+            "V"}
+        </span>
+
+        <strong>{user?.name || "VENKATESHA A"}</strong>
+        <small>⌄</small>
+      </button>
+
+      {showMenu && (
+        <div className="profile-dropdown premium-dropdown">
+          <button type="button" onClick={goDashboard}>🏠 Dashboard</button>
+          <button type="button" onClick={goProfile}>👤 View Profile</button>
+          <button type="button" onClick={goProfile}>✏️ Modify Profile</button>
+          <button type="button" onClick={() => (window.location.href = "/services")}>
+            🚀 NoPromptJobs Pro
+          </button>
+          <button type="button" onClick={() => (window.location.href = "/candidate-settings")}>
+            ⚙️ Settings
+          </button>
+          <button type="button" className="logout-btn" onClick={logout}>
+            🚪 Logout
+          </button>
+        </div>
+      )}
+    </div>
+  </header>
+);}
 function CandidateUpload() {
   const [form, setForm] = useState({
     name: "",
@@ -3348,8 +3293,11 @@ function FileInput({ label, name, accept, onChange }) {
 
 function CandidateProfile() {
   const [candidate, setCandidate] = useState(null);
-  const [editOpen, setEditOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
+const [jobs, setJobs] = useState([]);
+const [searchText, setSearchText] = useState("");
+
+const [activity, setActivity] = useState([]);
+const [interviewAlerts, setInterviewAlerts] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
   const [editData, setEditData] = useState({});
 
@@ -4000,7 +3948,7 @@ function CandidateProfile() {
           <h3>👑 NoPompt Pro</h3>
           <p>Stand out from normal job portals.</p>
           <ul>
-            <li>AI Resume Optimization</li>
+            <li>Resume Optimization</li>
             <li>Mock Interview Practice</li>
             <li>Priority Recruiter Visibility</li>
             <li>Auto Apply With Consent</li>
@@ -4076,6 +4024,8 @@ function CandidateDashboard() {
   const [candidate, setCandidate] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [activity, setActivity] = useState([]);
+const [interviewAlerts, setInterviewAlerts] = useState([]);
 
   const candidateId = window.location.pathname.split("/").pop();
 
@@ -4091,6 +4041,59 @@ function CandidateDashboard() {
             candidateRes.data.data ||
             candidateRes.data
         );
+        const candidateData =
+  candidateRes.data.candidate ||
+  candidateRes.data.data ||
+  candidateRes.data;
+
+setCandidate(candidateData);
+
+const realActivity = [];
+
+if (candidateData?.profileViews > 0) {
+  realActivity.push({
+    title: "Recruiter viewed your profile",
+    time: `${candidateData.profileViews} views`,
+  });
+}
+
+if (candidateData?.shortlisted) {
+  realActivity.push({
+    title: "You were shortlisted",
+    time: candidateData.updatedAt
+      ? new Date(candidateData.updatedAt).toLocaleDateString()
+      : "Recently",
+  });
+}
+
+if (candidateData?.resumeUrl) {
+  realActivity.push({
+    title: "Resume available to recruiters",
+    time: "Active",
+  });
+}
+
+setActivity(realActivity);
+
+const realInterviews = [];
+
+if (candidateData?.status === "Interview") {
+  realInterviews.push({
+    round: "Interview Round",
+    status: "Scheduled",
+  });
+}
+
+if (candidateData?.interviews?.length > 0) {
+  candidateData.interviews.forEach((item) => {
+    realInterviews.push({
+      round: item.round || item.title || "Interview",
+      status: item.status || item.date || "Pending",
+    });
+  });
+}
+
+setInterviewAlerts(realInterviews);
 
         const jobsRes = await axios.get(`${API_URL}/api/jobs`);
 
@@ -4214,17 +4217,17 @@ function CandidateDashboard() {
               <span>👑</span>
               <div>
                 <h3>Premium Career Tools</h3>
-                <p>AI-powered career growth panel</p>
+                <p>powered career growth panel</p>
               </div>
             </div>
 
             <button onClick={() => (window.location.href = `/profile/${candidate._id}`)}>
-              <b>📝 AI Resume Builder</b>
+              <b>📝 Resume Builder</b>
               <span>Create ATS resume with keywords</span>
             </button>
 
             <button onClick={() => (window.location.href = "/services")}>
-              <b>🧠 AI Skill Gap Analyzer</b>
+              <b>🧠 Skill Gap Analyzer</b>
               <span>Python, AWS, SQL, System Design</span>
             </button>
 
@@ -4249,7 +4252,7 @@ function CandidateDashboard() {
             </button>
 
             <button onClick={() => (window.location.href = "/services")}>
-              <b>✨ AI Career Assistant</b>
+              <b>✨  Career Assistant</b>
               <span>Roadmap, resume tips and career plan</span>
             </button>
           </div>
@@ -4265,7 +4268,7 @@ function CandidateDashboard() {
               </p>
 
               <div className="hero-actions">
-                <a href="/services">AI Career Assistant</a>
+                <a href="/services"> Career Assistant</a>
                 <a href={`/profile/${candidate._id}`}>View My Profile</a>
               </div>
             </div>
@@ -4388,43 +4391,55 @@ function CandidateDashboard() {
 
         <aside className="premium-right">
           <div className="premium-card">
-            <div className="premium-section-head">
-              <h3>Recruiter Activity</h3>
-              <a href="#">View All →</a>
-            </div>
+  <div className="premium-section-head">
+    <h3>Recruiter Activity</h3>
 
-            <div className="activity-item">
-              <b>Recruiter viewed your profile</b>
-              <span>2h ago</span>
-            </div>
+    <button
+      type="button"
+      className="view-all-btn"
+      onClick={() => (window.location.href = "/notifications")}
+    >
+      View All →
+    </button>
+  </div>
 
-            <div className="activity-item">
-              <b>You were shortlisted</b>
-              <span>5h ago</span>
-            </div>
+  {activity.length > 0 ? (
+    activity.slice(0, 3).map((item, index) => (
+      <div className="activity-item" key={index}>
+        <b>{item.title}</b>
+        <span>{item.time}</span>
+      </div>
+    ))
+  ) : (
+    <p className="empty-panel-text">No recruiter activity yet</p>
+  )}
+</div>
 
-            <div className="activity-item">
-              <b>Resume opened</b>
-              <span>1d ago</span>
-            </div>
-          </div>
+<div className="premium-card">
+  <div className="premium-section-head">
+    <h3>Interview Alerts</h3>
 
-          <div className="premium-card">
-            <div className="premium-section-head">
-              <h3>Interview Alerts</h3>
-              <a href="#">View All →</a>
-            </div>
+    <button
+      type="button"
+      className="view-all-btn"
+      onClick={() => (window.location.href = "/ai-interview-prep")}
+    >
+      View All →
+    </button>
+  </div>
 
-            <div className="activity-item">
-              <b>Technical Round</b>
-              <span>No schedule yet</span>
-            </div>
-
-            <div className="activity-item">
-              <b>HR Round</b>
-              <span>No schedule yet</span>
-            </div>
-          </div>
+  {interviewAlerts.length > 0 ? (
+    interviewAlerts.slice(0, 3).map((item, index) => (
+      <div className="activity-item" key={index}>
+        <b>{item.round}</b>
+        <span>{item.status}</span>
+      </div>
+    ))
+  ) : (
+    <p className="empty-panel-text">No interview schedule yet</p>
+  )}
+</div>
+          
 
           <div className="passport-card right-premium-card">
             <h3>Candidate Trust Passport</h3>
@@ -4528,7 +4543,7 @@ function TalentInsightPanel({ candidate, score }) {
       </div>
 
       <div className="ai-card">
-        <h4>AI Profile Match</h4>
+        <h4> Profile Match</h4>
         <p>
           Optimized for <b>{candidate.currentRole || "technology roles"}</b>
         </p>
@@ -4618,7 +4633,7 @@ function RecruiterAdvancedSidebar() {
         <span>Advanced Tools</span>
 
         <button onClick={() => goTo("/recruiter-ai-assistant")}>
-          🤖 AI Job Assistant <b>New</b>
+          🤖 Job Assistant <b>New</b>
         </button>
 
         <button onClick={() => goTo("/recruiter-reports")}>
@@ -4680,7 +4695,7 @@ function RecruiterAdvancedSidebar() {
 
       <div className="advanced-pro-card">
         <h3>👑 NoProxy Talent Pro</h3>
-        <p>Unlock AI hiring tools and reach verified candidates faster.</p>
+        <p>Unlock hiring tools and reach verified candidates faster.</p>
 
         <button onClick={() => goTo("/recruiter-billing")}>
           Upgrade Now →
@@ -4726,13 +4741,13 @@ function ProFeaturesPage() {
       icon: "🔔",
     },
     {
-      title: "AI Resume Studio",
+      title: " Resume Studio",
       desc: "Create ATS-ready resumes with AI.",
       path: "/feature/resume-studio",
       icon: "📄",
     },
     {
-      title: "AI Match Score",
+      title: "Match Score",
       desc: "Know your job match percentage.",
       path: "/feature/ai-match-score",
       icon: "🎯",
@@ -4772,11 +4787,11 @@ function ProFeaturesPage() {
           <span>NoPromptJobs Pro</span>
 
           <h1>
-            Unlock Your AI Career Workspace
+            Unlock Your Career Workspace
           </h1>
 
           <p>
-            Access all premium AI tools after subscription.
+            Access all premium tools after subscription.
           </p>
 
           {!isPro && pendingPlan && (
@@ -4986,7 +5001,7 @@ function RecruiterDashboard() {
 
             <div className="saas-panel ai-panel">
               <div className="saas-panel-head">
-                <h2>AI Insights</h2>
+                <h2> Insights</h2>
                 <button>View All</button>
               </div>
 
@@ -5259,7 +5274,7 @@ function RecruiterPostJobPage() {
             </div>
 
             <div>
-              <span>AI Quality</span>
+              <span> Quality</span>
               <h2>92%</h2>
               <p>Job post strength</p>
             </div>
@@ -5415,7 +5430,7 @@ function RecruiterPostJobPage() {
 
             <aside className="postjob-right-panel">
               <div className="postjob-ai-card">
-                <h2>✨ AI Job Quality</h2>
+                <h2>✨ Job Quality</h2>
                 <div className="quality-circle">92%</div>
                 <p>Strong job post. Add salary and benefits for better applications.</p>
 
@@ -5519,7 +5534,7 @@ function RecruiterPostJobPage() {
         <main className="talent-search-main">
           <section className="talent-search-hero">
             <div>
-              <h1>AI Talent Search Command Center</h1>
+              <h1> Talent Search Command Center</h1>
               <p>
                 Search verified candidates with skills, role, experience,
                 location and hiring intent.
@@ -6160,8 +6175,8 @@ function UltimateDashboard() {
 
   const tools = [
     ["⚡", "Auto Apply Engine", "Smart Apply to Jobs"],
-    ["📄", "AI Resume Studio", "Build ATS Resume"],
-    ["🎯", "AI Match Score", "Check Job Fit"],
+    ["📄", "Resume Studio", "Build ATS Resume"],
+    ["🎯", "Match Score", "Check Job Fit"],
     ["🧠", "Skill Gap Analyzer", "Find Missing Skills"],
     ["🎤", "Interview Prep Hub", "Practice Interviews"],
     ["💰", "Salary Predictor", "Predict Salary Range"],
@@ -6249,11 +6264,11 @@ function UltimateDashboard() {
   const toolActions = {
   "Auto Apply Engine": () => openToolModal("Auto Apply Engine"),
 
-  "AI Resume Studio": () => {
+  " Resume Studio": () => {
     window.location.href = "/resume-studio";
   },
 
-  "AI Match Score": goToJobs,
+  " Match Score": goToJobs,
 
  "Skill Gap Analyzer": () => {
   window.location.href = "/skill-analyzer";
@@ -6290,7 +6305,7 @@ return (
 
       <nav>
         <a className="active" onClick={scrollToWorkspace}>⌂ Dashboard</a>
-        <a onClick={scrollToWorkspace}>✦ AI Workspace</a>
+        <a onClick={scrollToWorkspace}>✦  Workspace</a>
         <a onClick={goToJobs}>▣ Applications <b>28</b></a>
         <a onClick={() => openToolModal("Auto Apply Engine")}>⚡ Auto Apply <b>124</b></a>
         <a onClick={() => openToolModal("Premium Job Alerts")}>
@@ -6317,8 +6332,8 @@ return (
     <section className="ultimate-main">
       <div className="ultimate-top-search">
         <input placeholder="Search jobs, skills, companies..." />
-        <button onClick={() => openToolModal("AI Career Assistant")}>
-          ✦ AI Assistant
+        <button onClick={() => openToolModal("Career Assistant")}>
+          ✦ Assistant
         </button>
         <span onClick={goToNotifications}>🔔</span>
         <div className="ultimate-avatar">{name.charAt(0).toUpperCase()}</div>
@@ -6330,15 +6345,15 @@ return (
           <h1>
             Your <span>Ultimate</span>
             <br />
-            AI Career Command Center
+            Career Command Center
           </h1>
           <p>
-            All premium AI tools, insights and opportunities — powered to
+            All premium tools, insights and opportunities — powered to
             accelerate your career.
           </p>
 
           <div className="ultimate-hero-buttons">
-            <button onClick={scrollToWorkspace}>Launch AI Workspace →</button>
+            <button onClick={scrollToWorkspace}>Launch  Workspace →</button>
             <button className="ghost" onClick={scrollToWorkspace}>
               Explore All Tools
             </button>
@@ -6348,7 +6363,7 @@ return (
         <div className="ultimate-access-card">
           <div className="crown">👑</div>
           <h2>Ultimate Access</h2>
-          <p>All 9 AI Tools Unlocked</p>
+          <p>All 9  Tools Unlocked</p>
           <span>● Active</span>
         </div>
       </section>
@@ -6369,8 +6384,8 @@ return (
         <div className="ultimate-panel large" id="ultimate-ai-workspace">
           <div className="panel-head">
             <div>
-              <h2>AI Workspace</h2>
-              <p>Powerful AI tools to supercharge your career</p>
+              <h2> Workspace</h2>
+              <p>Powerful tools to supercharge your career</p>
             </div>
             <button onClick={scrollToWorkspace}>View All Tools →</button>
           </div>
@@ -6393,7 +6408,7 @@ return (
         </div>
 
         <div className="ultimate-panel">
-          <h2>AI Career Assistant</h2>
+          <h2> Career Assistant</h2>
           <p>Ask anything about your career</p>
 
           <div className="ultimate-ai-input">
@@ -6424,7 +6439,7 @@ return (
         <div className="ultimate-panel">
           <div className="panel-head">
             <div>
-              <h2>Your AI Roadmap</h2>
+              <h2>Your  Roadmap</h2>
               <p>Personalized steps to achieve your dream career</p>
             </div>
             <button onClick={() => openToolModal("Career Roadmap")}>
@@ -6489,7 +6504,7 @@ return (
     <div className="auto-premium-icon">🔔</div>
 
     <h3>Premium Job Alerts</h3>
-    <h4>AI-powered instant opportunity tracking</h4>
+    <h4>powered instant opportunity tracking</h4>
 
     <div className="premium-alerts-grid">
       {[
@@ -6622,7 +6637,7 @@ return (
     <h2>{activeTool}</h2>
     <p>
       This feature is unlocked in Ultimate Plan. Frontend flow is
-      ready. Backend AI API connection will be added step by step.
+      ready. Backend  API connection will be added step by step.
     </p>
     <button onClick={() => setActiveTool(null)}>
       Continue Setup →
@@ -6726,7 +6741,7 @@ function SettingsPage() {
                 <div className="setting-icon">💎</div>
                 <h3>NoPromptJobs Pro</h3>
                 <p>
-                  Upgrade to unlock auto apply, AI resume studio, salary
+                  Upgrade to unlock auto apply,  resume studio, salary
                   predictor, hidden opportunities and premium recruiter reach.
                 </p>
                 <button onClick={() => (window.location.href = "/services")}>
@@ -7580,7 +7595,7 @@ function RecruiterBillingPage() {
               <span className="billing-badge">👑 NO Proxy Talent Pro</span>
               <h1>Billing & Plans</h1>
               <p>
-                Upgrade your hiring workspace with advanced search, AI hiring tools,
+                Upgrade your hiring workspace with advanced search, hiring tools,
                 interview pipeline and premium recruiter features.
               </p>
             </div>
