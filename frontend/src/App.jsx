@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { FcGoogle } from "react-icons/fc";
+import { FaLinkedinIn, FaFacebookF, FaMicrosoft } from "react-icons/fa";
 import "./index.css";
 import JobDetailsPage from "./pages/JobDetailsPage";
 import AIInterviewPrepPage from "./pages/AIInterviewPrepPage";
 import MobileCandidateDashboard from "./pages/MobileCandidateDashboard";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider, facebookProvider, microsoftProvider } from "./firebase";
+
+
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -452,28 +458,47 @@ function CandidateLogin() {
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const features = [
-    {
-      img: "/images/ai-resume-builder.png",
-      title: " Resume Builder",
-      text: "Create ATS-optimized resumes instantly.",
-    },
-    {
-      img: "/images/project-proof.png",
-      title: "Project Verification",
-      text: "Show real project proof and skills.",
-    },
-    {
-      img: "/images/trust-passport.png",
-      title: "Trust Passport",
-      text: "Global standard trust profile.",
-    },
-    {
-      img: "/images/ai-match-score.png",
-      title: "Match Score",
-      text: "Get matched with the best job opportunities.",
-    },
-  ];
+  const socialLogin = async (providerName) => {
+    try {
+      let provider = null;
+
+      if (providerName === "google") provider = googleProvider;
+      else if (providerName === "facebook") provider = facebookProvider;
+      else if (providerName === "microsoft") provider = microsoftProvider;
+      else if (providerName === "linkedin") {
+        alert("LinkedIn login will be added later. Please use Google, Facebook, Microsoft or Email OTP.");
+        return;
+      }
+
+      if (!provider) return alert("Invalid login provider");
+
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      const token = await firebaseUser.getIdToken();
+
+      const response = await axios.post(
+        `${API_URL}/api/candidates/firebase-login`,
+        {
+          token,
+          provider: providerName,
+        }
+      );
+
+      const candidate = response.data.candidate;
+
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(candidate));
+
+      window.location.href = `/dashboard/${candidate._id || candidate.id}`;
+    } catch (error) {
+      console.error("SOCIAL LOGIN ERROR:", error);
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Social login failed"
+      );
+    }
+  };
 
   const sendOtp = async () => {
     const signupEmail = email.trim().toLowerCase();
@@ -490,15 +515,12 @@ function CandidateLogin() {
         method: "email",
       });
 
-      console.log("OTP RESPONSE:", response.data);
-
       localStorage.setItem("candidateSignupEmail", signupEmail);
       localStorage.setItem("candidateSignupMobile", mobile.trim());
 
       setOtpSent(true);
       alert(response.data?.message || "OTP sent to your email");
     } catch (error) {
-      console.log("SEND OTP ERROR:", error.response?.data || error.message);
       alert(error.response?.data?.message || "Failed to send OTP");
     } finally {
       setLoading(false);
@@ -520,8 +542,6 @@ function CandidateLogin() {
         method: "email",
       });
 
-      console.log("VERIFY OTP RESPONSE:", response.data);
-
       localStorage.setItem("candidateSignupEmail", signupEmail);
       localStorage.setItem("candidateSignupMobile", mobile.trim());
       localStorage.setItem("candidateOtpVerified", "true");
@@ -529,7 +549,6 @@ function CandidateLogin() {
       alert(response.data?.message || "Email verified successfully");
       window.location.href = "/candidate-set-password";
     } catch (error) {
-      console.log("VERIFY OTP ERROR:", error.response?.data || error.message);
       alert(error.response?.data?.message || "Invalid OTP");
     } finally {
       setLoading(false);
@@ -548,96 +567,109 @@ function CandidateLogin() {
   };
 
   return (
-    <main className="np-premium-auth">
-      <div className="np-ball np-ball-one"></div>
-      <div className="np-ball np-ball-two"></div>
-      <div className="np-ball np-ball-three"></div>
-
-      <section className="np-premium-left">
-        <div className="np-premium-brand">
-          <img src="/logo.png" alt="NoPromptJobs" />
-          <div>
-            <h2>NOPROMPTJOBS.COM</h2>
-            <p>Verified Talent Intelligence Platform</p>
-          </div>
+    <main className="np-register-page">
+      <section className="np-register-left">
+        <div className="np-register-brand">
+          <img
+            src="/logo.png"
+            alt="NoPromptJobs"
+            className="np-premium-logo"
+          />
         </div>
 
-        <div className="np-premium-hero">
+        <div className="np-register-copy">
           <span>🛡 Verified Hiring Network</span>
 
           <h1>
-            Create your <b>account</b>
+            Find the right <b>job opportunity</b>
           </h1>
 
           <p>
-            Build your verified profile with real proof, identity signals,
-            project evidence and recruiter-ready trust score.
+            Explore verified jobs from trusted companies and build a career
+            you're proud of.
           </p>
         </div>
 
-        <div className="np-center-shield">
-          <div className="np-shield-stage"></div>
-          <div className="np-shield-icon">✓</div>
-        </div>
-
-        <div className="np-premium-features">
-          {features.map((item) => (
-            <div className="np-feature-card" key={item.title}>
-              <img src={item.img} alt={item.title} />
-              <div>
-                <h4>{item.title}</h4>
-                <p>{item.text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="np-premium-stats">
-          <div>
-            <h3>95%</h3>
-            <p>Profile trust score</p>
-          </div>
-          <div>
-            <h3>4.8/5</h3>
-            <p>Recruiter confidence</p>
-          </div>
-          <div>
-            <h3>10K+</h3>
-            <p>Verified candidates</p>
-          </div>
+        <div className="np-boy-photo-wrap">
+          <img
+            src="/images/candidate-boy.png"
+            alt="Candidate using laptop"
+            className="np-boy-photo"
+          />
         </div>
       </section>
 
-      <section className="np-premium-right">
-        <div className="np-form-panel">
-          <span className="np-form-badge">Candidate Onboarding</span>
+      <section className="np-register-right">
+        <div className="np-register-card">
+          <span className="np-register-badge">Candidate Onboarding</span>
 
           <h1>{otpSent ? "Verify your email" : "Create your account"}</h1>
 
-          <p className="np-form-subtitle">
+          <p className="np-register-sub">
             {otpSent
               ? `We sent a 6-digit OTP to ${email}`
-              : "Start with email verification to create your profile."}
+              : "Start with email verification or social login to create your profile."}
           </p>
-
-          <button
-            type="button"
-            className="np-google-premium"
-            disabled={loading}
-            onClick={() => alert("Google login coming soon")}
-          >
-            <b>G</b> Continue with Google
-          </button>
-
-          <div className="np-premium-divider">
-            <span></span>
-            <p>or continue with email</p>
-            <span></span>
-          </div>
 
           {!otpSent ? (
             <>
-              <label className="np-premium-field">
+              <div className="np-login-options">
+                <button
+                  type="button"
+                  className="np-social-btn"
+                  onClick={() => socialLogin("google")}
+                  disabled={loading}
+                >
+                  <FcGoogle className="np-real-icon" />
+                  <b>Continue with Google</b>
+                  <i>→</i>
+                </button>
+
+                <button
+                  type="button"
+                  className="np-social-btn"
+                  onClick={() => socialLogin("linkedin")}
+                  disabled={loading}
+                >
+                  <span className="np-icon-bg linkedin-bg">
+                    <FaLinkedinIn />
+                  </span>
+                  <b>Continue with LinkedIn</b>
+                  <i>→</i>
+                </button>
+
+                <button
+                  type="button"
+                  className="np-social-btn"
+                  onClick={() => socialLogin("microsoft")}
+                  disabled={loading}
+                >
+                  <FaMicrosoft className="np-real-icon microsoft-icon" />
+                  <b>Continue with Microsoft</b>
+                  <i>→</i>
+                </button>
+
+                <button
+                  type="button"
+                  className="np-social-btn"
+                  onClick={() => socialLogin("facebook")}
+                  disabled={loading}
+                >
+                  <span className="np-icon-bg facebook-bg">
+                    <FaFacebookF />
+                  </span>
+                  <b>Continue with Facebook</b>
+                  <i>→</i>
+                </button>
+              </div>
+
+              <div className="np-register-divider">
+                <span></span>
+                <p>or</p>
+                <span></span>
+              </div>
+
+              <label className="np-register-field">
                 Email Address
                 <div>
                   <span>✉</span>
@@ -651,7 +683,7 @@ function CandidateLogin() {
                 </div>
               </label>
 
-              <label className="np-premium-field">
+              <label className="np-register-field">
                 Mobile Number (Optional)
                 <div>
                   <span>IN +91</span>
@@ -667,12 +699,18 @@ function CandidateLogin() {
 
               <button
                 type="button"
-                className="np-premium-primary"
+                className="np-register-primary"
                 onClick={sendOtp}
                 disabled={loading}
               >
                 {loading ? "Sending OTP..." : "Create Account →"}
               </button>
+
+              <p className="np-register-terms">
+                By creating an account, you accept our{" "}
+                <a href="/terms">Terms</a> and{" "}
+                <a href="/privacy">Privacy Policy</a>.
+              </p>
             </>
           ) : (
             <>
@@ -690,56 +728,24 @@ function CandidateLogin() {
                     onChange={(e) =>
                       handleOtpChange(index, e.target.value, e.target)
                     }
-                    onKeyDown={(e) => {
-                      if (
-                        e.key === "Backspace" &&
-                        !otp[index] &&
-                        e.target.previousElementSibling
-                      ) {
-                        e.target.previousElementSibling.focus();
-                      }
-                    }}
                   />
                 ))}
               </div>
 
               <button
                 type="button"
-                className="np-premium-primary"
+                className="np-register-primary"
                 onClick={verifyOtp}
                 disabled={loading}
               >
                 {loading ? "Verifying..." : "Verify & continue →"}
               </button>
-
-              <div className="np-action-buttons">
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => {
-                    setOtpSent(false);
-                    setOtp("");
-                  }}
-                >
-                  Change email
-                </button>
-
-                <button type="button" disabled={loading} onClick={sendOtp}>
-                  Resend OTP
-                </button>
-              </div>
             </>
           )}
 
-          <p className="np-premium-signin">
+          <p className="np-register-signin">
             Already have an account? <a href="/candidate-login">Sign in</a>
           </p>
-        </div>
-
-        <div className="np-form-security">
-          <span>🔒 Secure & Encrypted</span>
-          <span>🛡 Verified Platform</span>
-          <span>🔐 Privacy First</span>
         </div>
       </section>
     </main>

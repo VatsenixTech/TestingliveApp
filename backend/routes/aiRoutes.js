@@ -105,7 +105,9 @@ Make it practical and job-focused.
       error: error.message,
     });
   }
-});router.post("/trust-passport", async (req, res) => {
+});
+
+router.post("/trust-passport", async (req, res) => {
   try {
     const { candidate, localScore } = req.body;
 
@@ -166,15 +168,10 @@ Do not invent fake verification.
     });
   }
 });
+
 router.post("/salary-predict", async (req, res) => {
-
   try {
-
-    const {
-      role,
-      skills,
-      experience
-    } = req.body;
+    const { role, skills, experience } = req.body;
 
     const prompt = `
 You are a salary prediction expert.
@@ -189,39 +186,33 @@ Experience:
 ${experience} years
 
 Provide:
-
 1. Expected salary in India
 2. Average salary
 3. Top companies hiring
 4. Skills increasing salary
 5. Career roadmap
 6. High-paying alternatives
-
 `;
 
-    const response = await axios.post(
-      "http://localhost:11434/api/generate",
-      {
-        model: "llama3.1",
-        prompt,
-        stream: false
-      }
-    );
-
-    res.json({
-      success:true,
-      analysis:response.data.response
+    const response = await axios.post("http://localhost:11434/api/generate", {
+      model: "llama3.1",
+      prompt,
+      stream: false,
     });
 
+    return res.json({
+      success: true,
+      analysis: response.data.response,
+    });
   } catch (error) {
+    console.log("SALARY AI ERROR:", error.message);
 
-    console.log(error);
-
-    res.status(500).json({
-      success:false
+    return res.status(500).json({
+      success: false,
+      message: "Salary prediction failed",
+      error: error.message,
     });
-
   }
-
 });
+
 module.exports = router;

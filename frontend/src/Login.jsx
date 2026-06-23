@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../firebase";
 
 function Login() {
   const navigate = useNavigate();
@@ -33,9 +35,60 @@ function Login() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+
+      const firebaseToken = await result.user.getIdToken();
+
+      const response = await fetch(
+        "http://localhost:5000/api/candidates/firebase-login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: firebaseToken,
+            provider: "google",
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Google login failed");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.candidate));
+
+      alert("Google login successful");
+      navigate("/dashboard");
+    } catch (error) {
+      console.log("GOOGLE LOGIN ERROR:", error);
+      alert(error.message);
+    }
+  };
+
   return (
     <div style={{ padding: "40px", maxWidth: "400px", margin: "auto" }}>
       <h2>Login</h2>
+
+      <button
+        type="button"
+        onClick={handleGoogleLogin}
+        style={{
+          width: "100%",
+          padding: "12px",
+          marginBottom: "20px",
+          cursor: "pointer",
+        }}
+      >
+        Continue with Google
+      </button>
 
       <form onSubmit={handleLogin}>
         <input
@@ -47,7 +100,8 @@ function Login() {
           required
         />
 
-        <br /><br />
+        <br />
+        <br />
 
         <input
           type="password"
@@ -58,7 +112,8 @@ function Login() {
           required
         />
 
-        <br /><br />
+        <br />
+        <br />
 
         <button type="submit">Login</button>
       </form>

@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 
+const passport = require("./config/passport");
+
 const aiRoutes = require("./routes/aiRoutes");
 const candidateRoutes = require("./routes/candidates");
 const authRoutes = require("./routes/auth");
@@ -15,6 +17,10 @@ const protectedPdfRoutes = require("./routes/protectedPdfRoutes");
 
 const app = express();
 
+
+// ================================
+// CORS CONFIGURATION
+// ================================
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -25,31 +31,52 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
+
+      // Postman or Mobile Apps
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
+      // Allow Vercel Deployments
       if (origin.endsWith(".vercel.app")) {
         return callback(null, true);
       }
 
       return callback(new Error("Not allowed by CORS"));
     },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   })
 );
 
+
+// ================================
+// MIDDLEWARES
+// ================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+// ================================
+// PASSPORT
+// ================================
+app.use(passport.initialize());
+
+
+// ================================
+// HOME ROUTE
+// ================================
 app.get("/", (req, res) => {
   res.send("Backend Running Successfully");
 });
 
+
+// ================================
+// TEST ROUTE
+// ================================
 app.get("/api/test", (req, res) => {
   res.json({
     success: true,
@@ -57,7 +84,10 @@ app.get("/api/test", (req, res) => {
   });
 });
 
-/* ✅ SMTP TEST ROUTE */
+
+// ================================
+// SMTP TEST ROUTE
+// ================================
 app.get("/api/mail-test", async (req, res) => {
   try {
     console.log("SMTP TEST STARTED");
@@ -83,7 +113,7 @@ app.get("/api/mail-test", async (req, res) => {
       });
     }
 
-    const testTransporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
       secure: false,
@@ -96,9 +126,9 @@ app.get("/api/mail-test", async (req, res) => {
       },
     });
 
-    await testTransporter.verify();
+    await transporter.verify();
 
-    await testTransporter.sendMail({
+    await transporter.sendMail({
       from: `"NoPromptJobs" <${process.env.SMTP_FROM}>`,
       to: process.env.SMTP_USER,
       subject: "NoPromptJobs SMTP Test",
@@ -112,11 +142,13 @@ app.get("/api/mail-test", async (req, res) => {
 
     return res.json({
       success: true,
-      message: "SMTP connected and test email sent successfully",
+      message: "SMTP connected successfully",
       user: process.env.SMTP_USER,
     });
+
   } catch (error) {
-    console.log("SMTP TEST ERROR:", error);
+
+    console.log("SMTP ERROR:", error);
 
     return res.status(500).json({
       success: false,
@@ -129,20 +161,28 @@ app.get("/api/mail-test", async (req, res) => {
   }
 });
 
-/* ✅ API ROUTES */
-app.use("/api/candidates", candidateRoutes);
+
+// ================================
+// API ROUTES
+// ================================
 app.use("/api/auth", authRoutes);
+
+app.use("/api/candidates", candidateRoutes);
+
 app.use("/api/jobs", jobRoutes);
+
 app.use("/api/payments", paymentRoutes);
+
 app.use("/api/protected-pdf", protectedPdfRoutes);
 
-/* ✅ AI ROUTES */
 app.use("/api/ai", aiRoutes);
 
-/* ✅ AUTO APPLY ROUTES */
 app.use("/api/auto-apply", autoApplyRoutes);
 
-/* ✅ 404 ROUTE SHOULD ALWAYS BE LAST */
+
+// ================================
+// 404 ROUTE
+// ================================
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -150,17 +190,41 @@ app.use((req, res) => {
   });
 });
 
+
+// ================================
+// GLOBAL ERROR HANDLER
+// ================================
+app.use((err, req, res, next) => {
+
+  console.error("SERVER ERROR:", err);
+
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error",
+    error: err.message,
+  });
+
+});
+
+
+// ================================
+// MONGODB CONNECTION
+// ================================
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("MongoDB Connected");
+    console.log("MongoDB Connected Successfully");
   })
   .catch((err) => {
-    console.log("MongoDB Error:", err);
+    console.log("MongoDB Connection Error:", err);
   });
 
+
+// ================================
+// SERVER
+// ================================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
