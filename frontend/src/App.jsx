@@ -8,6 +8,7 @@ import AIInterviewPrepPage from "./pages/AIInterviewPrepPage";
 import MobileCandidateDashboard from "./pages/MobileCandidateDashboard";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
+import ApplicationsPage from "./pages/ApplicationsPage";
 
 
 
@@ -2256,32 +2257,83 @@ function NotificationsPage() {
   );
 }
 function ResumeStudioPage() {
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const candidateId = user?._id || user?.id || user?.candidateId;
+
   const [selectedTemplate, setSelectedTemplate] = useState("Modern ATS");
   const [resumeText, setResumeText] = useState("");
+  const [resumeFile, setResumeFile] = useState(null);
+  const [uploadedResumeUrl, setUploadedResumeUrl] = useState("");
   const [optimizedResume, setOptimizedResume] = useState("");
+  const [atsScore, setAtsScore] = useState(null);
+  const [keywords, setKeywords] = useState([]);
+  const [missingKeywords, setMissingKeywords] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const templates = [
-    {
-      name: "Modern ATS",
-      role: "Software Developer",
-      score: "94%",
-    },
-    {
-      name: "Data Engineer",
-      role: "Python / SQL / Cloud",
-      score: "91%",
-    },
-    {
-      name: "Business Analyst",
-      role: "Analytics / Reporting",
-      score: "89%",
-    },
+    { name: "Modern ATS", role: "Best for ATS Systems", score: "94%" },
+    { name: "Professional", role: "Corporate & Clean", score: "91%" },
+    { name: "Data Engineer", role: "Python / SQL / Cloud", score: "92%" },
+    { name: "Business Analyst", role: "Analytics / Reporting", score: "89%" },
+    { name: "Executive", role: "Senior Level Roles", score: "88%" },
   ];
 
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only PDF, DOCX, or TXT files are allowed");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be below 5MB");
+      return;
+    }
+
+    setResumeFile(file);
+
+    try {
+      setUploading(true);
+
+      const formData = new FormData();
+      formData.append("resume", file);
+      formData.append("candidateId", candidateId);
+
+      const res = await axios.post(
+        `${API_URL}/api/resume/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setUploadedResumeUrl(res.data.resumeUrl || "");
+      setResumeText(res.data.extractedText || "");
+
+      alert("Resume uploaded successfully");
+    } catch (error) {
+      console.log("RESUME UPLOAD ERROR:", error.response?.data || error.message);
+      alert(error.response?.data?.message || "Resume upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const improveResume = async () => {
-    if (!resumeText.trim()) {
-      alert("Please paste your current resume content");
+    if (!resumeText.trim() && !uploadedResumeUrl) {
+      alert("Please paste resume text or upload resume file");
       return;
     }
 
@@ -2290,143 +2342,265 @@ function ResumeStudioPage() {
       setOptimizedResume("");
 
       const response = await axios.post(`${API_URL}/api/ai/resume-analyze`, {
+        candidateId,
         resumeText,
+        resumeUrl: uploadedResumeUrl,
         template: selectedTemplate,
       });
 
-      setOptimizedResume(response.data.optimizedResume);
+      setOptimizedResume(response.data.optimizedResume || "");
+      setAtsScore(response.data.atsScore || 0);
+      setKeywords(response.data.keywords || []);
+      setMissingKeywords(response.data.missingKeywords || []);
     } catch (error) {
-      console.log(error.response?.data || error.message);
-      alert("AI resume analysis failed. Check backend and Ollama.");
+      console.log("AI RESUME ERROR:", error.response?.data || error.message);
+      alert(error.response?.data?.message || "AI resume analysis failed");
     } finally {
       setLoading(false);
     }
   };
 
+  const downloadPDF = () => {
+    if (!optimizedResume) {
+      alert("Generate optimized resume first");
+      return;
+    }
+
+    window.print();
+  };
+
+  const copyResume = () => {
+    if (!optimizedResume) {
+      alert("No optimized resume available");
+      return;
+    }
+
+    navigator.clipboard.writeText(optimizedResume);
+    alert("Optimized resume copied");
+  };
+
   return (
-  <main className="resume-studio-page">
-    <aside className="resume-ultimate-sidebar">
-      <div className="resume-side-brand">
-        <img
-          src="/logo.png"
-          alt="NoPromptJobs"
-          className="resume-sidebar-logo"
-        />
-
-        <div>
-          <h2>NoPromptJobs</h2>
-          <span>ULTIMATE</span>
-        </div>
-      </div>
-
-      <div className="resume-side-title">AI Workspace</div>
-
-      <nav className="resume-side-nav">
-        <a onClick={() => (window.location.href = "/ultimate-dashboard")}>
-          ⌂ Dashboard
-        </a>
-
-        <a className="active">
-          ✨ AI Resume Studio <b>Premium</b>
-          <small>Build ATS-ready resumes</small>
-        </a>
-
-        <a onClick={() => (window.location.href = "/ai-interview-prep")}>
-          🎤 Interview Prep
-        </a>
-
-        <a onClick={() => (window.location.href = "/skill-analyzer")}>
-          🧠 Skill Analyzer
-        </a>
-
-        <a onClick={() => (window.location.href = "/trust-passport")}>
-          🛡 Trust Passport
-        </a>
-
-        <a onClick={() => (window.location.href = "/salary-predictor")}>
-          💼 Salary Predictor
-        </a>
-      </nav>
-
-      <div className="resume-access-card">
-        <span>👑</span>
-        <h3>Ultimate Access</h3>
-        <p>All 9 AI tools unlocked</p>
-        <b>● Active</b>
-
-        <button onClick={() => (window.location.href = "/ultimate-dashboard")}>
-          View All Tools →
-        </button>
-      </div>
-
-      <div className="resume-credit-card">
-        <p>AI Credits</p>
-        <h3>Unlimited ∞</h3>
-        <div></div>
-        <small>Resets on 18 Aug, 2026</small>
-      </div>
-    </aside>
-
-    <section className="resume-studio-main">
-      <div className="resume-studio-hero">
-        <span>📄 PREMIUM RESUME BUILDER</span>
-
-        <h1>Create ATS optimized resumes using AI</h1>
-
-        <p>
-          Select a resume style, paste your current resume, and generate an
-          improved ATS-friendly resume using local AI.
-        </p>
-      </div>
-
-      <section className="resume-template-grid">
-        {templates.map((item) => (
-          <div
-            key={item.name}
-            className={
-              selectedTemplate === item.name
-                ? "resume-template-card active"
-                : "resume-template-card"
-            }
-            onClick={() => setSelectedTemplate(item.name)}
-          >
-            <h3>{item.name}</h3>
-            <p>{item.role}</p>
-            <b>ATS Score {item.score}</b>
+    <main className="rs-page">
+      <aside className="rs-sidebar">
+        <div className="rs-brand">
+          <img src="/logo.png" alt="NoPromptJobs" />
+          <div>
+            <h2>NoPromptJobs</h2>
+            <span>ULTIMATE</span>
           </div>
-        ))}
-      </section>
+        </div>
 
-      <section className="resume-workspace">
-        <div className="resume-input-card">
-          <h2>Your Current Resume</h2>
-
-          <textarea
-            placeholder="Paste your current resume here..."
-            value={resumeText}
-            onChange={(e) => setResumeText(e.target.value)}
-          />
-
-          <button onClick={improveResume} disabled={loading}>
-            {loading ? "AI is improving resume..." : "Improve ATS Resume →"}
+        <div className="rs-access">
+          <h3>👑 Ultimate Access</h3>
+          <p>All 9 AI tools unlocked</p>
+          <b>● Active</b>
+          <button onClick={() => (window.location.href = "/ultimate-dashboard")}>
+            View All Tools →
           </button>
         </div>
 
-        <div className="resume-output-card">
-          <h2>Improved ATS Resume</h2>
+        <nav className="rs-nav">
+          <a onClick={() => (window.location.href = "/ultimate-dashboard")}>
+            ⌂ Dashboard
+          </a>
+          <a>✦ AI Workspace</a>
+          <a onClick={() => (window.location.href = "/applications")}>
+            ▣ Applications
+          </a>
+          <a onClick={() => (window.location.href = "/auto-apply")}>
+            ⚡ Auto Apply
+          </a>
+          <a onClick={() => (window.location.href = "/job-alerts")}>
+            🔔 Job Alerts
+          </a>
+          <a className="active">📄 Resume Studio</a>
+          <a onClick={() => (window.location.href = "/ai-interview-prep")}>
+            🎤 AI Interview Prep
+          </a>
+          <a onClick={() => (window.location.href = "/skill-analyzer")}>
+            ▦ Skill Analyzer
+          </a>
+          <a onClick={() => (window.location.href = "/trust-passport")}>
+            🛡 Trust Passport
+          </a>
+          <a onClick={() => (window.location.href = "/salary-predictor")}>
+            💼 Salary Predictor
+          </a>
+        </nav>
+      </aside>
 
-          {optimizedResume ? (
-            <pre>{optimizedResume}</pre>
-          ) : (
-            <div className="resume-empty-box">
-              Your AI optimized ATS resume will appear here.
+      <section className="rs-main">
+        <header className="rs-topbar">
+          <input placeholder="Search jobs, skills, companies..." />
+          <button>✦ AI Assistant</button>
+          <span>🔔</span>
+          <div className="rs-avatar">
+            {(user?.name || "V").charAt(0).toUpperCase()}
+          </div>
+        </header>
+
+        <section className="rs-layout">
+          <div className="rs-center">
+            <section className="rs-hero">
+              <div>
+                <span>👑 PREMIUM RESUME BUILDER</span>
+                <h1>
+                  Create ATS optimized <br />
+                  resumes using <b>AI</b>
+                </h1>
+                <p>
+                  Upload PDF/DOCX/TXT resume, analyze real ATS score, improve
+                  keywords and generate recruiter-ready resume.
+                </p>
+
+                <div className="rs-tags">
+                  <small>✅ ATS Optimized</small>
+                  <small>🧠 AI Powered</small>
+                  <small>🎯 Job Match Ready</small>
+                  <small>📄 PDF / DOCX / TXT</small>
+                </div>
+              </div>
+
+              <div className="rs-ai-visual">
+                <div className="rs-doc">📄</div>
+                <div className="rs-ai-badge">AI</div>
+              </div>
+            </section>
+
+            <section className="rs-template-panel">
+              <div className="rs-section-head">
+                <h2>📄 Choose Resume Format</h2>
+              </div>
+
+              <div className="rs-template-row">
+                {templates.map((item) => (
+                  <div
+                    key={item.name}
+                    onClick={() => setSelectedTemplate(item.name)}
+                    className={
+                      selectedTemplate === item.name
+                        ? "rs-template active"
+                        : "rs-template"
+                    }
+                  >
+                    <div className="rs-template-preview"></div>
+                    <h3>{item.name}</h3>
+                    <p>{item.role}</p>
+                    <b>{item.score} Match</b>
+                    {selectedTemplate === item.name && <i>✓</i>}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rs-workspace">
+              <div className="rs-input-card">
+                <h2>📄 Upload / Paste Resume</h2>
+
+                <label className="rs-upload-box">
+                  <input
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    onChange={handleResumeUpload}
+                    hidden
+                  />
+
+                  <div>
+                    <span>☁️</span>
+                    <h3>
+                      {resumeFile ? resumeFile.name : "Upload Resume File"}
+                    </h3>
+                    <p>PDF, DOCX, TXT supported • Max 5MB</p>
+                  </div>
+                </label>
+
+                {uploading && <p className="rs-live-text">Uploading resume...</p>}
+
+                <textarea
+                  value={resumeText}
+                  onChange={(e) => setResumeText(e.target.value)}
+                  placeholder="Or paste your current resume text here..."
+                />
+
+                <button onClick={improveResume} disabled={loading || uploading}>
+                  {loading ? "Analyzing real resume..." : "Analyze & Improve with AI →"}
+                </button>
+              </div>
+
+              <div className="rs-output-card">
+                <div className="rs-section-head">
+                  <h2>🤖 AI Optimized Resume</h2>
+                  <button>{atsScore ? `ATS ${atsScore}/100` : "Preview"}</button>
+                </div>
+
+                {optimizedResume ? (
+                  <pre>{optimizedResume}</pre>
+                ) : (
+                  <div className="rs-empty">
+                    <span>🤖</span>
+                    <p>Your optimized ATS resume will appear here.</p>
+                  </div>
+                )}
+
+                <div className="rs-output-actions">
+                  <button onClick={downloadPDF}>⇩ Download PDF</button>
+                  <button onClick={copyResume}>⧉ Copy Text</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside className="rs-right">
+            <div className="rs-score-card">
+              <h3>Your Resume Score</h3>
+
+              <div className="rs-score-circle">
+                <h2>{atsScore || "--"}</h2>
+                <p>{atsScore ? "Live Score" : "Upload"}</p>
+              </div>
+
+              <ul>
+                <li>✅ ATS Friendly</li>
+                <li>✅ Keyword Optimized</li>
+                <li>✅ Content Quality</li>
+                <li>✅ Format Score</li>
+                <li>✅ Readability</li>
+              </ul>
+
+              <button onClick={improveResume}>
+                Improve My Resume →
+              </button>
             </div>
-          )}
-        </div>
+
+            <div className="rs-side-card">
+              <h3>Matched Keywords</h3>
+
+              {keywords.length > 0 ? (
+                keywords.map((item, index) => (
+                  <p key={index}>✅ {item}</p>
+                ))
+              ) : (
+                <p>No keyword data yet</p>
+              )}
+            </div>
+
+            <div className="rs-side-card">
+              <h3>Missing Keywords</h3>
+
+              {missingKeywords.length > 0 ? (
+                missingKeywords.map((item, index) => (
+                  <p key={index}>⚠️ {item}</p>
+                ))
+              ) : (
+                <p>No missing keywords yet</p>
+              )}
+            </div>
+          </aside>
+        </section>
       </section>
-    </section>
-  </main>
-);}
+    </main>
+  );
+}
 function SkillAnalyzerPage() {
   const [currentSkills, setCurrentSkills] = useState("");
   const [targetRole, setTargetRole] = useState("Data Engineer");
@@ -2941,7 +3115,7 @@ function App() {
 
   if (path === "/candidate") return <CandidateUpload />;
   if (path === "/mobile-dashboard") return <MobileCandidateDashboard />;
-
+  if (path === "/applications") return <ApplicationsPage />;
 
   if (path.startsWith("/dashboard/")) return <CandidateDashboard />;
 
@@ -4577,6 +4751,7 @@ function CandidateDashboard() {
   });
 
   return (
+  <>
     <main className="candidate-dashboard-page">
       <header className="candidate-topbar">
         <img src="/logo.png" alt="NoPromptJobs" className="candidate-top-logo" />
@@ -4878,7 +5053,97 @@ function CandidateDashboard() {
           </div>
         </aside>
       </section>
-    </main>
+     </main>
+
+    <PremiumFooter />
+  </>
+);}
+function PremiumFooter() {
+  return (
+    <footer className="vatsenix-footer">
+      <div className="vf-main">
+        <div className="vf-brand">
+          <img src="/logo.png" alt="Vatsenix Software Pvt Ltd" />
+          <p>
+            NoPromptJobs is a hiring product operated by Vatsenix Software Pvt Ltd,
+            built for verified candidates and trusted employers.
+          </p>
+
+          <h4>Connect with us</h4>
+          <div className="vf-social">
+            <span>in</span>
+            <span>X</span>
+            <span>▶</span>
+            <span>f</span>
+          </div>
+        </div>
+
+        <div className="vf-col">
+          <h3>For Job Seekers</h3>
+          <a href="/jobs">Browse Jobs</a>
+          <a href="/services">Career Tools</a>
+          <a href="/resume-studio">Resume Builder</a>
+          <a href="/notifications">Job Alerts</a>
+          <a href="/skill-gap-analyzer">Skill Assessments</a>
+        </div>
+
+        <div className="vf-col">
+          <h3>For Employers</h3>
+          <a href="/recruiter-post-job">Post a Job</a>
+          <a href="/recruiter-search">Search Candidates</a>
+          <a href="/recruiter-dashboard">Employer Dashboard</a>
+          <a href="/services">Pricing</a>
+          <a href="/recruiter-reports">Hiring Reports</a>
+        </div>
+
+        <div className="vf-col">
+          <h3>Company</h3>
+          <a href="/about">About Us</a>
+          <a href="/careers">Careers</a>
+          <a href="/contact">Contact Us</a>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Use</a>
+        </div>
+
+        <div className="vf-app">
+          <h3>Get the App</h3>
+          <p>Find jobs, apply, track interviews and improve your profile.</p>
+          <button>▶ Google Play</button>
+          <button> App Store</button>
+        </div>
+      </div>
+
+      <div className="vf-info">
+        <div>
+          <b>🛡 Trusted & Secure</b>
+          <p>Your data is protected with secure hiring workflows.</p>
+        </div>
+
+        <div>
+          <b>🏢 Vatsenix Software Pvt Ltd</b>
+          <p>Building technology that connects talent with opportunity.</p>
+        </div>
+
+        <div>
+          <b>📍 Location</b>
+          <p>Hyderabad, Telangana, India</p>
+        </div>
+
+        <div>
+          <b>☎ Contact</b>
+          <p>hello@vatsenix.com</p>
+        </div>
+      </div>
+
+      <div className="vf-bottom">
+        <p>© 2026 Vatsenix Software Pvt Ltd. All rights reserved.</p>
+        <div>
+          <a href="/sitemap">Sitemap</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </div>
+      </div>
+    </footer>
   );
 }
 function TalentInsightPanel({ candidate, score }) {
@@ -6653,11 +6918,19 @@ function UltimateDashboard() {
     window.location.href = "/jobs";
   };
 
-const goToProfile = () => {
-  window.location.href = candidateId
-    ? `/candidate-profile/${candidateId}`
-    : "/candidate-login";
-};
+  const goToApplications = () => {
+    window.location.href = "/applications";
+  };
+
+  const goToHiddenOpportunities = () => {
+    window.location.href = "/hidden-opportunities";
+  };
+
+  const goToProfile = () => {
+    window.location.href = candidateId
+      ? `/candidate-profile/${candidateId}`
+      : "/candidate-login";
+  };
 
   const goToNotifications = () => {
     window.location.href = "/notifications";
@@ -6728,419 +7001,449 @@ const goToProfile = () => {
   };
 
   const toolActions = {
-  "Auto Apply Engine": () => openToolModal("Auto Apply Engine"),
+    "Auto Apply Engine": () => openToolModal("Auto Apply Engine"),
+    "Resume Studio": () => {
+      window.location.href = "/resume-studio";
+    },
+    "Match Score": goToJobs,
+    "Skill Gap Analyzer": () => {
+      window.location.href = "/skill-analyzer";
+    },
+    "Interview Prep Hub": () => {
+      window.location.href = "/interview-prep";
+    },
+    "Salary Predictor": () => {
+      window.location.href = "/salary-predictor";
+    },
+    "Trust Passport": () => {
+      window.location.href = "/trust-passport";
+    },
+    "Instant Job Alerts": goToNotifications,
+    "Hidden Opportunities": goToHiddenOpportunities,
+  };
 
-  " Resume Studio": () => {
-    window.location.href = "/resume-studio";
-  },
-
-  " Match Score": goToJobs,
-
- "Skill Gap Analyzer": () => {
-  window.location.href = "/skill-analyzer";
-},
-
-  "Interview Prep Hub": () => {
-    window.location.href = "/interview-prep";
-  },
-
-  "Salary Predictor": () => {
-    window.location.href = "/salary-predictor";
-  },
-
-  "Trust Passport": () => {
-    window.location.href = "/trust-passport";
-  },
-
-  "Instant Job Alerts": goToNotifications,
-
-  "Hidden Opportunities": () => {
-  window.location.href = "/hidden-opportunities";
-},
-};
-return (
-  <main className="ultimate-dark-page">
-    <aside className="ultimate-sidebar">
-      <div className="ultimate-brand">
-        <img src="/logo.png" alt="NoPromptJobs" />
-        <div>
-          <h2>NoPromptJobs</h2>
-          <span>ULTIMATE</span>
-        </div>
-      </div>
-
-      <nav>
-  <a className="active" onClick={scrollToWorkspace}>⌂ Dashboard</a>
-  <a onClick={scrollToWorkspace}>✦  Workspace</a>
-  <a onClick={goToJobs}>▣ Applications <b>28</b></a>
-  <a onClick={() => openToolModal("Auto Apply Engine")}>⚡ Auto Apply <b>124</b></a>
-
-  <a onClick={() => openToolModal("Premium Job Alerts")}>
-    🔔 Job Alerts <b>12</b>
-  </a>
-
-  <a onClick={() => (window.location.href = "/resume-studio")}>
-    📄 Resume Studio
-  </a>
-
-  <a onClick={() => (window.location.href = "/interview-alerts")}>
-    📅 Interview Alerts
-  </a>
-
-  <a onClick={() => (window.location.href = "/ai-interview-prep")}>
-    🎤 AI Interview Prep
-  </a>
-
-  <a onClick={() => (window.location.href = "/skill-analyzer")}>
-    ▦ Skill Analyzer
-  </a>
-
-  <a onClick={() => (window.location.href = "/trust-passport")}>
-    🛡 Trust Passport
-  </a>
-
-  <a onClick={() => (window.location.href = "/salary-predictor")}>
-    💼 Salary Predictor
-  </a>
-
-  <a onClick={goToJobs}>
-    💎 Hidden Opportunities
-  </a>
-
-  <a onClick={() => openToolModal("Career Roadmap")}>
-    📊 Career Roadmap
-  </a>
-</nav>
-      <div className="ultimate-plan-box">
-        <span>👑</span>
-        <p>Upgrade Status</p>
-        <h3>Ultimate Plan</h3>
-        <b>Active</b>
-        <small>Valid till 17 Jul, 2026</small>
-      </div>
-    </aside>
-
-    <section className="ultimate-main">
-      <div className="ultimate-top-search">
-        <input placeholder="Search jobs, skills, companies..." />
-        <button onClick={() => openToolModal("Career Assistant")}>
-          ✦ Assistant
-        </button>
-        <span onClick={goToNotifications}>🔔</span>
-        <div className="ultimate-avatar">{name.charAt(0).toUpperCase()}</div>
-      </div>
-
-      <section className="ultimate-hero-dark">
-        <div>
-          <p>Welcome back, {name}! 👋</p>
-          <h1>
-            Your <span>Ultimate</span>
-            <br />
-            Career Command Center
-          </h1>
-          <p>
-            All premium tools, insights and opportunities — powered to
-            accelerate your career.
-          </p>
-
-          <div className="ultimate-hero-buttons">
-            <button onClick={scrollToWorkspace}>Launch  Workspace →</button>
-            <button className="ghost" onClick={scrollToWorkspace}>
-              Explore All Tools
-            </button>
-          </div>
-        </div>
-
-        <div className="ultimate-access-card">
-          <div className="crown">👑</div>
-          <h2>Ultimate Access</h2>
-          <p>All 9  Tools Unlocked</p>
-          <span>● Active</span>
-        </div>
-      </section>
-
-      <section className="ultimate-stats-row">
-        {stats.map((item) => (
-          <div className="ultimate-stat-card" key={item[1]}>
-            <div className="stat-icon">{item[0]}</div>
-            <p>{item[1]}</p>
-            <h2>{item[2]}</h2>
-            <span>{item[3]}</span>
-            <b>↑ {item[4]}</b>
-          </div>
-        ))}
-      </section>
-
-      <section className="ultimate-grid-layout">
-        <div className="ultimate-panel large" id="ultimate-ai-workspace">
-          <div className="panel-head">
-            <div>
-              <h2> Workspace</h2>
-              <p>Powerful tools to supercharge your career</p>
-            </div>
-            <button onClick={scrollToWorkspace}>View All Tools →</button>
-          </div>
-
-          <div className="ultimate-tool-grid">
-            {tools.map((tool) => (
-              <button
-                className="ultimate-tool-mini"
-                key={tool[1]}
-                onClick={toolActions[tool[1]]}
-              >
-                <span>{tool[0]}</span>
-                <div>
-                  <h4>{tool[1]}</h4>
-                  <p>{tool[2]}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="ultimate-panel">
-          <h2> Career Assistant</h2>
-          <p>Ask anything about your career</p>
-
-          <div className="ultimate-ai-input">
-            <input
-              placeholder="Example: How can I become a Data Engineer in 6 months?"
-              value={aiQuestion}
-              onChange={(e) => setAiQuestion(e.target.value)}
-            />
-            <button onClick={generateAIAnswer}>➤</button>
-          </div>
-
-          <div className="quick-tags">
-            <button onClick={() => setAiQuestion("How can I improve my resume?")}>
-              Improve my resume
-            </button>
-            <button onClick={() => setAiQuestion("Find high paying jobs for my profile")}>
-              Find high paying jobs
-            </button>
-            <button onClick={() => setAiQuestion("Give me interview preparation tips")}>
-              Interview tips
-            </button>
-            <button onClick={() => setAiQuestion("Create my skill roadmap")}>
-              Skill roadmap
-            </button>
-          </div>
-        </div>
-
-        <div className="ultimate-panel">
-          <div className="panel-head">
-            <div>
-              <h2>Your  Roadmap</h2>
-              <p>Personalized steps to achieve your dream career</p>
-            </div>
-            <button onClick={() => openToolModal("Career Roadmap")}>
-              View Full Roadmap →
-            </button>
-          </div>
-
-          <div className="roadmap-dark">
-            <div className="done">✓ Step 1 <b>Improve Resume Score</b></div>
-            <div>▣ Step 2 <b>Complete Trust Passport</b></div>
-            <div>✦ Step 3 <b>Apply to 90% Match Jobs</b></div>
-            <div>◉ Step 4 <b>Practice Interviews</b></div>
-          </div>
-        </div>
-
-        <div className="ultimate-panel">
-          <h2>Recent Activity</h2>
-          <div className="activity-dark">
-            ✦ Auto applied to 15 new jobs <span>2 min ago</span>
-          </div>
-          <div className="activity-dark">
-            ↻ Resume score improved to 92% <span>1 hour ago</span>
-          </div>
-        </div>
-
-        <div className="ultimate-panel">
-          <h2>Top Job Matches</h2>
-          <div className="job-match-dark" onClick={goToJobs}>
-            <div>💼</div>
-            <div>
-              <h4>Senior Data Engineer</h4>
-              <p>Tech Mahindra</p>
-            </div>
-            <b>95% Match</b>
-          </div>
-        </div>
-
-        <div className="ultimate-panel">
-          <h2>Skills Analysis</h2>
-          <div className="skill-circle">86%</div>
-          <p>In Demand: 28</p>
-          <p>Good: 12</p>
-          <p>Need Improvement: 4</p>
-          <button
-            className="skills-action-btn"
-            onClick={() => openToolModal("Skills Analysis")}
-          >
-            View Details →
-          </button>
-        </div>
-      </section>
-
-      {activeTool && (
-        <div className="ultimate-modal-overlay">
-          <div className="ultimate-tool-modal">
-            <button className="modal-close" onClick={() => setActiveTool(null)}>
-              ×
-            </button>
-
-{activeTool === "Premium Job Alerts" ? (
-  <div className="premium-alerts-box">
-    <div className="auto-premium-icon">🔔</div>
-
-    <h3>Premium Job Alerts</h3>
-    <h4>powered instant opportunity tracking</h4>
-
-    <div className="premium-alerts-grid">
-      {[
-        {
-          icon: "🚀",
-          title: "High-match Data Engineer role found",
-          desc: "96% match • Bangalore • 2 min ago",
-          action: () => {
-            setActiveTool(null);
-            window.location.href = "/jobs";
-          },
-        },
-
-        {
-          icon: "💎",
-          title: "Hidden recruiter-only opportunity",
-          desc: "Private opening • Premium access",
-          action: () => {
-            setActiveTool(null);
-            window.location.href = "/hidden-opportunities";
-          },
-        },
-
-        {
-          icon: "⚡",
-          title: "Fast apply window closing soon",
-          desc: "Apply within 24 hours",
-          action: () => {
-            setActiveTool("Auto Apply Engine");
-          },
-        },
-
-        {
-          icon: "🎯",
-          title: "Salary upgraded match",
-          desc: "₹10–18 LPA role matched",
-          action: () => {
-            setActiveTool(null);
-            window.location.href = "/salary-predictor";
-          },
-        },
-      ].map((item) => (
-        <div className="premium-alert-card" key={item.title}>
-          <span>{item.icon}</span>
-
+  return (
+    <main className="ultimate-dark-page">
+      <aside className="ultimate-sidebar">
+        <div className="ultimate-brand">
+          <img src="/logo.png" alt="NoPromptJobs" />
           <div>
-            <h5>{item.title}</h5>
-            <p>{item.desc}</p>
+            <h2>NoPromptJobs</h2>
+            <span>ULTIMATE</span>
           </div>
+        </div>
 
-          <button onClick={item.action}>
-            View →
+        <nav>
+          <a className="active" onClick={scrollToWorkspace}>
+            ⌂ Dashboard
+          </a>
+
+          <a onClick={scrollToWorkspace}>✦ Workspace</a>
+
+          <a onClick={goToApplications}>
+            ▣ Applications <b>28</b>
+          </a>
+
+          <a onClick={() => openToolModal("Auto Apply Engine")}>
+            ⚡ Auto Apply <b>124</b>
+          </a>
+
+          <a onClick={() => openToolModal("Premium Job Alerts")}>
+            🔔 Job Alerts <b>12</b>
+          </a>
+
+          <a onClick={() => (window.location.href = "/resume-studio")}>
+            📄 Resume Studio
+          </a>
+
+          <a onClick={() => (window.location.href = "/interview-alerts")}>
+            📅 Interview Alerts
+          </a>
+
+          <a onClick={() => (window.location.href = "/ai-interview-prep")}>
+            🎤 AI Interview Prep
+          </a>
+
+          <a onClick={() => (window.location.href = "/skill-analyzer")}>
+            ▦ Skill Analyzer
+          </a>
+
+          <a onClick={() => (window.location.href = "/trust-passport")}>
+            🛡 Trust Passport
+          </a>
+
+          <a onClick={() => (window.location.href = "/salary-predictor")}>
+            💼 Salary Predictor
+          </a>
+
+          <a onClick={goToHiddenOpportunities}>
+            💎 Hidden Opportunities
+          </a>
+
+          <a onClick={() => openToolModal("Career Roadmap")}>
+            📊 Career Roadmap
+          </a>
+        </nav>
+
+        <div className="ultimate-plan-box">
+          <span>👑</span>
+          <p>Upgrade Status</p>
+          <h3>Ultimate Plan</h3>
+          <b>Active</b>
+          <small>Valid till 17 Jul, 2026</small>
+        </div>
+      </aside>
+
+      <section className="ultimate-main">
+        <div className="ultimate-top-search">
+          <input placeholder="Search jobs, skills, companies..." />
+
+          <button onClick={() => openToolModal("Career Assistant")}>
+            ✦ Assistant
           </button>
-        </div>
-      ))}
-    </div>
-  </div>
-): activeTool === "Auto Apply Engine" ? (
-  <div className="auto-apply-premium-box">
-    <div className="auto-premium-icon">🚀</div>
 
-    <h3>Auto Apply Engine</h3>
-    <h4>One-Time Auto Apply Consent</h4>
+          <span onClick={goToNotifications}>🔔</span>
 
-    <p>
-      Give permission once. NoPromptJobs will automatically apply for
-      suitable and recommended jobs based on your skills, profile,
-      location, experience and job preference.
-    </p>
-
-    <div className="auto-consent-premium-card">
-      <div className="auto-shield-card">
-        <span>🛡</span>
-      </div>
-
-      <label className="auto-consent-premium-check">
-        <input
-          type="checkbox"
-          checked={autoApplyConsent}
-          onChange={(e) => {
-            setAutoApplyConsent(e.target.checked);
-            localStorage.setItem("autoApplyConsent", e.target.checked);
-          }}
-        />
-
-        <div>
-          <b>
-            I allow NoPromptJobs to auto-apply for suitable jobs on
-            my behalf.
-          </b>
-          <small>
-            Your data is safe and secure. You can pause or stop
-            anytime.
-          </small>
-        </div>
-      </label>
-    </div>
-
-    {!autoApplyConsent ? (
-      <button className="auto-premium-btn" onClick={giveAutoApplyConsent}>
-        Give Consent →
-      </button>
-    ) : (
-      <button
-        className="auto-premium-btn"
-        onClick={startAutoApply}
-        disabled={autoApplyLoading}
-      >
-        {autoApplyLoading
-          ? "Applying to suitable jobs..."
-          : "Start Auto Apply Now →"}
-      </button>
-    )}
-
-    {autoApplyResult && (
-      <div className="auto-success-premium">
-        <span>✅</span>
-        <div>
-          <h2>{autoApplyResult.appliedCount || 0}</h2>
-          <p>Jobs Applied Successfully</p>
-          <small>
-            Matched Jobs: {autoApplyResult.totalMatchedJobs || 0}
-          </small>
-        </div>
-      </div>
-    )}
-  </div>
-) : (
-  <>
-    <h2>{activeTool}</h2>
-    <p>
-      This feature is unlocked in Ultimate Plan. Frontend flow is
-      ready. Backend  API connection will be added step by step.
-    </p>
-    <button onClick={() => setActiveTool(null)}>
-      Continue Setup →
-    </button>
-  </>
-)}
+          <div className="ultimate-avatar" onClick={goToProfile}>
+            {name.charAt(0).toUpperCase()}
           </div>
         </div>
-      )}
-    </section>
-  </main>
-);}
+
+        <section className="ultimate-hero-dark">
+          <div>
+            <p>Welcome back, {name}! 👋</p>
+
+            <h1>
+              Your <span>Ultimate</span>
+              <br />
+              Career Command Center
+            </h1>
+
+            <p>
+              All premium tools, insights and opportunities — powered to
+              accelerate your career.
+            </p>
+
+            <div className="ultimate-hero-buttons">
+              <button onClick={scrollToWorkspace}>Launch Workspace →</button>
+              <button className="ghost" onClick={scrollToWorkspace}>
+                Explore All Tools
+              </button>
+            </div>
+          </div>
+
+          <div className="ultimate-access-card">
+            <div className="crown">👑</div>
+            <h2>Ultimate Access</h2>
+            <p>All 9 Tools Unlocked</p>
+            <span>● Active</span>
+          </div>
+        </section>
+
+        <section className="ultimate-stats-row">
+          {stats.map((item) => (
+            <div className="ultimate-stat-card" key={item[1]}>
+              <div className="stat-icon">{item[0]}</div>
+              <p>{item[1]}</p>
+              <h2>{item[2]}</h2>
+              <span>{item[3]}</span>
+              <b>↑ {item[4]}</b>
+            </div>
+          ))}
+        </section>
+
+        <section className="ultimate-grid-layout">
+          <div className="ultimate-panel large" id="ultimate-ai-workspace">
+            <div className="panel-head">
+              <div>
+                <h2>Workspace</h2>
+                <p>Powerful tools to supercharge your career</p>
+              </div>
+              <button onClick={scrollToWorkspace}>View All Tools →</button>
+            </div>
+
+            <div className="ultimate-tool-grid">
+              {tools.map((tool) => (
+                <button
+                  className="ultimate-tool-mini"
+                  key={tool[1]}
+                  onClick={toolActions[tool[1]]}
+                >
+                  <span>{tool[0]}</span>
+                  <div>
+                    <h4>{tool[1]}</h4>
+                    <p>{tool[2]}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="ultimate-panel">
+            <h2>Career Assistant</h2>
+            <p>Ask anything about your career</p>
+
+            <div className="ultimate-ai-input">
+              <input
+                placeholder="Example: How can I become a Data Engineer in 6 months?"
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+              />
+              <button onClick={generateAIAnswer}>➤</button>
+            </div>
+
+            <div className="quick-tags">
+              <button onClick={() => setAiQuestion("How can I improve my resume?")}>
+                Improve my resume
+              </button>
+              <button onClick={() => setAiQuestion("Find high paying jobs for my profile")}>
+                Find high paying jobs
+              </button>
+              <button onClick={() => setAiQuestion("Give me interview preparation tips")}>
+                Interview tips
+              </button>
+              <button onClick={() => setAiQuestion("Create my skill roadmap")}>
+                Skill roadmap
+              </button>
+            </div>
+          </div>
+
+          <div className="ultimate-panel">
+            <div className="panel-head">
+              <div>
+                <h2>Your Roadmap</h2>
+                <p>Personalized steps to achieve your dream career</p>
+              </div>
+              <button onClick={() => openToolModal("Career Roadmap")}>
+                View Full Roadmap →
+              </button>
+            </div>
+
+            <div className="roadmap-dark">
+              <div className="done">✓ Step 1 <b>Improve Resume Score</b></div>
+              <div>▣ Step 2 <b>Complete Trust Passport</b></div>
+              <div>✦ Step 3 <b>Apply to 90% Match Jobs</b></div>
+              <div>◉ Step 4 <b>Practice Interviews</b></div>
+            </div>
+          </div>
+
+          <div className="ultimate-panel">
+            <h2>Recent Activity</h2>
+            <div className="activity-dark">
+              ✦ Auto applied to 15 new jobs <span>2 min ago</span>
+            </div>
+            <div className="activity-dark">
+              ↻ Resume score improved to 92% <span>1 hour ago</span>
+            </div>
+          </div>
+
+          <div className="ultimate-panel">
+            <h2>Top Job Matches</h2>
+            <div className="job-match-dark" onClick={goToJobs}>
+              <div>💼</div>
+              <div>
+                <h4>Senior Data Engineer</h4>
+                <p>Tech Mahindra</p>
+              </div>
+              <b>95% Match</b>
+            </div>
+          </div>
+
+          <div className="ultimate-panel">
+            <h2>Skills Analysis</h2>
+            <div className="skill-circle">86%</div>
+            <p>In Demand: 28</p>
+            <p>Good: 12</p>
+            <p>Need Improvement: 4</p>
+            <button
+              className="skills-action-btn"
+              onClick={() => openToolModal("Skills Analysis")}
+            >
+              View Details →
+            </button>
+          </div>
+        </section>
+
+        {activeTool && (
+          <div className="ultimate-modal-overlay">
+            <div className="ultimate-tool-modal">
+              <button className="modal-close" onClick={() => setActiveTool(null)}>
+                ×
+              </button>
+
+              {activeTool === "Premium Job Alerts" ? (
+                <div className="premium-alerts-box">
+                  <div className="auto-premium-icon">🔔</div>
+
+                  <h3>Premium Job Alerts</h3>
+                  <h4>Powered instant opportunity tracking</h4>
+
+                  <div className="premium-alerts-grid">
+                    {[
+                      {
+                        icon: "🚀",
+                        title: "High-match Data Engineer role found",
+                        desc: "96% match • Bangalore • 2 min ago",
+                        action: () => {
+                          setActiveTool(null);
+                          window.location.href = "/jobs";
+                        },
+                      },
+                      {
+                        icon: "💎",
+                        title: "Hidden recruiter-only opportunity",
+                        desc: "Private opening • Premium access",
+                        action: () => {
+                          setActiveTool(null);
+                          window.location.href = "/hidden-opportunities";
+                        },
+                      },
+                      {
+                        icon: "⚡",
+                        title: "Fast apply window closing soon",
+                        desc: "Apply within 24 hours",
+                        action: () => {
+                          setActiveTool("Auto Apply Engine");
+                        },
+                      },
+                      {
+                        icon: "🎯",
+                        title: "Salary upgraded match",
+                        desc: "₹10–18 LPA role matched",
+                        action: () => {
+                          setActiveTool(null);
+                          window.location.href = "/salary-predictor";
+                        },
+                      },
+                    ].map((item) => (
+                      <div className="premium-alert-card" key={item.title}>
+                        <span>{item.icon}</span>
+                        <div>
+                          <h5>{item.title}</h5>
+                          <p>{item.desc}</p>
+                        </div>
+                        <button onClick={item.action}>View →</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : activeTool === "Auto Apply Engine" ? (
+                <div className="auto-apply-premium-box">
+                  <div className="auto-premium-icon">🚀</div>
+
+                  <h3>Auto Apply Engine</h3>
+                  <h4>One-Time Auto Apply Consent</h4>
+
+                  <p>
+                    Give permission once. NoPromptJobs will automatically apply
+                    for suitable and recommended jobs based on your skills,
+                    profile, location, experience and job preference.
+                  </p>
+
+                  <div className="auto-consent-premium-card">
+                    <div className="auto-shield-card">
+                      <span>🛡</span>
+                    </div>
+
+                   <div className="auto-consent-premium-card">
+
+  <div className="auto-consent-left">
+
+    <div className="auto-document-card">
+      <div className="auto-document-lines"></div>
+      <div className="auto-document-lines"></div>
+      <div className="auto-document-lines"></div>
+
+      <div className="auto-shield-floating">
+        ✓
+      </div>
+
+      <div className="auto-ring"></div>
+    </div>
+
+  </div>
+
+  <div className="auto-consent-right">
+
+    <label className="auto-consent-premium-check">
+      <input
+        type="checkbox"
+        checked={autoApplyConsent}
+        onChange={(e) => {
+          setAutoApplyConsent(e.target.checked);
+          localStorage.setItem(
+            "autoApplyConsent",
+            e.target.checked
+          );
+        }}
+      />
+
+      <div>
+        <b>
+          I allow NoPromptJobs to auto-apply for suitable jobs
+          on my behalf.
+        </b>
+
+        <small>
+          Your data is safe and secure with us.
+          You can pause or stop anytime.
+        </small>
+      </div>
+    </label>
+
+  </div>
+
+</div>
+                  </div>
+
+                  {!autoApplyConsent ? (
+                    <button className="auto-premium-btn" onClick={giveAutoApplyConsent}>
+                      Give Consent →
+                    </button>
+                  ) : (
+                    <button
+                      className="auto-premium-btn"
+                      onClick={startAutoApply}
+                      disabled={autoApplyLoading}
+                    >
+                      {autoApplyLoading
+                        ? "Applying to suitable jobs..."
+                        : "Start Auto Apply Now →"}
+                    </button>
+                  )}
+
+                  {autoApplyResult && (
+                    <div className="auto-success-premium">
+                      <span>✅</span>
+                      <div>
+                        <h2>{autoApplyResult.appliedCount || 0}</h2>
+                        <p>Jobs Applied Successfully</p>
+                        <small>
+                          Matched Jobs: {autoApplyResult.totalMatchedJobs || 0}
+                        </small>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <h2>{activeTool}</h2>
+                  <p>
+                    This feature is unlocked in Ultimate Plan. Frontend flow is
+                    ready. Backend API connection will be added step by step.
+                  </p>
+                  <button onClick={() => setActiveTool(null)}>
+                    Continue Setup →
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
 function SettingsPage() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
