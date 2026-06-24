@@ -2,6 +2,7 @@ const express = require("express");
 const Job = require("../models/job");
 const Candidate = require("../models/Candidate");
 const Application = require("../models/Application");
+const Notification = require("../models/Notification");
 
 const router = express.Router();
 
@@ -62,10 +63,7 @@ router.get("/recommended/:candidateId", async (req, res) => {
         },
         {
           location: {
-            $regex:
-              candidate.preferredLocation ||
-              candidate.location ||
-              "",
+            $regex: candidate.preferredLocation || candidate.location || "",
             $options: "i",
           },
         },
@@ -96,10 +94,22 @@ router.post("/:jobId/apply/:candidateId", async (req, res) => {
       });
     }
 
+    const job = await Job.findById(req.params.jobId);
+
     const application = await Application.create({
       jobId: req.params.jobId,
       candidateId: req.params.candidateId,
       autoApplied: false,
+    });
+
+    await Notification.create({
+      candidateId: req.params.candidateId,
+      title: "Application Submitted",
+      message: `Your application for ${
+        job?.title || job?.jobTitle || job?.role || "this job"
+      } was submitted successfully.`,
+      type: "Job Alerts",
+      read: false,
     });
 
     res.status(201).json({
@@ -151,6 +161,16 @@ router.post("/auto-apply/:candidateId", async (req, res) => {
       }
     }
 
+    if (applications.length > 0) {
+      await Notification.create({
+        candidateId: candidate._id,
+        title: "Auto Apply Completed",
+        message: `Auto Apply submitted ${applications.length} job applications successfully.`,
+        type: "Job Alerts",
+        read: false,
+      });
+    }
+
     res.json({
       message: "Auto apply completed",
       appliedCount: applications.length,
@@ -165,7 +185,6 @@ router.post("/auto-apply/:candidateId", async (req, res) => {
 });
 
 // get single job by id
-// keep this near bottom, before module.exports
 router.get("/:id", async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);

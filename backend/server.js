@@ -14,6 +14,8 @@ const jobRoutes = require("./routes/jobs");
 const paymentRoutes = require("./routes/payments");
 const autoApplyRoutes = require("./routes/autoApplyRoutes");
 const protectedPdfRoutes = require("./routes/protectedPdfRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const recruiterRoutes = require("./routes/recruiterRoutes");
 
 const app = express();
 
@@ -64,6 +66,10 @@ app.use(express.urlencoded({ extended: true }));
 // PASSPORT
 // ================================
 app.use(passport.initialize());
+app.use(
+  "/api/notifications",
+  notificationRoutes
+);
 
 
 // ================================
@@ -178,6 +184,7 @@ app.use("/api/protected-pdf", protectedPdfRoutes);
 app.use("/api/ai", aiRoutes);
 
 app.use("/api/auto-apply", autoApplyRoutes);
+app.use("/api/recruiter", recruiterRoutes);
 
 
 // ================================

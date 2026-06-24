@@ -6,6 +6,7 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Candidate = require("../models/Candidate");
+const Notification = require("../models/Notification");
 
 const router = express.Router();
 
@@ -15,7 +16,6 @@ let admin = null;
 
 try {
   admin = require("firebase-admin");
-
   const serviceAccount = require("../config/firebase-service-account.json");
 
   if (!admin.apps.length) {
@@ -364,7 +364,10 @@ router.post(
       };
 
       if (files.profileImage?.[0]) {
-        candidateData.profileImageUrl = await uploadFile(files.profileImage[0], "image");
+        candidateData.profileImageUrl = await uploadFile(
+          files.profileImage[0],
+          "image"
+        );
       }
 
       if (files.resume?.[0]) {
@@ -372,14 +375,29 @@ router.post(
       }
 
       if (files.selfIntroVideo?.[0]) {
-        candidateData.selfIntroVideoUrl = await uploadFile(files.selfIntroVideo[0], "video");
+        candidateData.selfIntroVideoUrl = await uploadFile(
+          files.selfIntroVideo[0],
+          "video"
+        );
       }
 
       if (files.projectVideo?.[0]) {
-        candidateData.projectVideoUrl = await uploadFile(files.projectVideo[0], "video");
+        candidateData.projectVideoUrl = await uploadFile(
+          files.projectVideo[0],
+          "video"
+        );
       }
 
       const candidate = await Candidate.create(candidateData);
+
+      await Notification.create({
+        candidateId: candidate._id,
+        title: "Profile Created Successfully",
+        message:
+          "Your NoPromptJobs candidate profile has been created successfully.",
+        type: "Profile Updates",
+        read: false,
+      });
 
       delete global.candidateOtpStore[email];
 
@@ -464,6 +482,14 @@ router.patch("/:id/view", async (req, res) => {
       });
     }
 
+    await Notification.create({
+      candidateId: candidate._id,
+      title: "Recruiter viewed your profile",
+      message: "A recruiter viewed your candidate profile.",
+      type: "Recruiter Activity",
+      read: false,
+    });
+
     return res.json({
       success: true,
       candidate,
@@ -528,6 +554,15 @@ router.post("/firebase-login", async (req, res) => {
         firebaseUid: decoded.uid,
         profileImageUrl,
         isEmailVerified: true,
+      });
+
+      await Notification.create({
+        candidateId: candidate._id,
+        title: "Profile Created Successfully",
+        message:
+          "Your NoPromptJobs candidate profile has been created successfully.",
+        type: "Profile Updates",
+        read: false,
       });
     } else {
       candidate.authProvider = candidate.authProvider || provider || "firebase";
