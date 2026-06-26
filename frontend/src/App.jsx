@@ -1362,89 +1362,6 @@ function ServicesPage() {
   const ULTIMATE_PAYMENT_LINK = "https://rzp.io/rzp/gT6RQiD";
 
   const [selectedFeature, setSelectedFeature] = useState(null);
-  const [candidate, setCandidate] = useState(null);
-  const [jobs, setJobs] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponMessage, setCouponMessage] = useState("");
-  const [couponLoading, setCouponLoading] = useState(false);
-
-  useEffect(() => {
-    const loadRealtimeData = async () => {
-      try {
-        if (candidateId) {
-          const candidateRes = await axios.get(
-            `${API_URL}/api/candidates/${candidateId}`
-          );
-
-          setCandidate(
-            candidateRes.data.candidate ||
-              candidateRes.data.data ||
-              candidateRes.data
-          );
-
-          try {
-            const notificationRes = await axios.get(
-              `${API_URL}/api/notifications/candidate/${candidateId}`
-            );
-
-            const notificationData =
-              notificationRes.data.notifications ||
-              notificationRes.data.data ||
-              notificationRes.data ||
-              [];
-
-            setNotifications(Array.isArray(notificationData) ? notificationData : []);
-          } catch {
-            setNotifications([]);
-          }
-        }
-
-        const jobsRes = await axios.get(`${API_URL}/api/jobs`);
-        const jobsData = jobsRes.data.jobs || jobsRes.data.data || jobsRes.data || [];
-
-        setJobs(Array.isArray(jobsData) ? jobsData : []);
-      } catch (error) {
-        console.log("SERVICES LOAD ERROR:", error.response?.data || error.message);
-      }
-    };
-
-    loadRealtimeData();
-  }, [candidateId]);
-
-  const profileStrength = Math.min(
-    40 +
-      (candidate?.resumeUrl ? 15 : 0) +
-      (candidate?.profileImageUrl ? 10 : 0) +
-      (candidate?.skills?.length ? 15 : 0) +
-      (candidate?.profileSummary ? 10 : 0) +
-      (candidate?.selfIntroVideoUrl ? 10 : 0),
-    100
-  );
-
-  const applicationsCount =
-    candidate?.applications?.length ||
-    notifications.filter((item) =>
-      `${item.title || ""} ${item.message || ""}`
-        .toLowerCase()
-        .includes("application")
-    ).length ||
-    0;
-
-  const interviewCount =
-    candidate?.interviews?.length ||
-    notifications.filter((item) =>
-      `${item.type || ""} ${item.title || ""}`
-        .toLowerCase()
-        .includes("interview")
-    ).length ||
-    0;
-
-  const autoApplyCount = candidate?.autoAppliedCount || 0;
-
-  const totalCompanies = new Set(
-    jobs.map((job) => job.company || job.companyName).filter(Boolean)
-  ).size;
 
   const isUltimateUser = () => {
     const savedUser = JSON.parse(localStorage.getItem("user")) || {};
@@ -1457,13 +1374,9 @@ function ServicesPage() {
     );
   };
 
-  const goUltimateDashboard = () => {
-    window.location.href = "/ultimate-dashboard";
-  };
-
-  const openPayment = (plan = "Ultimate") => {
-    if (!candidateId) {
-      window.location.href = "/candidate-login";
+  const openPayment = (plan) => {
+    if (isUltimateUser()) {
+      window.location.href = "/ultimate-dashboard";
       return;
     }
 
@@ -1475,84 +1388,42 @@ function ServicesPage() {
     window.location.href = paymentLink;
   };
 
-  const activateUltimateByCoupon = () => {
-    const savedUser = JSON.parse(localStorage.getItem("user")) || {};
+  /*
+    TEMPORARY TESTING CODE - REMOVED FROM UI
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        ...savedUser,
-        plan: "Ultimate",
-        subscriptionStatus: "active",
-      })
-    );
+    Use only for local testing if needed:
 
-    localStorage.setItem("plan", "Ultimate");
-    localStorage.setItem("subscriptionStatus", "active");
+    const testActivateUltimate = () => {
+      const user = JSON.parse(localStorage.getItem("user")) || {};
 
-    goUltimateDashboard();
-  };
-
-  const applyCoupon = async () => {
-    const code = couponCode.trim().toUpperCase();
-
-    if (!candidateId) {
-      window.location.href = "/candidate-login";
-      return;
-    }
-
-    if (!code) {
-      setCouponMessage("Please enter coupon code.");
-      return;
-    }
-
-    try {
-      setCouponLoading(true);
-      setCouponMessage("");
-
-      const res = await axios.post(`${API_URL}/api/coupons/validate`, {
-        couponCode: code,
-        candidateId,
-        plan: "Ultimate",
-      });
-
-      if (res.data?.success && res.data?.freeAccess) {
-        activateUltimateByCoupon();
-        return;
-      }
-
-      if (res.data?.success && res.data?.paymentLink) {
-        window.location.href = res.data.paymentLink;
-        return;
-      }
-
-      setCouponMessage(res.data?.message || "Invalid coupon. Continue with payment.");
-    } catch (error) {
-      setCouponMessage(
-        error.response?.data?.message ||
-          "Coupon validation failed. Continue with payment."
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...user,
+          plan: "Ultimate",
+          subscriptionStatus: "active",
+        })
       );
-    } finally {
-      setCouponLoading(false);
-    }
-  };
 
-  const subscribeNow = () => {
+      localStorage.setItem("plan", "Ultimate");
+      localStorage.setItem("subscriptionStatus", "active");
+
+      window.location.href = "/ultimate-dashboard";
+    };
+  */
+
+  const goUltimateDashboard = () => {
     if (isUltimateUser()) {
-      goUltimateDashboard();
-      return;
+      window.location.href = "/ultimate-dashboard";
+    } else {
+      openPayment("Ultimate");
     }
-
-    if (couponCode.trim()) {
-      applyCoupon();
-      return;
-    }
-
-    openPayment("Ultimate");
   };
 
   const goProfile = () => {
-    window.location.href = candidateId ? `/profile/${candidateId}` : "/candidate-login";
+    window.location.href = candidateId
+      ? `/profile/${candidateId}`
+      : "/candidate-login";
   };
 
   const startFreePlan = () => {
@@ -1561,29 +1432,85 @@ function ServicesPage() {
       : "/candidate-email-verify";
   };
 
+  const openFeatureDetails = (feature) => {
+    setSelectedFeature(feature);
+  };
+
+  const closeFeatureDetails = () => {
+    setSelectedFeature(null);
+  };
+
   const featureDetails = {
     "Auto Apply Engine": {
-      benefits: ["Save time", "Apply faster", "Never miss matching jobs", "Track applications"],
+      steps: [
+        "AI reads your profile, skills and preferred role.",
+        "System finds matching jobs from backend.",
+        "Candidate gives permission before auto apply.",
+        "Applications are tracked inside dashboard.",
+      ],
+      benefits: ["Save time", "Apply faster", "Never miss matching jobs", "Track all applications"],
     },
     "Instant Job Alerts": {
+      steps: [
+        "AI monitors newly posted jobs.",
+        "Matches jobs with your skills.",
+        "Sends instant alerts.",
+        "Candidate can apply immediately.",
+      ],
       benefits: ["Early access to jobs", "Better response chance", "Personalized alerts"],
     },
     "Hidden Opportunities": {
+      steps: [
+        "System identifies recruiter-only roles.",
+        "AI checks your profile eligibility.",
+        "Matching hidden jobs appear in your dashboard.",
+        "You can apply before public competition increases.",
+      ],
       benefits: ["Access exclusive jobs", "Less competition", "Better recruiter visibility"],
     },
-    "AI Match Score": {
+    "AIMatch Score": {
+      steps: [
+        "AI compares your profile with job description.",
+        "Checks skills, experience, location and role fit.",
+        "Generates match percentage.",
+        "Shows best-fit jobs first.",
+      ],
       benefits: ["Know your hiring chance", "Apply to right jobs", "Improve weak areas"],
     },
     "Resume Studio": {
+      steps: [
+        "Upload or create your resume.",
+        "AI checks ATS score, keywords and structure.",
+        "System recommends improvements.",
+        "Download recruiter-ready resume.",
+      ],
       benefits: ["Better ATS score", "Professional resume", "More interview chances"],
     },
     "Trust Passport": {
+      steps: [
+        "Verify identity, resume, skills and project proof.",
+        "System builds a trust profile.",
+        "Recruiters see verified signals.",
+        "Your profile stands out from normal candidates.",
+      ],
       benefits: ["Higher recruiter confidence", "Proof-based profile", "Better credibility"],
     },
     "AI Interview Prep": {
+      steps: [
+        "Select role and interview type.",
+        "Practice HR and technical questions.",
+        "AI gives feedback.",
+        "Improve before real interviews.",
+      ],
       benefits: ["Better confidence", "Role-based preparation", "Interview readiness"],
     },
     "Skill Intelligence": {
+      steps: [
+        "AI reads your current skills.",
+        "Compares with market demand.",
+        "Shows missing skills and salary impact.",
+        "Creates learning roadmap.",
+      ],
       benefits: ["Clear skill roadmap", "Salary growth insights", "Career planning"],
     },
   };
@@ -1610,7 +1537,7 @@ function ServicesPage() {
     {
       img: "pro/ai-match-score.png",
       tag: "AI MATCH SCORE",
-      title: "AI Match Score",
+      title: "AIMatch Score",
       desc: "Know your chances of getting hired before you even apply.",
     },
     {
@@ -1626,7 +1553,7 @@ function ServicesPage() {
       desc: "Verify your identity, resume, projects and skills with smart verification.",
     },
     {
-      img: "pro/interview-prep.png",
+      img: "/pro/interview-prep.png",
       tag: "AI INTERVIEW PREP",
       title: "AI Interview Prep",
       desc: "Practice HR and technical interviews and improve with AI feedback.",
@@ -1654,47 +1581,28 @@ function ServicesPage() {
             </h1>
 
             <p>
-              Apply smarter, get noticed earlier, and land your dream role faster with AI.
+              Apply smarter, get noticed earlier, and land your dream role faster
+              with the power of AI.
             </p>
 
             <div className="hero-actions">
-              <button onClick={subscribeNow}>
-                {isUltimateUser() ? "👑 Open Ultimate Dashboard" : "👑 Subscribe Now"}
-              </button>
+              {isUltimateUser() ? (
+                <button onClick={goUltimateDashboard}>👑 Ultimate Dashboard</button>
+              ) : (
+                <button onClick={() => openPayment("Ultimate")}>
+                  👑 Upgrade to Ultimate
+                </button>
+              )}
 
               <button
-                onClick={() =>
-                  document
-                    .getElementById("all-features")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
+                onClick={() => {
+                  const section = document.getElementById("all-features");
+                  if (section) section.scrollIntoView({ behavior: "smooth" });
+                }}
               >
                 Explore All Features →
               </button>
             </div>
-
-            {!isUltimateUser() && (
-              <div className="coupon-box">
-                <input
-                  value={couponCode}
-                  placeholder="Enter coupon code"
-                  onChange={(e) => {
-                    setCouponCode(e.target.value);
-                    setCouponMessage("");
-                  }}
-                />
-
-                <button onClick={applyCoupon} disabled={couponLoading}>
-                  {couponLoading ? "Checking..." : "Apply Coupon"}
-                </button>
-
-                <button onClick={() => openPayment("Ultimate")}>
-                  Continue Payment →
-                </button>
-
-                {couponMessage && <p>{couponMessage}</p>}
-              </div>
-            )}
 
             <div className="hero-trust-row">
               <span>✅ AI-Powered</span>
@@ -1706,9 +1614,7 @@ function ServicesPage() {
 
           <div className="pro-dashboard-preview">
             <aside className="dash-sidebar">
-              <div className="dash-logo">
-                {(candidate?.name || user?.name || "N").charAt(0)}
-              </div>
+              <div className="dash-logo">N</div>
               <p className="active">Overview</p>
               <p>Applications</p>
               <p>Auto Apply</p>
@@ -1720,61 +1626,50 @@ function ServicesPage() {
             <section className="dash-main">
               <div className="dash-head">
                 <div>
-                  <h3>
-                    Welcome back, {candidate?.name || user?.name || "Candidate"}! 👋
-                  </h3>
+                  <h3>Welcome back, {user?.name || "VENKATESHA A"}! 👋</h3>
                   <small>Smart career overview</small>
                 </div>
 
-                <div className="trust-chip">
-                  {candidate?.isEmailVerified ? "🛡 Verified" : "⏳ Pending"}
-                </div>
+                <div className="trust-chip">🛡 Verified</div>
               </div>
 
               <div className="dash-grid">
                 <div className="dash-card score-card">
                   <p>AI Match Score</p>
-                  <h2>{profileStrength}</h2>
-                  <span>{profileStrength >= 85 ? "Excellent Match" : "Improve Profile"}</span>
+                  <h2>90</h2>
+                  <span>Excellent Match</span>
                 </div>
 
                 <div className="dash-card applications">
                   <div>
                     <p>Applications</p>
-                    <h3>{applicationsCount}</h3>
+                    <h3>0</h3>
                     <small>Applied</small>
                   </div>
 
                   <div>
-                    <h3>{interviewCount}</h3>
+                    <h3>0</h3>
                     <small>Interviewing</small>
                   </div>
                 </div>
 
                 <div className="dash-card strength">
                   <p>Profile Strength</p>
-                  <h2>{profileStrength}%</h2>
-                  <span>{profileStrength >= 80 ? "Strong" : "Needs Update"}</span>
+                  <h2>90%</h2>
+                  <span>Strong</span>
                 </div>
 
                 <div className="dash-card auto">
                   <p>Auto Apply</p>
-                  <h2>{autoApplyCount}</h2>
+                  <h2>0</h2>
                   <span>Applied</span>
                 </div>
 
                 <div className="dash-card activity">
                   <p>Recent Activity</p>
-
-                  {notifications.length > 0 ? (
-                    notifications.slice(0, 3).map((item, index) => (
-                      <span key={item._id || index}>
-                        {item.title || item.message}
-                      </span>
-                    ))
-                  ) : (
-                    <span>No recent activity yet</span>
-                  )}
+                  <span>Recruiter viewed your profile</span>
+                  <span>Profile strength improved</span>
+                  <span>New jobs matched your skills</span>
                 </div>
               </div>
             </section>
@@ -1782,30 +1677,53 @@ function ServicesPage() {
         </section>
 
         <section className="pro-stats-strip">
-          <div>👥 <b>{applicationsCount}</b><span>Applications</span></div>
-          <div>☑️ <b>{jobs.length}</b><span>Live Jobs</span></div>
-          <div>🏢 <b>{totalCompanies}</b><span>Hiring Companies</span></div>
-          <div>⭐ <b>{profileStrength}%</b><span>Profile Strength</span></div>
-          <div>🌟 <b>{notifications.length}</b><span>Career Alerts</span></div>
+          <div>👥 <b>0</b><span>Applications</span></div>
+          <div>☑️ <b>7</b><span>Live Jobs</span></div>
+          <div>🏢 <b>6</b><span>Hiring Companies</span></div>
+          <div>⭐ <b>90%</b><span>Profile Strength</span></div>
+          <div>🌟 <b>28</b><span>Career Alerts</span></div>
         </section>
 
         <section id="all-features" className="pro-feature-section">
           <div className="pro-section-title">
             <span>POWERFUL FEATURES</span>
             <h2>Everything NoPromptPro has, plus your own AI trust layer</h2>
-            <p>Powerful tools to automate, analyze and accelerate your career journey.</p>
+            <p>
+              Powerful tools to automate, analyze and accelerate your career journey.
+            </p>
           </div>
 
-          <div className="pro-feature-grid">
-            {featureCards.map((item) => (
-              <article className="pro-feature-card" key={item.title}>
-                <span className="feature-tag">+ {item.tag}</span>
-                <img src={item.img} alt={item.title} className="feature-image" />
-                <button className="feature-btn" onClick={() => setSelectedFeature(item)}>
-                  Explore →
-                </button>
-              </article>
-            ))}
+          <div className="pro-feature-scroll">
+            <div className="pro-feature-track">
+              {[...featureCards, ...featureCards, ...featureCards].map(
+                (item, index) => (
+                  <article
+                    className="pro-feature-card"
+                    key={`${item.title}-${index}`}
+                  >
+                    <span className="feature-tag">+ {item.tag}</span>
+
+                    <img
+                      src={item.img}
+                      alt={item.title}
+                      className="feature-image"
+                    />
+
+                    <div className="feature-card-body">
+                      <h3>{item.title}</h3>
+                      <p>{item.desc}</p>
+                    </div>
+
+                    <button
+                      className="feature-btn"
+                      onClick={() => openFeatureDetails(item)}
+                    >
+                      Explore →
+                    </button>
+                  </article>
+                )
+              )}
+            </div>
           </div>
         </section>
 
@@ -1813,22 +1731,24 @@ function ServicesPage() {
           <div className="trust-passport-banner">
             <div>
               <h2>Candidate Trust Passport</h2>
+
               <p>
                 Your verified identity and professional credibility that opens
                 doors to better opportunities.
               </p>
+
               <button onClick={goProfile}>Explore Trust Passport →</button>
             </div>
 
             <div className="trust-list">
-              <span>{candidate?.isEmailVerified ? "✅" : "⏳"} Email Verified</span>
-              <span>{candidate?.resumeUrl ? "✅" : "⏳"} Resume Added</span>
-              <span>{candidate?.skills?.length ? "✅" : "⏳"} Skills Added</span>
-              <span>{candidate?.linkedinUrl ? "✅" : "⏳"} LinkedIn Added</span>
-              <span>{candidate?.profileSummary ? "✅" : "⏳"} Profile Summary</span>
-              <span>{candidate?.selfIntroVideoUrl ? "✅" : "⏳"} Self Intro Video</span>
-              <span>{candidate?.projectVideoUrl ? "✅" : "⏳"} Project Proof</span>
-              <span>{candidate?.currentRole ? "✅" : "⏳"} Role Intent</span>
+              <span>✅ Identity Verified</span>
+              <span>✅ Resume Verified</span>
+              <span>✅ Skill Certifications</span>
+              <span>✅ LinkedIn Verification</span>
+              <span>✅ Resume Tested</span>
+              <span>✅ Real User Videos</span>
+              <span>✅ Status Verification</span>
+              <span>✅ Strong Role Intent</span>
             </div>
           </div>
 
@@ -1857,23 +1777,28 @@ function ServicesPage() {
             <h3>Basic</h3>
             <h2>₹0</h2>
             <p>For basic job seekers</p>
+
             <span>✓ Basic profile</span>
             <span>✓ Job alerts</span>
             <span>✓ Basic resume upload</span>
+
             <button onClick={startFreePlan}>Get Started</button>
           </div>
 
           <div className="price-card popular">
             <b>Most Popular</b>
+
             <h3>Pro</h3>
             <h2>₹899/month</h2>
             <p>For serious job seekers</p>
+
             <span>✓ Auto Apply</span>
             <span>✓ Job Alerts</span>
             <span>✓ AI Resume Studio</span>
             <span>✓ Trust Passport</span>
             <span>✓ Interview Practice</span>
             <span>✓ Salary Predictor</span>
+
             <button onClick={() => openPayment("Pro")}>Start Pro →</button>
           </div>
 
@@ -1881,21 +1806,34 @@ function ServicesPage() {
             <h3>Ultimate</h3>
             <h2>₹1999/month</h2>
             <p>For career accelerators</p>
+
             <span>✓ Everything in Pro</span>
             <span>✓ Priority recruiter visibility</span>
             <span>✓ AI Career Coach</span>
             <span>✓ Advanced insights</span>
-            <button onClick={subscribeNow}>
-              {isUltimateUser() ? "👑 Ultimate Dashboard" : "Subscribe Ultimate"}
-            </button>
+
+            {isUltimateUser() ? (
+              <button onClick={goUltimateDashboard}>👑 Ultimate Dashboard</button>
+            ) : (
+              <button onClick={() => openPayment("Ultimate")}>
+                Upgrade to Ultimate →
+              </button>
+            )}
           </div>
 
           <div className="final-pro-cta">
             <h2>Ready to accelerate your career?</h2>
+
             <p>Use premium AI tools based on your real profile and live job data.</p>
-            <button onClick={subscribeNow}>
-              {isUltimateUser() ? "👑 Ultimate Dashboard" : "Subscribe Now"}
-            </button>
+
+            {isUltimateUser() ? (
+              <button onClick={goUltimateDashboard}>👑 Ultimate Dashboard</button>
+            ) : (
+              <button onClick={() => openPayment("Ultimate")}>
+                Upgrade to Ultimate →
+              </button>
+            )}
+
             <ul>
               <li>✅ Real-time career insights</li>
               <li>✅ Live job intelligence</li>
@@ -1907,24 +1845,20 @@ function ServicesPage() {
         {selectedFeature && (
           <div className="feature-premium-overlay">
             <div className="feature-premium-page">
-              <button
-                className="feature-close-btn"
-                onClick={() => setSelectedFeature(null)}
-              >
+              <button className="feature-close-btn" onClick={closeFeatureDetails}>
                 ×
               </button>
 
               <section className="feature-premium-hero">
                 <div className="feature-left-panel">
-                  <button
-                    className="back-feature-btn"
-                    onClick={() => setSelectedFeature(null)}
-                  >
+                  <button className="back-feature-btn" onClick={closeFeatureDetails}>
                     ← Back to all features
                   </button>
 
                   <span className="feature-pill">⚡ {selectedFeature.tag}</span>
+
                   <h1>{selectedFeature.title}</h1>
+
                   <p>{selectedFeature.desc}</p>
 
                   <div className="feature-mini-benefits">
@@ -1944,15 +1878,17 @@ function ServicesPage() {
                   </div>
 
                   <div className="feature-actions">
-                    <button onClick={subscribeNow}>
-                      {isUltimateUser()
-                        ? "👑 Open Ultimate Dashboard"
-                        : "Subscribe / Apply Coupon"}
-                    </button>
+                    {isUltimateUser() ? (
+                      <button onClick={goUltimateDashboard}>
+                        👑 Open Ultimate Dashboard
+                      </button>
+                    ) : (
+                      <button onClick={() => openPayment("Ultimate")}>
+                        Start Using Feature →
+                      </button>
+                    )}
 
-                    <button onClick={() => setSelectedFeature(null)}>
-                      Back to Services
-                    </button>
+                    <button onClick={closeFeatureDetails}>Back to Services</button>
                   </div>
                 </div>
 
@@ -1960,303 +1896,421 @@ function ServicesPage() {
                   <img src={selectedFeature.img} alt={selectedFeature.title} />
                 </div>
               </section>
+
+              <section className="feature-bottom-grid">
+                <div className="feature-how-card">
+                  <h2>How it works</h2>
+
+                  <div className="feature-steps-row">
+                    {(featureDetails[selectedFeature.title]?.steps || []).map(
+                      (step, index) => (
+                        <div className="feature-step-item" key={index}>
+                          <div className="step-icon">
+                            {index === 0 && "🤖"}
+                            {index === 1 && "🎯"}
+                            {index === 2 && "🚀"}
+                            {index === 3 && "📈"}
+                          </div>
+
+                          <small>Step {String(index + 1).padStart(2, "0")}</small>
+
+                          <h3>
+                            {index === 0 && "Profile Analysis"}
+                            {index === 1 && "Smart Matching"}
+                            {index === 2 && "Take Action"}
+                            {index === 3 && "Track Results"}
+                          </h3>
+
+                          <p>{step}</p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div className="feature-benefit-card">
+                  <h2>Key Benefits</h2>
+
+                  <div className="benefit-grid">
+                    {(featureDetails[selectedFeature.title]?.benefits || []).map(
+                      (benefit, index) => (
+                        <div className="benefit-item" key={index}>
+                          <span>
+                            {index === 0 && "📈"}
+                            {index === 1 && "🖥"}
+                            {index === 2 && "🎯"}
+                            {index === 3 && "💎"}
+                          </span>
+
+                          <div>
+                            <h3>{benefit}</h3>
+                            <p>
+                              Improve your career workflow with smarter AI-powered
+                              automation.
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
         )}
-
-        <PremiumFooter />
       </main>
     </>
   );
-}
-function NotificationsPage() {
+}function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
-  const [candidate, setCandidate] = useState(null);
   const [activeTab, setActiveTab] = useState("All");
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const user = JSON.parse(localStorage.getItem("user")) || {};
-  const candidateId = user?._id || user?.id || user?.candidateId;
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  useEffect(() => {
-    const loadNotifications = async () => {
-      try {
-        const candidateRes = await axios.get(
-          `${API_URL}/api/candidates/${candidateId}`
-        );
+  const candidateId = user?.candidateId || user?._id || user?.id || "";
 
-        const candidateData =
-          candidateRes.data.candidate ||
-          candidateRes.data.data ||
-          candidateRes.data;
+  const profileStrength =
+    Number(user?.profileStrength) ||
+    Number(localStorage.getItem("profileStrength")) ||
+    90;
 
-        setCandidate(candidateData);
+  const goTo = (path) => {
+    window.location.href = path;
+  };
 
-        const notificationRes = await axios.get(
-          `${API_URL}/api/notifications/candidate/${candidateId}`
-        );
+  const authHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
 
-        const realNotifications =
-          notificationRes.data.notifications ||
-          notificationRes.data.data ||
-          notificationRes.data ||
-          [];
+  const loadNotifications = async () => {
+    if (!candidateId) {
+      goTo("/candidate-login");
+      return;
+    }
 
-        setNotifications(Array.isArray(realNotifications) ? realNotifications : []);
-      } catch (err) {
-        console.log("NOTIFICATIONS LOAD ERROR:", err.response?.data || err.message);
-        setNotifications([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (candidateId) loadNotifications();
-  }, [candidateId]);
-
-  const markAllAsRead = async () => {
     try {
-      await axios.put(`${API_URL}/api/notifications/read-all/${candidateId}`);
+      setLoading(true);
 
-      setNotifications((prev) =>
-        prev.map((item) => ({ ...item, read: true, isRead: true }))
+      const res = await axios.get(
+        `${API_URL}/api/notifications/candidate/${candidateId}`,
+        { headers: authHeaders() }
       );
+
+      const data =
+        res.data.notifications ||
+        res.data.items ||
+        res.data.data ||
+        res.data ||
+        [];
+
+      setNotifications(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert("Failed to mark notifications as read");
+      console.log("NOTIFICATION LOAD ERROR:", err.response?.data || err.message);
+      setNotifications([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const tabs = [
-    "All",
-    "Recruiter Activity",
-    "Job Alerts",
-    "Profile Updates",
-    "Interviews",
-    "Announcements",
-  ];
+  useEffect(() => {
+    loadNotifications();
+  }, [candidateId]);
+
+  const unreadCount = notifications.filter((n) => !n.read && !n.isRead).length;
+
+  const markAllAsRead = async () => {
+    try {
+      await axios.put(
+        `${API_URL}/api/notifications/candidate/${candidateId}/read-all`,
+        {},
+        { headers: authHeaders() }
+      );
+
+      loadNotifications();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to mark all as read");
+    }
+  };
+
+  const getType = (item) =>
+    item.type || item.category || item.notificationType || "System";
 
   const filteredNotifications =
     activeTab === "All"
       ? notifications
-      : notifications.filter(
-          (item) =>
-            item.type?.toLowerCase() === activeTab.toLowerCase() ||
-            item.category?.toLowerCase() === activeTab.toLowerCase()
+      : activeTab === "Unread"
+      ? notifications.filter((n) => !n.read && !n.isRead)
+      : notifications.filter((n) =>
+          getType(n).toLowerCase().includes(activeTab.toLowerCase())
         );
 
-  const unreadCount = notifications.filter(
-    (item) => !item.read && !item.isRead
-  ).length;
+  const getIcon = (item) => {
+    const type = getType(item).toLowerCase();
 
-  const thisWeekCount = notifications.filter((item) => {
-    if (!item.createdAt) return false;
-    const created = new Date(item.createdAt);
-    const now = new Date();
-    const diffDays = (now - created) / (1000 * 60 * 60 * 24);
-    return diffDays <= 7;
-  }).length;
+    if (type.includes("recruiter")) return "👁";
+    if (type.includes("job")) return "💼";
+    if (type.includes("application")) return "✉";
+    if (type.includes("interview")) return "📅";
+    if (type.includes("profile")) return "⭐";
 
-  const formatTime = (date) => {
-    if (!date) return "Recently";
-
-    const created = new Date(date);
-    const now = new Date();
-    const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
-
-    if (diffHours < 1) return "Just now";
-    if (diffHours < 24) return `${diffHours}h ago`;
-
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return "Yesterday";
-    return `${diffDays} days ago`;
+    return "🔔";
   };
 
-  if (loading) {
-    return <div className="loading">Loading Notifications...</div>;
-  }
+  const getColor = (item) => {
+    const type = getType(item).toLowerCase();
+
+    if (type.includes("recruiter")) return "purple";
+    if (type.includes("job")) return "green";
+    if (type.includes("application")) return "blue";
+    if (type.includes("interview")) return "orange";
+    if (type.includes("profile")) return "violet";
+
+    return "sky";
+  };
+
+  const getTitle = (item) =>
+    item.title || item.heading || item.subject || "Notification";
+
+  const getText = (item) =>
+    item.message || item.text || item.description || "You have a new update.";
+
+  const getTime = (item) => {
+    const date = item.createdAt || item.updatedAt || item.time;
+
+    if (!date) return "Recently";
+
+    return new Date(date).toLocaleString();
+  };
 
   return (
-    <main className="npj-notifications-page">
-      <header className="candidate-topbar npj-notification-header">
-        <img src="/logo.png" alt="NoPromptJobs" className="candidate-top-logo" />
+    <>
+      <main className="notifications-saas-page">
+        <CandidatePremiumSidebar
+          candidateId={candidateId}
+          unreadCount={unreadCount}
+          profileStrength={profileStrength}
+          goTo={goTo}
+        />
 
-        <div className="candidate-search">
-          <span>🔍</span>
-          <input placeholder="Search jobs, companies..." />
-        </div>
-
-        <nav className="candidate-nav">
-          <a href={`/dashboard/${candidateId}`}>Dashboard</a>
-          <a href="/jobs">Jobs</a>
-          <a href="/companies">Companies</a>
-          <a href="/services">Services</a>
-          <a className="active" href="/notifications">
-            Notifications <b>{unreadCount}</b>
-          </a>
-        </nav>
-
-        <div className="candidate-user-pill">
-          <span>{candidate?.name?.charAt(0) || "V"}</span>
-          <b>{candidate?.name || user?.name || "Candidate"}</b>
-        </div>
-      </header>
-
-      <section className="npj-notification-layout">
-        <section className="npj-notification-main">
-          <div className="npj-notification-hero">
-            <div className="notification-icon-large">🔔</div>
-
-            <div>
-              <h1>Notifications</h1>
-              <p>
-                Track recruiter actions, job alerts, profile updates and
-                interview reminders.
-              </p>
+        <section className="notifications-saas-main">
+          <header className="npj-compact-topbar">
+            <div className="npj-compact-search">
+              <button type="button" className="search-btn">⌕</button>
+              <input placeholder="Search jobs, companies, skills..." />
             </div>
-          </div>
 
-          <div className="npj-notification-panel">
-            <div className="notification-tabs">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  className={activeTab === tab ? "active" : ""}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-
-              <button className="mark-read-btn" onClick={markAllAsRead}>
-                ✓ Mark all as read
+            <div className="npj-compact-userarea">
+              <button type="button" onClick={() => goTo("/notifications")}>
+                🔔{unreadCount > 0 && <b>{unreadCount}</b>}
               </button>
-            </div>
 
-            {filteredNotifications.length > 0 ? (
-              <div className="notification-list">
-                {filteredNotifications.map((item, index) => (
-                  <article
-                    className={`premium-notification-row ${
-                      !item.read && !item.isRead ? "unread" : ""
-                    }`}
-                    key={item._id || index}
+              <button type="button" onClick={() => goTo("/notifications")}>
+                ✉
+              </button>
+
+              <div className="profile-dropdown-wrap">
+                <div
+                  className="npj-compact-user"
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                >
+                  <img src={user?.profileImageUrl || "/profile.png"} alt="Candidate" />
+
+                  <div>
+                    <b>{user?.name || "VENKATESHA A"}</b>
+                    <span>Candidate</span>
+                  </div>
+
+                  <small>⌄</small>
+                </div>
+
+                {showProfileMenu && (
+                  <div className="profile-dropdown-menu">
+                    <button onClick={() => goTo(`/profile/${candidateId}`)}>
+                      <span>♙</span> My Profile
+                    </button>
+
+                    <button onClick={() => goTo(`/profile/${candidateId}?edit=true`)}>
+                      <span>✎</span> Edit Profile
+                    </button>
+
+                    <button onClick={() => goTo("/candidate-settings")}>
+                      <span>⚙</span> Settings
+                    </button>
+
+                    <button onClick={() => goTo("/help-center")}>
+                      <span>?</span> Help Center
+                    </button>
+
+                    <hr />
+
+                    <button
+                      className="logout-menu-btn"
+                      onClick={() => {
+                        localStorage.clear();
+                        goTo("/candidate-login");
+                      }}
+                    >
+                      <span>↳</span> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
+          <section className="notifications-layout">
+            <section className="notifications-left">
+              <section className="notifications-hero">
+                <div>
+                  <span>🔔 Notification Center</span>
+                  <h1>Notifications</h1>
+                  <p>
+                    Stay updated with recruiter actions, job alerts, profile
+                    updates and interview reminders.
+                  </p>
+                </div>
+
+                <div className="notification-bell-art">
+                  <div className="bell-glow"></div>
+                  <div className="bell-main">🔔</div>
+                  <b>{unreadCount}</b>
+                </div>
+              </section>
+
+              <section className="notification-tabs">
+                {[
+                  ["All", notifications.length],
+                  ["Unread", unreadCount],
+                  ["Job", notifications.filter((n) => getType(n).toLowerCase().includes("job")).length],
+                  ["Application", notifications.filter((n) => getType(n).toLowerCase().includes("application")).length],
+                  ["Interview", notifications.filter((n) => getType(n).toLowerCase().includes("interview")).length],
+                  ["Recruiter", notifications.filter((n) => getType(n).toLowerCase().includes("recruiter")).length],
+                ].map((tab) => (
+                  <button
+                    className={activeTab === tab[0] ? "active" : ""}
+                    key={tab[0]}
+                    onClick={() => setActiveTab(tab[0])}
                   >
-                    <div className="notification-icon">
-                      {item.icon || "🔔"}
-                    </div>
-
-                    <div className="notification-content">
-                      <h3>
-                        {item.title || "Notification"}
-                        {!item.read && !item.isRead && <span>New</span>}
-                      </h3>
-
-                      <p>{item.message || item.description || "No details added"}</p>
-
-                      <small>
-                        {item.type || item.category || "General"}
-                      </small>
-                    </div>
-
-                    <div className="notification-time">
-                      {formatTime(item.createdAt || item.date)}
-                    </div>
-
-                    <button className="notification-arrow">›</button>
-                  </article>
+                    {tab[0]} <b>{tab[1]}</b>
+                  </button>
                 ))}
+
+                <button className="mark-read" onClick={markAllAsRead}>
+                  ✓ Mark all as read
+                </button>
+
+                <button className="filter-btn" onClick={loadNotifications}>
+                  ↻ Refresh
+                </button>
+              </section>
+
+              <section className="notification-list-premium">
+                {loading ? (
+                  <div className="empty-premium-box">Loading notifications...</div>
+                ) : filteredNotifications.length > 0 ? (
+                  filteredNotifications.map((item, index) => {
+                    const isUnread = !item.read && !item.isRead;
+
+                    return (
+                      <article
+                        className={`notification-row-premium ${
+                          isUnread ? "unread" : ""
+                        }`}
+                        key={item._id || index}
+                      >
+                        <div className={`notification-icon ${getColor(item)}`}>
+                          {getIcon(item)}
+                        </div>
+
+                        <section>
+                          <h3>
+                            {getTitle(item)}
+                            {isUnread && <span>New</span>}
+                          </h3>
+
+                          <p>{getText(item)}</p>
+
+                          <em>{getType(item)}</em>
+                        </section>
+
+                        <aside>
+                          <time>{getTime(item)}</time>
+                          {isUnread && <i></i>}
+                        </aside>
+                      </article>
+                    );
+                  })
+                ) : (
+                  <div className="empty-premium-box">
+                    No notifications found.
+                  </div>
+                )}
+              </section>
+            </section>
+
+            <aside className="notifications-right">
+              <div className="notification-summary-card">
+                <h3>Notification Summary</h3>
+
+                <div>
+                  <article>
+                    <span>🔔</span>
+                    <b>{unreadCount}</b>
+                    <p>Unread</p>
+                  </article>
+
+                  <article>
+                    <span>👁</span>
+                    <b>{notifications.length}</b>
+                    <p>This Week</p>
+                  </article>
+
+                  <article>
+                    <span>✅</span>
+                    <b>{notifications.length}</b>
+                    <p>Total</p>
+                  </article>
+
+                  <article>
+                    <span>🎯</span>
+                    <b>{user?.profileViews || 0}</b>
+                    <p>Profile Views</p>
+                  </article>
+                </div>
               </div>
-            ) : (
-              <div className="empty-premium-box">
-                No notifications found.
+
+              <div className="notification-settings-card">
+                <h3>⚙ Notification Settings</h3>
+
+                {[
+                  ["Recruiter Activity", "Get notified when recruiters view your profile"],
+                  ["Job Alerts", "Receive alerts for new job matches"],
+                  ["Application Updates", "Get updates on application status"],
+                  ["Interview Reminders", "Get reminders for scheduled interviews"],
+                ].map((item) => (
+                  <div className="notification-toggle-row" key={item[0]}>
+                    <section>
+                      <b>{item[0]}</b>
+                      <p>{item[1]}</p>
+                    </section>
+                    <span></span>
+                  </div>
+                ))}
+
+                <button onClick={() => goTo("/candidate-settings")}>
+                  Manage all notification preferences →
+                </button>
               </div>
-            )}
-          </div>
+            </aside>
+          </section>
         </section>
-
-        <aside className="npj-notification-right">
-          <div className="notification-summary-card">
-            <h3>Notification Summary</h3>
-
-            <div className="summary-grid">
-              <div>
-                <span>🔔</span>
-                <h2>{unreadCount}</h2>
-                <p>Unread</p>
-              </div>
-
-              <div>
-                <span>👁</span>
-                <h2>{thisWeekCount}</h2>
-                <p>This Week</p>
-              </div>
-
-              <div>
-                <span>✅</span>
-                <h2>{notifications.length}</h2>
-                <p>Total</p>
-              </div>
-
-              <div>
-                <span>🎯</span>
-                <h2>{candidate?.profileViews || 0}</h2>
-                <p>Profile Views</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="notification-settings-card">
-            <h3>⚙ Notification Settings</h3>
-
-            <div className="setting-row">
-              <div>
-                <b>Recruiter Activity</b>
-                <p>Profile views, shortlists, messages</p>
-              </div>
-              <input type="checkbox" defaultChecked />
-            </div>
-
-            <div className="setting-row">
-              <div>
-                <b>Job Alerts</b>
-                <p>New jobs and match alerts</p>
-              </div>
-              <input type="checkbox" defaultChecked />
-            </div>
-
-            <div className="setting-row">
-              <div>
-                <b>Interview Updates</b>
-                <p>Reminders and schedules</p>
-              </div>
-              <input type="checkbox" defaultChecked />
-            </div>
-
-            <div className="setting-row">
-              <div>
-                <b>Profile Updates</b>
-                <p>Trust score and verification</p>
-              </div>
-              <input type="checkbox" defaultChecked />
-            </div>
-          </div>
-
-          <div className="premium-notification-upgrade">
-            <span>👑</span>
-            <div>
-              <h3>Unlock Premium Notifications</h3>
-              <p>Get instant alerts, early job access and premium benefits.</p>
-            </div>
-            <button onClick={() => (window.location.href = "/services")}>
-              Upgrade Now →
-            </button>
-          </div>
-        </aside>
-      </section>
+      </main>
 
       <PremiumFooter />
-    </main>
+    </>
   );
 }
 function ResumeStudioPage() {
@@ -3935,12 +3989,12 @@ function App() {
   if (path === "/services") return <ServicesPage />;
   if (path === "/notifications") return <NotificationsPage />;
   if (path === "/interview-alerts") return <InterviewAlertsPage />;
-  if (path === "/resume-studio") return <ResumeStudioPage />;
-  if (path === "/skill-analyzer") return <SkillAnalyzerPage />;
+  if (path === "/resume-studio") return <ServicesPage />;
+  if (path === "/skill-analyzer") return <ServicesPage />;
   if (path === "/trust-passport") return <TrustPassportPage />;
   if (path === "/salary-predictor") return <SalaryPredictorPage />;
   if (path === "/hidden-opportunities") return <HiddenOpportunitiesPage />;
-  if (path === "/ai-interview-prep") return <AIInterviewPrepPage />;
+  if (path === "/ai-interview-prep") return <ServicesPage />;
   if (path === "/settings") return <SettingsPage />;
   if (path === "/candidate-settings") return <SettingsPage />;
   if (path === "/saved-jobs") return <SavedJobsPage />;
@@ -5423,29 +5477,29 @@ function CandidateProfile() {
           {unreadCount > 0 && <em>{unreadCount}</em>}
         </button>
 
-        <p className="npj-menu-label">AI Tools</p>
+        <p className="npj-menu-label">CARRER Tools</p>
 
-        <button onClick={() => goTo("/resume-studio")}>
+        <button onClick={() => goTo("/services")}>
           <span>◫</span>
           <b>Resume Studio</b>
         </button>
 
-        <button onClick={() => goTo("/ai-interview-prep")}>
+        <button onClick={() => goTo("/services")}>
           <span>◉</span>
           <b>AI Interview Prep</b>
         </button>
 
-        <button onClick={() => goTo("/skill-assessment")}>
+        <button onClick={() => goTo("/services")}>
           <span>◎</span>
           <b>Skill Assessment</b>
         </button>
 
-        <button onClick={() => goTo("/salary-predictor")}>
+        <button onClick={() => goTo("/services")}>
           <span>◔</span>
           <b>Salary Predictor</b>
         </button>
 
-        <button onClick={() => goTo("/trust-passport")}>
+        <button onClick={() => goTo("/services")}>
           <span>▣</span>
           <b>Trust Passport</b>
           <i>{profileStrength}%</i>
@@ -5880,21 +5934,21 @@ return (
 
           <p className="npj-menu-label">AI Tools</p>
 
-          {[
-            ["◫", "Resume Studio", "/resume-studio"],
-            ["◉", "AI Interview Prep", "/ai-interview-prep"],
-            ["◎", "Skill Assessment", "/skill-assessment"],
-            ["◔", "Salary Predictor", "/salary-predictor"],
-            ["▣", "Trust Passport", "/trust-passport"],
-            ["🔗", "Career Tools", "/services"],
-          ].map((item) => (
-            <button key={item[1]} onClick={() => goTo(item[2])}>
-              <span>{item[0]}</span>
-              <b>{item[1]}</b>
-              {item[1] === "Trust Passport" && <i>{profileStrength}%</i>}
-              {item[1] === "Career Tools" && <small>›</small>}
-            </button>
-          ))}
+{[
+  ["◫", "Resume Studio"],
+  ["◉", "AI Interview Prep"],
+  ["◎", "Skill Assessment"],
+  ["◔", "Salary Predictor"],
+  ["▣", "Trust Passport"],
+  ["🔗", "Career Tools"],
+].map((item) => (
+  <button key={item[1]} onClick={() => goTo("/services")}>
+    <span>{item[0]}</span>
+    <b>{item[1]}</b>
+    {item[1] === "Trust Passport" && <i>{profileStrength}%</i>}
+    {item[1] === "Career Tools" && <small>›</small>}
+  </button>
+))}
 
           <p className="npj-menu-label">Account</p>
 
@@ -6341,7 +6395,7 @@ function PremiumFooter() {
           <h3>Job Seekers</h3>
           <a href="/jobs">Browse Jobs</a>
           <a href="/applications">Applications</a>
-          <a href="/resume-studio">Resume Studio</a>
+          <a href="/services">📄 Resume Studio</a>
           <a href="/ai-interview-prep">AI Interview Prep</a>
           <a href="/salary-predictor">Salary Predictor</a>
           <a href="/trust-passport">Trust Passport</a>
