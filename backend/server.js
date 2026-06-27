@@ -16,6 +16,8 @@ const autoApplyRoutes = require("./routes/autoApplyRoutes");
 const protectedPdfRoutes = require("./routes/protectedPdfRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const recruiterRoutes = require("./routes/recruiterRoutes");
+const resumeStudioRoutes = require("./routes/resumeStudioRoutes");
+const skillAnalyzerRoutes = require("./routes/skillAnalyzerRoutes");
 
 const app = express();
 
@@ -71,6 +73,8 @@ app.use(
   notificationRoutes
 );
 
+app.use("/api/skill-analyzer", skillAnalyzerRoutes);
+app.use("/api/resume-studio", resumeStudioRoutes);
 
 // ================================
 // HOME ROUTE

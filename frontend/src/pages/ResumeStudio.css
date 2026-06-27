@@ -1,0 +1,478 @@
+* {
+  box-sizing: border-box;
+}
+
+.rs-page {
+  min-height: 100vh;
+  display: flex;
+  background:
+    radial-gradient(circle at top right, rgba(111, 66, 255, 0.18), transparent 35%),
+    linear-gradient(135deg, #020817, #07152e 55%, #020817);
+  color: #ffffff;
+  font-family: Inter, system-ui, Arial, sans-serif;
+}
+
+.rs-sidebar {
+  width: 270px;
+  padding: 24px 16px;
+  background: rgba(2, 8, 23, 0.9);
+  border-right: 1px solid rgba(148, 163, 184, 0.18);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.rs-logo img {
+  width: 155px;
+}
+
+.rs-logo p {
+  color: #a5b4fc;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.rs-sidebar nav {
+  margin-top: 32px;
+  display: grid;
+  gap: 9px;
+}
+
+.rs-sidebar nav a {
+  padding: 13px 14px;
+  color: #dbeafe;
+  text-decoration: none;
+  border-radius: 14px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.rs-sidebar nav a:hover,
+.rs-sidebar nav a.active {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  color: white;
+  box-shadow: 0 14px 30px rgba(59, 130, 246, 0.35);
+}
+
+.rs-sidebar nav span {
+  background: rgba(37, 99, 235, 0.7);
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+
+.rs-plan {
+  margin-top: 30px;
+  padding: 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.18), rgba(124, 58, 237, 0.16));
+  border: 1px solid rgba(45, 212, 191, 0.25);
+}
+
+.rs-plan h3,
+.rs-plan p {
+  margin: 0 0 8px;
+}
+
+.rs-plan p {
+  color: #22c55e;
+  font-weight: 800;
+}
+
+.rs-plan small {
+  color: #cbd5e1;
+}
+
+.rs-plan button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  background: rgba(15, 23, 42, 0.7);
+  color: white;
+  font-weight: 800;
+}
+
+.rs-main {
+  flex: 1;
+  padding: 22px 28px 40px;
+}
+
+.rs-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.rs-topbar input {
+  height: 56px;
+  border-radius: 18px;
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  background: rgba(15, 23, 42, 0.72);
+  color: white;
+  padding: 0 24px;
+  font-size: 16px;
+}
+
+.rs-topbar button,
+.rs-primary {
+  border: none;
+  border-radius: 15px;
+  padding: 15px 24px;
+  background: linear-gradient(135deg, #2563eb, #9333ea);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.rs-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rs-user img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+
+.rs-user small {
+  display: block;
+  color: #86efac;
+}
+
+.rs-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 270px 1fr;
+  gap: 22px;
+  padding: 34px;
+  border-radius: 26px;
+  background: rgba(15, 23, 42, 0.74);
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.28);
+}
+
+.rs-hero h1 {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1.15;
+}
+
+.rs-hero p {
+  color: #bfdbfe;
+  font-size: 16px;
+}
+
+.rs-tags {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.rs-tags span {
+  padding: 10px 15px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.88);
+  font-weight: 800;
+}
+
+.rs-score-card,
+.rs-trust,
+.rs-card,
+.rs-consent {
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  border-radius: 22px;
+}
+
+.rs-score-card {
+  text-align: center;
+  padding: 26px;
+}
+
+.rs-score {
+  width: 155px;
+  height: 155px;
+  margin: auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  font-weight: 1000;
+  background:
+    radial-gradient(circle, #111827 54%, transparent 56%),
+    conic-gradient(#22c55e, #06b6d4, #7c3aed, #1e293b);
+}
+
+.rs-score small {
+  font-size: 18px;
+}
+
+.rs-score-card strong {
+  color: #facc15;
+  text-transform: uppercase;
+}
+
+.rs-trust {
+  padding: 22px;
+}
+
+.rs-trust h3 {
+  margin-top: 0;
+}
+
+.rs-trust p {
+  margin: 10px 0;
+  color: #dbeafe;
+}
+
+.rs-consent {
+  margin-top: 18px;
+  padding: 18px 22px;
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(6, 95, 70, 0.22);
+}
+
+.rs-consent label {
+  display: flex;
+  gap: 14px;
+  line-height: 1.5;
+  color: #d1fae5;
+}
+
+.rs-consent input {
+  width: 20px;
+  height: 20px;
+}
+
+.rs-grid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.25fr 0.95fr;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.rs-card {
+  padding: 24px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+.rs-card h2 {
+  margin-top: 0;
+  font-size: 21px;
+}
+
+.rs-upload {
+  display: block;
+  border: 1px dashed rgba(96, 165, 250, 0.45);
+  border-radius: 20px;
+  text-align: center;
+  padding: 26px;
+  cursor: pointer;
+  background: rgba(2, 8, 23, 0.35);
+}
+
+.rs-upload input {
+  display: none;
+}
+
+.upload-icon {
+  font-size: 42px;
+}
+
+.rs-upload button {
+  margin-top: 15px;
+  padding: 13px 26px;
+  border-radius: 13px;
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #9333ea);
+  color: white;
+  font-weight: 900;
+}
+
+.rs-file {
+  margin: 14px 0;
+  padding: 13px;
+  border-radius: 14px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+}
+
+textarea {
+  width: 100%;
+  min-height: 180px;
+  margin-top: 16px;
+  border-radius: 18px;
+  padding: 18px;
+  background: rgba(2, 8, 23, 0.75);
+  color: white;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  resize: vertical;
+}
+
+.rs-primary {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.rs-process p {
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 13px;
+  background: rgba(30, 41, 59, 0.55);
+  color: #bbf7d0;
+  font-weight: 700;
+}
+
+.rs-breakdown {
+  margin-top: 20px;
+}
+
+.rs-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.rs-row strong {
+  color: #86efac;
+}
+
+.optimized pre {
+  max-height: 500px;
+  overflow: auto;
+  white-space: pre-wrap;
+  background: rgba(2, 8, 23, 0.75);
+  border-radius: 18px;
+  padding: 18px;
+  color: #e0f2fe;
+  line-height: 1.55;
+}
+
+.rs-empty {
+  min-height: 420px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: #93c5fd;
+}
+
+.rs-empty:first-letter {
+  font-size: 45px;
+}
+
+.green,
+.red {
+  padding-left: 18px;
+  line-height: 1.8;
+}
+
+.green li {
+  color: #86efac;
+}
+
+.red li {
+  color: #fca5a5;
+}
+
+.rs-bottom {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 22px;
+}
+
+.notice {
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.4), rgba(15, 23, 42, 0.9));
+}
+
+.rs-recent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  margin-top: 12px;
+  border-radius: 14px;
+  background: rgba(30, 41, 59, 0.65);
+}
+
+.rs-recent small {
+  display: block;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.rs-recent span {
+  color: #86efac;
+  font-weight: 900;
+}
+
+@media (max-width: 1200px) {
+  .rs-grid,
+  .rs-hero,
+  .rs-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .rs-sidebar {
+    display: none;
+  }
+
+  .rs-topbar {
+    grid-template-columns: 1fr;
+  }
+}.rs-secondary {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 15px;
+  padding: 14px 22px;
+  background: rgba(15, 23, 42, 0.8);
+  color: #dbeafe;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.rs-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rs-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rs-actions button {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+.rs-actions button:last-child {
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+}.ultimate-dashboard-child-content {
+  width: 100%;
+  padding: 0;
+}
+
+.ultimate-dashboard-child-content .rs-page {
+  min-height: auto;
+  background: transparent;
+}
+
+.ultimate-dashboard-child-content .rs-main {
+  padding: 0;
+}

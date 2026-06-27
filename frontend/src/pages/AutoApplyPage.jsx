@@ -70,7 +70,10 @@ export default function ApplicationsPage() {
       }
 
       setApplications(Array.isArray(data) ? data : []);
-      localStorage.setItem("applicationsCount", String(Array.isArray(data) ? data.length : 0));
+      localStorage.setItem(
+        "applicationsCount",
+        String(Array.isArray(data) ? data.length : 0)
+      );
     } catch (err) {
       console.log("APPLICATIONS ERROR:", err.response?.data || err.message);
       setApplications([]);
@@ -176,7 +179,8 @@ export default function ApplicationsPage() {
     return applications.filter((app) => {
       const status = app.status || app.applicationStatus || "Applied";
 
-      const title = app.role || app.title || app.jobTitle || app.job?.title || "";
+      const title =
+        app.role || app.title || app.jobTitle || app.job?.title || "";
       const company = app.company || app.companyName || app.job?.company || "";
       const location = app.location || app.job?.location || "";
 
@@ -219,7 +223,8 @@ export default function ApplicationsPage() {
   const getStatus = (app) => app.status || app.applicationStatus || "Applied";
 
   const getDate = (app) => {
-    const date = app.appliedDate || app.appliedAt || app.createdAt || app.updatedAt;
+    const date =
+      app.appliedDate || app.appliedAt || app.createdAt || app.updatedAt;
     return date ? new Date(date).toLocaleDateString() : "Today";
   };
 
@@ -307,7 +312,9 @@ export default function ApplicationsPage() {
                 <div className="apps-empty-icon">📭</div>
                 <h3>No applications found</h3>
                 <p>Click Add Application to add your first real application.</p>
-                <button onClick={() => setShowAdd(true)}>+ Add Application</button>
+                <button onClick={() => setShowAdd(true)}>
+                  + Add Application
+                </button>
               </div>
             )}
 
@@ -333,13 +340,17 @@ export default function ApplicationsPage() {
 
                       <div className="app-meta">
                         <small>📅 {getDate(app)}</small>
-                        <small>⚡ {app.matchScore || app.aiMatchScore || 92}% Match</small>
+                        <small>
+                          ⚡ {app.matchScore || app.aiMatchScore || 92}% Match
+                        </small>
                       </div>
                     </section>
 
                     <select
                       value={getStatus(app)}
-                      onChange={(e) => updateStatus(app._id || app.id, e.target.value)}
+                      onChange={(e) =>
+                        updateStatus(app._id || app.id, e.target.value)
+                      }
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s}>{s}</option>
@@ -442,6 +453,8 @@ export default function ApplicationsPage() {
           </div>
         </div>
       )}
+
+      <ApplicationsFooter />
     </section>
   );
 }
@@ -468,5 +481,111 @@ function Action({ icon, title, text, onClick }) {
         <p>{text}</p>
       </div>
     </div>
+  );
+}
+
+function ApplicationsFooter() {
+  const goTo = (path) => {
+    window.location.href = path;
+  };
+
+  return (
+    <footer className="apps-premium-footer">
+      <div className="apps-footer-grid">
+        <div className="apps-footer-brand-block">
+          <div className="apps-footer-brand">
+            <div className="apps-footer-logo">NP</div>
+            <div>
+              <h3>NOPROMPTJOBS.COM</h3>
+              <p>SMART HIRING. REAL CAREERS.</p>
+            </div>
+          </div>
+
+          <p className="apps-footer-desc">
+            NoPromptJobs.com is a next-generation hiring platform built to
+            connect verified candidates with trusted career opportunities.
+          </p>
+
+          <div className="apps-footer-socials">
+            <button onClick={() => window.open("https://linkedin.com", "_blank")}>
+              in
+            </button>
+            <button onClick={() => window.open("https://twitter.com", "_blank")}>
+              X
+            </button>
+            <button onClick={() => window.open("https://facebook.com", "_blank")}>
+              f
+            </button>
+            <button onClick={() => window.open("https://instagram.com", "_blank")}>
+              ig
+            </button>
+            <button onClick={() => window.open("https://youtube.com", "_blank")}>
+              ▶
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h4>For Candidates</h4>
+          <button onClick={() => goTo("/jobs")}>Browse Jobs</button>
+          <button onClick={() => goTo("/resume-studio")}>Resume Studio</button>
+          <button onClick={() => goTo("/ai-interview-prep")}>
+            AI Interview Prep
+          </button>
+          <button onClick={() => goTo("/skill-analyzer")}>Skill Analyzer</button>
+          <button onClick={() => goTo("/salary-predictor")}>
+            Salary Predictor
+          </button>
+        </div>
+
+        <div>
+          <h4>For Employers</h4>
+          <button onClick={() => goTo("/recruiter-post-job")}>Post a Job</button>
+          <button onClick={() => goTo("/recruiter-search")}>
+            Search Candidates
+          </button>
+          <button onClick={() => goTo("/recruiter-login")}>
+            Recruiter Login
+          </button>
+          <button onClick={() => goTo("/pricing")}>Pricing Plans</button>
+          <button onClick={() => goTo("/hiring-solutions")}>
+            Hiring Solutions
+          </button>
+        </div>
+
+        <div>
+          <h4>Company</h4>
+          <button onClick={() => goTo("/about")}>About Us</button>
+          <button onClick={() => goTo("/how-it-works")}>How It Works</button>
+          <button onClick={() => goTo("/blog")}>Blog</button>
+          <button onClick={() => goTo("/careers")}>Careers</button>
+          <button onClick={() => goTo("/contact")}>Contact Us</button>
+        </div>
+
+        <div>
+          <h4>Stay Updated</h4>
+          <p>Get the latest jobs, hiring insights and career tips.</p>
+
+          <div className="apps-footer-subscribe">
+            <input placeholder="Enter your email" />
+            <button onClick={() => alert("Subscribed successfully")}>
+              Subscribe
+            </button>
+          </div>
+
+          <div className="apps-store-row">
+            <button>▶ Google Play</button>
+            <button> App Store</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="apps-footer-bottom">
+        <p>© 2026 NoPromptJobs.com. All rights reserved.</p>
+        <span>🛡 Secure & Verified Platform</span>
+        <span>🔐 ISO 27001 Certified</span>
+        <span>🇮🇳 Made with ❤️ in India</span>
+      </div>
+    </footer>
   );
 }

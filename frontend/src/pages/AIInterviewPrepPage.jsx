@@ -159,14 +159,22 @@ function AIInterviewPrepPage() {
   }, []);
 
   useEffect(() => {
-    if (started && !report) {
-      timerRef.current = setInterval(() => {
-        setElapsed((prev) => prev + 1);
-      }, 1000);
-    }
+  if (started && !report) {
+    timerRef.current = setInterval(() => {
+      setElapsed((prev) => {
+        if (prev >= 1800) {
+          clearInterval(timerRef.current);
+          finishInterview();
+          return 1800;
+        }
 
-    return () => clearInterval(timerRef.current);
-  }, [started, report]);
+        return prev + 1;
+      });
+    }, 1000);
+  }
+
+  return () => clearInterval(timerRef.current);
+}, [started, report]);
 
   useEffect(() => {
     return () => {
@@ -186,7 +194,10 @@ function AIInterviewPrepPage() {
     const sec = String(seconds % 60).padStart(2, "0");
     return `${min}:${sec}`;
   };
-
+const getTimeRemaining = () => {
+  const remaining = Math.max(1800 - elapsed, 0);
+  return formatTime(remaining);
+};
   const addMessage = (sender, text) => {
     setMessages((prev) => [
       ...prev,
@@ -819,114 +830,130 @@ const token =
       </aside>
 
       <section className="ai-live-main">
-        <header className="ai-live-header">
-          <div>
-            <span>⏱ {formatTime(elapsed)}</span>
-            <p>{started && !report ? "Interview in Progress" : activeMenu}</p>
-          </div>
+      <header className="ai-live-header premium-live-header">
+  <div className="live-session-title">
+    <span>🎙 LIVE INTERVIEW SESSION</span>
+    {started && !report && <b>LIVE</b>}
+  </div>
 
-          {started && !report && (
-            <button onClick={finishInterview}>End Interview</button>
-          )}
+  <div className="live-wave">
+    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+  </div>
 
-          <div className="user-pill">{candidateName}</div>
-        </header>
+  <div className="live-time-box">
+    <strong>⏱ {getTimeRemaining()} / 30:00</strong>
+    <small>Time Remaining</small>
+  </div>
 
-        {!started && activeMenu === "Live Interview" && (
-          <section className="interview-setup-premium">
-            <div className="setup-copy">
-              <span>AI INTERVIEW SETUP</span>
-              <h1>
-                Practice with <b>Takshvi</b>, your female AI interviewer.
-              </h1>
+  {started && !report && (
+    <button className="end-interview-btn" onClick={finishInterview}>
+      End Interview
+    </button>
+  )}
+
+  <div className="user-pill">{candidateName}</div>
+</header>
+
+{!started && activeMenu === "Live Interview" && (
+  <section className="interview-setup-premium">
+    <div className="setup-copy">
+      <span>AI INTERVIEW SETUP</span>
+
+      <h1>
+        Practice with <b>Takshvi</b>, your female AI interviewer.
+      </h1>
+
+      <p>
+        Takshvi asks role-based questions, listens to your answer, waits during
+        silence and prepares a communication, English, confidence and technical
+        report.
+      </p>
+    </div>
+
+    <div className="setup-card-premium">
+      <h2>Let’s get you ready</h2>
+
+      <label>Candidate Name</label>
+      <input
+        value={candidateName}
+        onChange={(e) => setCandidateName(e.target.value)}
+        placeholder="Enter candidate name"
+      />
+
+      <label>Select Interview Role</label>
+      <select value={role} onChange={(e) => setRole(e.target.value)}>
+        <option>Data Engineer</option>
+        <option>SAP</option>
+        <option>HR</option>
+        <option>Cybersecurity</option>
+        <option>Data Science</option>
+        <option>DevOps</option>
+      </select>
+
+      <label>Upload Resume</label>
+      <input type="file" accept=".pdf,.doc,.docx,.txt" />
+
+      <button onClick={startInterview}>
+        Start Interview with Takshvi →
+      </button>
+    </div>
+  </section>
+)}
+
+{!started && activeMenu !== "Live Interview" && (
+  <section className="premium-menu-page">
+    <div className="premium-menu-hero">
+      <span>AI WORKSPACE</span>
+      <h1>{activeMenu}</h1>
+      <p>
+        Premium interview intelligence dashboard for real practice, saved
+        reports, protected PDF folders and career readiness.
+      </p>
+    </div>
+
+    <div className="premium-menu-grid">
+      {activeMenu === "Interview History" && (
+        <>
+          {savedReports.length === 0 ? (
+            <div className="premium-empty-state">
+              <h2>No interviews completed yet</h2>
               <p>
-                Takshvi asks role-based questions, listens to your answer,
-                waits during silence and prepares a communication, English,
-                confidence and technical report.
+                Complete your first Takshvi AI interview to see real saved
+                history here.
               </p>
-            </div>
-
-            <div className="setup-card-premium">
-              <h2>Let’s get you ready</h2>
-
-              <label>Candidate Name</label>
-              <input
-                value={candidateName}
-                onChange={(e) => setCandidateName(e.target.value)}
-              />
-
-              <label>Select Interview Role</label>
-              <select value={role} onChange={(e) => setRole(e.target.value)}>
-                <option>Data Engineer</option>
-                <option>SAP</option>
-                <option>HR</option>
-                <option>Cybersecurity</option>
-                <option>Data Science</option>
-                <option>DevOps</option>
-              </select>
-
-              <label>Upload Resume</label>
-              <input type="file" accept=".pdf,.doc,.docx,.txt" />
-
-              <button onClick={startInterview}>
-                Start Interview with Takshvi →
+              <button onClick={() => openMenu("Live Interview")}>
+                Start Interview →
               </button>
             </div>
-          </section>
-        )}
+          ) : (
+            savedReports.map((item) => (
+              <div className="premium-menu-card history-card" key={item.id}>
+                <div className="card-topline">
+                  <span>{item.role}</span>
+                  <em>{item.duration}</em>
+                </div>
 
-        {!started && activeMenu !== "Live Interview" && (
-          <section className="premium-menu-page">
-            <div className="premium-menu-hero">
-              <span>AI WORKSPACE</span>
-              <h1>{activeMenu}</h1>
-              <p>
-                Premium interview intelligence dashboard for real practice,
-                saved reports, protected PDF folders and career readiness.
-              </p>
-            </div>
+                <h3>{item.role} Interview</h3>
+                <b>{item.overall}%</b>
+                <p>{item.date}</p>
 
-            <div className="premium-menu-grid">
-              {activeMenu === "Interview History" && (
-                <>
-                  {savedReports.length === 0 ? (
-                    <div className="premium-empty-state">
-                      <h2>No interviews completed yet</h2>
-                      <p>
-                        Complete your first Takshvi AI interview to see real
-                        saved history here.
-                      </p>
-                      <button onClick={() => openMenu("Live Interview")}>
-                        Start Interview →
-                      </button>
-                    </div>
-                  ) : (
-                    savedReports.map((item) => (
-                      <div className="premium-menu-card history-card" key={item.id}>
-                        <div className="card-topline">
-                          <span>{item.role}</span>
-                          <em>{item.duration}</em>
-                        </div>
-                        <h3>{item.role} Interview</h3>
-                        <b>{item.overall}%</b>
-                        <p>{item.date}</p>
-                        <p>
-                          Answered: {item.answered}/{item.totalQuestions}
-                        </p>
-                        <button
-                          onClick={() => {
-                            setReport(item);
-                            setActiveMenu("My Reports");
-                          }}
-                        >
-                          View Report →
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </>
-              )}
+                <p>
+                  Answered: {item.answered}/{item.totalQuestions}
+                </p>
 
+                <button
+                  onClick={() => {
+                    setReport(item);
+                    setActiveMenu("My Reports");
+                  }}
+                >
+                  View Report →
+                </button>
+              </div>
+            ))
+          )}
+        </>
+      )}
               {activeMenu === "Practice Modes" &&
                 [
                   ["🎯 Technical Round", "Role-based deep technical questions"],
@@ -1068,107 +1095,195 @@ const token =
         )}
 
         {started && (
-          <section className="ai-live-grid-premium">
-            <div className="video-card-premium">
-              <div className="live-badge">● LIVE</div>
+  <section className="ai-interview-premium-layout">
+    <section className="interview-left-area">
+      <div className="interviewer-card">
+        <div className="live-badge">● LIVE</div>
 
-              <div className={`human-video ${speaking ? "talking" : ""}`}>
-                <div className="female-avatar">
-                  <div className="hair"></div>
+        <div className={`premium-avatar-wrap ${speaking ? "talking" : ""}`}>
+          <div className="takshvi-avatar">
+            <div className="avatar-face">👩‍💼</div>
+          </div>
 
-                  <div className="face">
-                    <span className="eye"></span>
-                    <span className="eye"></span>
-                    <div className="mouth"></div>
-                  </div>
+          <div className="avatar-caption">
+            <p>
+              {speaking
+                ? "Takshvi is asking the question..."
+                : listening
+                ? "Listening to your answer..."
+                : `Hello ${candidateName}, let's continue your interview.`}
+            </p>
+          </div>
+        </div>
 
-                  <div className="headset"></div>
-                  <div className="blazer"></div>
-                </div>
-              </div>
+        <div className="call-controls">
+          <button onClick={startListening}>🎙<span>Mic</span></button>
+          <button onClick={repeatLastQuestion}>🔊<span>Repeat</span></button>
+          <button className="end-call-btn" onClick={finishInterview}>
+            📞<span>End</span>
+          </button>
+        </div>
+      </div>
 
-              <div className="video-bottom">
-                <h2>Takshvi</h2>
-                <p>Senior Technical Recruiter</p>
+      <div className="interview-flow-card">
+        <h3>Interview Flow</h3>
 
-                <div className="voice-bars">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </div>
-
-              <div className="call-controls">
-                <button onClick={startListening}>🎙</button>
-                <button className="end-call-btn" onClick={finishInterview}>
-                  📞
-                </button>
-                <button onClick={repeatLastQuestion}>🔊</button>
-              </div>
+        <div className="interview-flow-line">
+          {[
+            ["Introduction", "1 Question"],
+            ["Technical", "3 Questions"],
+            ["Problem Solving", "2 Questions"],
+            ["Behavioral", "1 Question"],
+            ["Experience", "1 Question"],
+          ].map((step, index) => (
+            <div
+              key={step[0]}
+              className={questionIndex >= index ? "active" : ""}
+            >
+              <span>{index + 1}</span>
+              <b>{step[0]}</b>
+              <small>{step[1]}</small>
             </div>
+          ))}
+        </div>
+      </div>
 
-            <div className="conversation-panel">
-              <div className="conversation-header">
-                <div>
-                  <h2>Conversation</h2>
-                  <small>
-                    Question {Math.min(questionIndex + 1, questions.length)} of {questions.length}
-                  </small>
-                </div>
+      <div className="transcript-card">
+        <h3>Live Transcript</h3>
 
-                <div className="notes-btn">Notes</div>
-              </div>
-
-              <div className="chat-window-premium">
-                {messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`message-card ${
-                      msg.sender === "ai" ? "ai-card" : "user-card"
-                    }`}
-                  >
-                    <div className="message-header">
-                      <b>{msg.sender === "ai" ? "Takshvi (AI)" : candidateName}</b>
-                      <small>{msg.time}</small>
-                    </div>
-
-                    <p>{msg.text}</p>
-                  </div>
-                ))}
-
-                {answer && (
-                  <div className="message-card user-card speaking-card">
-                    <div className="message-header">
-                      <b>You</b>
-                    </div>
-
-                    <div className="wave-animation"></div>
-                    <p>{answer}</p>
-                  </div>
-                )}
-              </div>
-
-              {!report && (
-                <div className="mic-panel">
-                  <span>
-                    {speaking
-                      ? "Takshvi is asking the question..."
-                      : listening
-                      ? "Listening... stop speaking for 5 seconds to continue"
-                      : "Click mic to continue"}
-                  </span>
-
-                  <button onClick={startListening}>🎙</button>
-                </div>
-              )}
+        {messages.length === 0 ? (
+          <p>No conversation yet.</p>
+        ) : (
+          messages.slice(-5).map((msg, index) => (
+            <div
+              key={index}
+              className={`transcript-row ${
+                msg.sender === "ai" ? "ai-row" : "you-row"
+              }`}
+            >
+              <b>{msg.sender === "ai" ? "AI" : "You"}</b>
+              <p>{msg.text}</p>
+              <small>{msg.time}</small>
             </div>
-          </section>
+          ))
         )}
-      </section>
+
+        {answer && (
+          <div className="transcript-row you-row">
+            <b>You</b>
+            <p>{answer}</p>
+            <small>Speaking...</small>
+          </div>
+        )}
+      </div>
+    </section>
+
+    <section className="interview-center-area">
+      <div className="question-card-premium">
+        <span>Current Question</span>
+
+        <h4>
+          {Math.min(questionIndex + 1, questions.length)} / {questions.length}
+        </h4>
+
+        <h2>
+          {messages.filter((m) => m.sender === "ai").slice(-1)[0]?.text ||
+            questions[questionIndex]}
+        </h2>
+
+        <div className="hint-box">
+          💡 <b>Hint</b>
+          <p>
+            Use real examples, project details, measurable numbers and final
+            impact.
+          </p>
+        </div>
+
+        <button className="answer-now-btn" onClick={startListening}>
+          🎙 Answer Now
+        </button>
+
+        <p className="listening-status">
+          {speaking
+            ? "Takshvi is speaking..."
+            : listening
+            ? "Listening... stop speaking for 5 seconds to continue"
+            : "Click Answer Now"}
+        </p>
+      </div>
+    </section>
+
+    <aside className="interview-right-area">
+      <div className="live-analysis-card">
+        <h3>AI Analysis Live</h3>
+
+        <div className="score-ring-small">
+          <strong>
+            {messages.filter((m) => m.sender === "candidate").length === 0
+              ? 0
+              : Math.min(95, 60 + questionIndex * 5)}
+          </strong>
+          <span>/100</span>
+        </div>
+
+        {[
+          ["Communication", 82],
+          ["Technical Knowledge", 75],
+          ["Confidence", 70],
+          ["Clarity", 85],
+        ].map((item) => (
+          <div className="analysis-line" key={item[0]}>
+            <p>
+              {item[0]} <b>{item[1]}/100</b>
+            </p>
+            <div>
+              <span style={{ width: `${item[1]}%` }}></span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="progress-card">
+        <h3>Interview Progress</h3>
+
+        <div className="progress-ring">
+          {Math.round(((questionIndex + 1) / questions.length) * 100)}%
+        </div>
+
+        <p>
+          Questions Answered{" "}
+          <b>
+            {messages.filter((m) => m.sender === "candidate").length}/
+            {questions.length}
+          </b>
+        </p>
+
+        <p>
+          Time Elapsed <b>{formatTime(elapsed)}</b>
+        </p>
+      </div>
+
+      <div className="pro-tips-card">
+        <h3>Pro Tips</h3>
+        <p>✅ Speak clearly and at moderate speed</p>
+        <p>✅ Use STAR format</p>
+        <p>✅ Add numbers and business impact</p>
+        <p>✅ Explain your project contribution</p>
+      </div>
+
+      <div className="quick-actions-card">
+        <h3>Quick Actions</h3>
+        <button onClick={() => openMenu("Question Bank")}>📚 Question Bank</button>
+        <button onClick={() => openMenu("My Reports")}>📊 View Reports</button>
+        <button onClick={finishInterview}>⬇ Generate Report</button>
+      </div>
+    </aside>
+  </section>
+)}
+</section>
     </main>
   );
 }
 
 export default AIInterviewPrepPage;
+
