@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import "./AIInterviewPrepPage.css";
 
 function AIInterviewPrepPage() {
-  const [activeMenu, setActiveMenu] = useState("Live Interview");
+  const [activeMenu, setActiveMenu] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("tab") || "Live Interview";
+});
   const [role, setRole] = useState("Data Engineer");
   const [candidateName, setCandidateName] = useState("Candidate");
   const [started, setStarted] = useState(false);

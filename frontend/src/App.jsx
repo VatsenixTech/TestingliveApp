@@ -13,6 +13,8 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import ResumeStudio from "./pages/ResumeStudio";
 import SkillAnalyzerPage from "./pages/SkillAnalyzerPage";
+import SalaryPredictorPage from "./pages/SalaryPredictorPage";
+
 
 
 import "swiper/css";
@@ -2384,122 +2386,6 @@ function TrustPassportPage() {
     </main>
   );
 }
-function SalaryPredictorPage() {
-
-  const [role, setRole] = useState("");
-  const [skills, setSkills] = useState("");
-  const [experience, setExperience] = useState("");
-  const [result, setResult] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const predictSalary = async () => {
-
-    if (!role || !skills || !experience) {
-      alert("Please fill all fields");
-      return;
-    }
-
-    try {
-
-      setLoading(true);
-
-      const response = await axios.post(
-        `${API_URL}/api/ai/salary-predict`,
-        {
-          role,
-          skills,
-          experience
-        }
-      );
-
-      setResult(response.data.analysis);
-
-    } catch (err) {
-
-      console.log(err);
-
-      alert("Salary prediction failed");
-
-    } finally {
-
-      setLoading(false);
-
-    }
-  };
-
-  return (
-    <main className="salary-page">
-
-      <aside className="salary-sidebar">
-
-        <img src="/logo.png" alt="" />
-
-        <h2>Salary Predictor</h2>
-
-        <button
-          onClick={() =>
-            (window.location.href="/ultimate-dashboard")
-          }
-        >
-          ← Back
-        </button>
-
-      </aside>
-
-      <section className="salary-main">
-
-        <div className="salary-card">
-
-          <h1>AI Salary Predictor</h1>
-
-          <input
-            placeholder="Target Role"
-            value={role}
-            onChange={(e)=>setRole(e.target.value)}
-          />
-
-          <textarea
-            placeholder="Skills"
-            value={skills}
-            onChange={(e)=>setSkills(e.target.value)}
-          />
-
-          <input
-            placeholder="Years of Experience"
-            value={experience}
-            onChange={(e)=>setExperience(e.target.value)}
-          />
-
-          <button onClick={predictSalary}>
-
-            {loading
-              ? "AI Predicting..."
-              : "Predict Salary →"}
-
-          </button>
-
-        </div>
-
-        <div className="salary-output">
-
-          <h2>Predicted Salary Report</h2>
-
-          {result ? (
-            <pre>{result}</pre>
-          ) : (
-            <div>
-              AI salary prediction will appear here
-            </div>
-          )}
-
-        </div>
-
-      </section>
-
-      <PremiumFooter />
-    </main>
-  );
-}
 function HiddenOpportunitiesPage() {
 
   const opportunities = [
@@ -3449,7 +3335,7 @@ function App() {
   if (path === "/recruiter-settings") return <RecruiterSettingsPage />;
   if (path === "/recruiter-notifications") return <RecruiterNotificationsPage />;
   if (path === "/ultimate-dashboard") return <UltimateDashboard />;
-
+  if (path === "/salary-predictor") return <SalaryPredictorPage />;
   if (path.startsWith("/recruiter-job-details/")) {
     return <RecruiterJobDetailsPage />;
   }
@@ -3475,7 +3361,7 @@ function App() {
   if (path === "/skill-analyzer")return <SkillAnalyzerPage />;
 
   if (path === "/trust-passport") return <TrustPassportPage />;
-  if (path === "/salary-predictor") return <SalaryPredictorPage />;
+
   if (path === "/hidden-opportunities") return <HiddenOpportunitiesPage />;
   if (path === "/ai-interview-prep")return <AIInterviewPrepPage />;
   if (path === "/settings") return <SettingsPage />;
