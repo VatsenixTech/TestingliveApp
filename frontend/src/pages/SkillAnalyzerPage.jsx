@@ -125,13 +125,8 @@ ${analysis.aiInsights}
     <main className="sa-page">
       <aside className="sa-sidebar">
         <div className="sa-brand">
-          <img src="/logo.png" alt="NoPromptJobs" />
-          <div>
-            <h2>NoPromptJobs</h2>
-            <p>AI CAREER COPILOT</p>
-          </div>
-        </div>
-
+  <img src="/logo.png" alt="NoPromptJobs" className="sa-logo" />
+</div>
         <nav>
           <button className="active">✦ Skill Analyzer</button>
           <button onClick={() => goTo("/career-roadmap")}>

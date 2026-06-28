@@ -18,6 +18,10 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const recruiterRoutes = require("./routes/recruiterRoutes");
 const resumeStudioRoutes = require("./routes/resumeStudioRoutes");
 const skillAnalyzerRoutes = require("./routes/skillAnalyzerRoutes");
+const hiddenOpportunityRoutes = require("./routes/hiddenOpportunityRoutes");
+const jobAlertRoutes = require("./routes/jobAlertRoutes");
+const careerRoadmapRoutes = require("./routes/careerRoadmapRoutes");
+
 
 const app = express();
 
@@ -75,6 +79,9 @@ app.use(
 
 app.use("/api/skill-analyzer", skillAnalyzerRoutes);
 app.use("/api/resume-studio", resumeStudioRoutes);
+app.use("/api/hidden-opportunities", hiddenOpportunityRoutes);
+app.use("/api/job-alerts", jobAlertRoutes);
+app.use("/api/career-roadmap", careerRoadmapRoutes);
 
 // ================================
 // HOME ROUTE

@@ -447,4 +447,14 @@ body {
   .sp-form-grid {
     grid-template-columns: 1fr;
   }
+}.sp-logo{
+    width:170px;
+    height:auto;
+    object-fit:contain;
+    filter:drop-shadow(0 0 18px rgba(59,130,246,.35));
+    transition:.3s;
+}
+
+.sp-logo:hover{
+    transform:scale(1.05);
 }

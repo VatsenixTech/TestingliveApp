@@ -14,7 +14,9 @@ import { Navigation } from "swiper/modules";
 import ResumeStudio from "./pages/ResumeStudio";
 import SkillAnalyzerPage from "./pages/SkillAnalyzerPage";
 import SalaryPredictorPage from "./pages/SalaryPredictorPage";
-
+import HiddenOpportunitiesPage from "./pages/HiddenOpportunitiesPage";
+import JobAlertsPage from "./pages/JobAlertsPage";
+import CareerRoadmapPage from "./pages/CareerRoadmapPage";
 
 
 import "swiper/css";
@@ -2386,136 +2388,6 @@ function TrustPassportPage() {
     </main>
   );
 }
-function HiddenOpportunitiesPage() {
-
-  const opportunities = [
-    {
-      company: "Google",
-      salary: "45 LPA",
-      type: "Recruiter Private",
-      location: "Bangalore",
-      confidence: "96%"
-    },
-    {
-      company: "Microsoft",
-      salary: "38 LPA",
-      type: "Hidden Opening",
-      location: "Hyderabad",
-      confidence: "94%"
-    },
-    {
-      company: "Amazon",
-      salary: "42 LPA",
-      type: "Premium Referral",
-      location: "Chennai",
-      confidence: "92%"
-    }
-  ];
-
-  return (
-    <main className="hidden-page">
-
-      <aside className="hidden-sidebar">
-
-        <img src="/logo.png" />
-
-        <h2>Hidden Opportunities</h2>
-
-        <button
-          onClick={() =>
-            (window.location.href = "/ultimate-dashboard")
-          }
-        >
-          ← Back
-        </button>
-
-      </aside>
-
-
-      <section className="hidden-main">
-
-        <div className="hidden-hero">
-
-          <span>💎 PREMIUM ACCESS</span>
-
-          <h1>
-            Hidden Opportunities Workspace
-          </h1>
-
-          <p>
-            Access recruiter-only openings, referrals,
-            confidential positions and premium hiring campaigns.
-          </p>
-
-        </div>
-
-        <div className="hidden-stats">
-
-          <div className="hidden-stat-card">
-            <h2>24</h2>
-            <p>Private Jobs</p>
-          </div>
-
-          <div className="hidden-stat-card">
-            <h2>9</h2>
-            <p>Referral Openings</p>
-          </div>
-
-          <div className="hidden-stat-card">
-            <h2>17</h2>
-            <p>High Salary Jobs</p>
-          </div>
-
-          <div className="hidden-stat-card">
-            <h2>96%</h2>
-            <p>Match Accuracy</p>
-          </div>
-
-        </div>
-
-        <div className="premium-jobs-grid">
-
-          {opportunities.map((item,index)=>(
-
-            <div
-              className="premium-job-card"
-              key={index}
-            >
-
-              <span className="premium-tag">
-                {item.type}
-              </span>
-
-              <h2>{item.company}</h2>
-
-              <h3>{item.salary}</h3>
-
-              <p>{item.location}</p>
-
-              <div className="confidence">
-
-                Match Score
-
-                <b>{item.confidence}</b>
-
-              </div>
-
-              <button>
-                Unlock Opportunity →
-              </button>
-
-            </div>
-
-          ))}
-
-        </div>
-
-      </section>
-
-      <PremiumFooter />
-    </main>
-  );
-}
 function StaticInfoPage({ page }) {
   return (
     <>
@@ -3306,6 +3178,7 @@ function App() {
   if (path === "/candidate-email-verify") return <CandidateEmailVerify />;
   if (path === "/candidate-set-password") return <CandidateSetPassword />;
   if (path === "/recruiter-login") return <RecruiterLogin />;
+  if (path === "/job-alerts") return <JobAlertsPage />;
 
   if (path === "/candidate-register") return <CandidateRegister />;
   if (path === "/recruiter-register") return <RecruiterRegister />;
@@ -3313,6 +3186,7 @@ function App() {
   if (path === "/candidate") return <CandidateUpload />;
   if (path === "/mobile-dashboard") return <MobileCandidateDashboard />;
   if (path === "/applications") return <ApplicationsPage />;
+  if (path === "/career-roadmap") return <CareerRoadmapPage />;
 
   if (path.startsWith("/dashboard/")) return <CandidateDashboard />;
 
