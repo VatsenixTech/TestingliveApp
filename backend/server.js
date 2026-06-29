@@ -22,6 +22,7 @@ const hiddenOpportunityRoutes = require("./routes/hiddenOpportunityRoutes");
 const jobAlertRoutes = require("./routes/jobAlertRoutes");
 const careerRoadmapRoutes = require("./routes/careerRoadmapRoutes");
 const candidateProfileRoutes = require("./routes/candidateProfileRoutes");
+const profileViewRoutes = require("./routes/profileViewRoutes");
 
 
 const app = express();
@@ -85,6 +86,8 @@ app.use("/api/job-alerts", jobAlertRoutes);
 app.use("/api/career-roadmap", careerRoadmapRoutes);
 app.use("/api/candidate-profile", candidateProfileRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use("/api/profile-views", profileViewRoutes);
+
 
 // ================================
 // HOME ROUTE

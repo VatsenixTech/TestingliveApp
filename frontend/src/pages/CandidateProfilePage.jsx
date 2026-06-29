@@ -10,9 +10,9 @@ function CandidateProfilePage() {
 
   const routePath = window.location.pathname;
   const pathCandidateId = routePath.startsWith("/profile/")
-    ? routePath.split("/profile/")[1]?.split("?")[0]
+    ? routePath.split("/profile/")[1]?.split("?")[0]?.split("/")[0]
     : routePath.startsWith("/candidate-profile/")
-    ? routePath.split("/candidate-profile/")[1]?.split("?")[0]
+    ? routePath.split("/candidate-profile/")[1]?.split("?")[0]?.split("/")[0]
     : "";
 
   const candidateId =
@@ -37,7 +37,14 @@ function CandidateProfilePage() {
   const [skillsForm, setSkillsForm] = useState([]);
   const [newSkill, setNewSkill] = useState({ name: "", level: "Intermediate" });
   const [employmentForm, setEmploymentForm] = useState([]);
-  const [newEmployment, setNewEmployment] = useState({ company: "", role: "", description: "" });
+  const [newEmployment, setNewEmployment] = useState({
+    company: "",
+    role: "",
+    startDate: "",
+    endDate: "",
+    isCurrent: true,
+    description: "",
+  });
   const [educationForm, setEducationForm] = useState([]);
   const [newEducation, setNewEducation] = useState({ degree: "", institute: "", year: "" });
   const [projectsForm, setProjectsForm] = useState([]);
@@ -194,11 +201,20 @@ function CandidateProfilePage() {
         company: e?.company || "",
         role: e?.role || "",
         description: e?.description || "",
+        startDate: e?.startDate ? String(e.startDate).slice(0, 10) : "",
+        endDate: e?.endDate ? String(e.endDate).slice(0, 10) : "",
         isCurrent: Boolean(e?.isCurrent),
       }))
     );
 
-    setNewEmployment({ company: "", role: "", description: "" });
+    setNewEmployment({
+      company: "",
+      role: "",
+      startDate: "",
+      endDate: "",
+      isCurrent: true,
+      description: "",
+    });
 
     setEducationForm(
       education.map((e) => ({
@@ -264,9 +280,24 @@ function CandidateProfilePage() {
 
     setEmploymentForm((prev) => [
       ...prev,
-      { ...newEmployment, company: newEmployment.company.trim(), role: newEmployment.role.trim(), isCurrent: true },
+      {
+        company: newEmployment.company.trim(),
+        role: newEmployment.role.trim(),
+        startDate: newEmployment.startDate || "",
+        endDate: newEmployment.isCurrent ? "" : newEmployment.endDate || "",
+        isCurrent: Boolean(newEmployment.isCurrent),
+        description: newEmployment.description || "",
+      },
     ]);
-    setNewEmployment({ company: "", role: "", description: "" });
+
+    setNewEmployment({
+      company: "",
+      role: "",
+      startDate: "",
+      endDate: "",
+      isCurrent: true,
+      description: "",
+    });
   }
 
   function addEducation() {
@@ -320,11 +351,12 @@ function CandidateProfilePage() {
       payload.employment = employmentForm
         .filter((e) => e.company?.trim() && e.role?.trim())
         .map((e) => ({
-          company: e.company,
-          role: e.role,
+          company: e.company.trim(),
+          role: e.role.trim(),
           description: e.description || "",
           isCurrent: Boolean(e.isCurrent),
-          startDate: e.startDate || new Date(),
+          startDate: e.startDate ? new Date(e.startDate) : undefined,
+          endDate: !e.isCurrent && e.endDate ? new Date(e.endDate) : undefined,
         }));
     }
 
@@ -384,7 +416,7 @@ function CandidateProfilePage() {
       const res = await axios.post(
         `${API_BASE}/api/candidate-profile/${candidateId}/upload-document`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+      
       );
 
       alert(res.data.message || "Uploaded successfully");
@@ -415,7 +447,22 @@ function CandidateProfilePage() {
   }
 
   if (loading) return <div className="cp-loading">Loading candidate profile...</div>;
-
+  const isProfileViewsPage =
+  window.location.pathname.includes("/views");
+if (isProfileViewsPage) {
+  return (
+    <ProfileViewsAnalytics
+      candidateId={candidateId}
+      goTo={goTo}
+      candidate={candidate}
+      profile={profile}
+      savedUser={savedUser}
+      profileStrength={profileStrength}
+      rating={rating}
+      breakdown={breakdown}
+    />
+  );
+}
   const uploadTitle = {
     uploadResume: "Upload Resume",
     uploadPan: "Upload PAN Card",
@@ -426,12 +473,14 @@ function CandidateProfilePage() {
 
   return (
     <main className="cp-page">
-      <header className="cp-header">
+      <header className="cp-header cp-header-final">
 
     <div
-        className="cp-brand"
-        onClick={()=>goTo("/ultimate-dashboard")}
-    >
+        
+  className="cp-brand"
+  onClick={() => goTo(`/dashboard/${candidateId}`)}
+>
+    
 
         <img src="/logo.png" alt="" />
 
@@ -445,7 +494,7 @@ function CandidateProfilePage() {
             placeholder="Search jobs, companies, skills..."
         />
 
-        <b>⌘ K</b>
+        
 
     </div>
 
@@ -464,15 +513,16 @@ function CandidateProfilePage() {
         <b>3</b>
     </button>
 
-    <button
-        className="cp-icon"
-        onClick={()=>goTo("/messages")}
-    >
-        ✉
-        <b>2</b>
-    </button>
+<button
+    className="cp-icon"
+    onClick={() => goTo(`/profile/${candidateId}/views`)}
+    title="Profile Views"
+>
+    👁
+    <b>{profile?.metrics?.profileViews || 0}</b>
+</button>
 
-    <div className="cp-user">
+    <div className="cp-user cp-user-final" onClick={() => openManager("basic")}>
 
         <img
             src={
@@ -494,12 +544,7 @@ function CandidateProfilePage() {
 
         </section>
 
-        <button
-            className="cp-user-arrow"
-            onClick={openBasicModal}
-        >
-            ⌄
-        </button>
+        <span className="cp-user-arrow">⌄</span>
 
     </div>
 
@@ -523,7 +568,13 @@ function CandidateProfilePage() {
 
           <span className="verified-pill">Verified Candidate</span>
           <button onClick={() => openManager("basic")}>✎ Edit Profile</button>
-          <button className="outline" onClick={() => goTo(`/public-profile/${candidateId}`)}>👁 View Public Profile</button>
+          
+          <button
+  className="outline"
+  onClick={() => goTo(`/profile/${candidateId}/views`)}
+>
+  👁 View Public Profile
+</button>
 
           <div className="cp-strength">
             <h3>Profile Strength</h3>
@@ -584,24 +635,31 @@ function CandidateProfilePage() {
             </div>
           </section>
 
-          <section className="cp-stats">
-            {[
-              ["👁", "Search Appearances", profile?.metrics?.searchAppearances || 0, "This Month"],
-              ["★", "Shortlisted By Recruiters", profile?.metrics?.shortlistedByRecruiters || 0, "Total"],
-              ["▣", "Interview Invites", profile?.metrics?.interviewInvites || 0, "Total"],
-              ["💼", "Applications", profile?.metrics?.applications || 0, "Active"],
-              ["👥", "Profile Views", profile?.metrics?.profileViews || 0, "Total"],
-            ].map((item) => (
-              <article className="cp-stat" key={item[1]}>
-                <div>{item[0]}</div>
-                <section>
-                  <p>{item[1]}</p>
-                  <h2>{item[2]}</h2>
-                  <small>{item[3]}</small>
-                </section>
-              </article>
-            ))}
-          </section>
+     <section className="cp-stats">
+  {[
+    ["👁", "Search Appearances", profile?.metrics?.searchAppearances || 0, "This Month", null],
+    ["★", "Shortlisted By Recruiters", profile?.metrics?.shortlistedByRecruiters || 0, "Total", null],
+    ["▣", "Interview Invites", profile?.metrics?.interviewInvites || 0, "Total", "/interview-alerts"],
+    ["💼", "Applications", profile?.metrics?.applications || 0, "Active", "/applications"],
+    ["👥", "Profile Views", profile?.metrics?.profileViews || 0, "Total", null],
+  ].map((item) => (
+    <article
+      className="cp-stat"
+      key={item[1]}
+      onClick={() => {
+        if (item[4]) goTo(item[4]);
+      }}
+      style={{ cursor: item[4] ? "pointer" : "default" }}
+    >
+      <div>{item[0]}</div>
+      <section>
+        <p>{item[1]}</p>
+        <h2>{item[2]}</h2>
+        <small>{item[3]}</small>
+      </section>
+    </article>
+  ))}
+</section>
 
           <section className="cp-grid">
             <div className="cp-card skills">
@@ -645,6 +703,17 @@ function CandidateProfilePage() {
                   <div className="experience-row" key={job._id || `${job.company}-${job.role}`}>
                     <h4>{job.company}</h4>
                     <p>{job.role}</p>
+                    <small>
+                      {job.startDate
+                        ? new Date(job.startDate).toLocaleDateString()
+                        : "Start date not added"}{" "}
+                      -{" "}
+                      {job.isCurrent
+                        ? "Present"
+                        : job.endDate
+                        ? new Date(job.endDate).toLocaleDateString()
+                        : "End date not added"}
+                    </small>
                     <small>{job.description}</small>
                     {job.isCurrent && <b>Current</b>}
                   </div>
@@ -880,25 +949,176 @@ function CandidateProfilePage() {
 
               {activeEditor === "employment" && (
                 <>
-                  <ManagerTitle icon="💼" title="Manage Employment" text="Add, edit or remove your work experience." />
+                  <ManagerTitle
+                    icon="💼"
+                    title="Manage Employment"
+                    text="Add, edit or remove your work experience. Company and role are mandatory."
+                  />
+
                   <div className="manager-list">
                     {employmentForm.map((job, index) => (
-                      <div className="manager-row three" key={index}>
-                        <input value={job.company} onChange={(e) => updateArray(setEmploymentForm, index, "company", e.target.value)} placeholder="Company" />
-                        <input value={job.role} onChange={(e) => updateArray(setEmploymentForm, index, "role", e.target.value)} placeholder="Role" />
-                        <input value={job.description} onChange={(e) => updateArray(setEmploymentForm, index, "description", e.target.value)} placeholder="Description" />
-                        <button className="delete-btn" onClick={() => removeArrayItem(setEmploymentForm, index)}>🗑</button>
+                      <div className="manager-employment-card" key={job._id || index}>
+                        <div className="manager-employment-grid">
+                          <label>
+                            Company
+                            <input
+                              value={job.company}
+                              onChange={(e) =>
+                                updateArray(setEmploymentForm, index, "company", e.target.value)
+                              }
+                              placeholder="Example: Capgemini"
+                            />
+                          </label>
+
+                          <label>
+                            Role / Designation
+                            <input
+                              value={job.role}
+                              onChange={(e) =>
+                                updateArray(setEmploymentForm, index, "role", e.target.value)
+                              }
+                              placeholder="Example: Data Engineer"
+                            />
+                          </label>
+
+                          <label>
+                            Start Date
+                            <input
+                              type="date"
+                              value={job.startDate || ""}
+                              onChange={(e) =>
+                                updateArray(setEmploymentForm, index, "startDate", e.target.value)
+                              }
+                            />
+                          </label>
+
+                          <label>
+                            End Date
+                            <input
+                              type="date"
+                              value={job.endDate || ""}
+                              disabled={job.isCurrent}
+                              onChange={(e) =>
+                                updateArray(setEmploymentForm, index, "endDate", e.target.value)
+                              }
+                            />
+                          </label>
+                        </div>
+
+                        <label className="manager-check">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(job.isCurrent)}
+                            onChange={(e) => {
+                              updateArray(setEmploymentForm, index, "isCurrent", e.target.checked);
+                              if (e.target.checked) {
+                                updateArray(setEmploymentForm, index, "endDate", "");
+                              }
+                            }}
+                          />
+                          I currently work here
+                        </label>
+
+                        <label>
+                          Description
+                          <textarea
+                            className="manager-small-textarea"
+                            value={job.description}
+                            onChange={(e) =>
+                              updateArray(setEmploymentForm, index, "description", e.target.value)
+                            }
+                            placeholder="Describe your responsibilities, tools, projects and impact"
+                          />
+                        </label>
+
+                        <button
+                          className="delete-btn manager-remove-wide"
+                          onClick={() => removeArrayItem(setEmploymentForm, index)}
+                        >
+                          🗑 Remove Employment
+                        </button>
                       </div>
                     ))}
                   </div>
+
                   <div className="manager-add-box">
                     <h3>Add New Employment</h3>
-                    <div className="manager-add-grid three">
-                      <input value={newEmployment.company} onChange={(e) => setNewEmployment({ ...newEmployment, company: e.target.value })} placeholder="Company" />
-                      <input value={newEmployment.role} onChange={(e) => setNewEmployment({ ...newEmployment, role: e.target.value })} placeholder="Role" />
-                      <input value={newEmployment.description} onChange={(e) => setNewEmployment({ ...newEmployment, description: e.target.value })} placeholder="Description" />
-                      <button onClick={addEmployment}>+ Add</button>
+
+                    <div className="manager-employment-grid">
+                      <label>
+                        Company
+                        <input
+                          value={newEmployment.company}
+                          onChange={(e) =>
+                            setNewEmployment({ ...newEmployment, company: e.target.value })
+                          }
+                          placeholder="Example: Capgemini"
+                        />
+                      </label>
+
+                      <label>
+                        Role / Designation
+                        <input
+                          value={newEmployment.role}
+                          onChange={(e) =>
+                            setNewEmployment({ ...newEmployment, role: e.target.value })
+                          }
+                          placeholder="Example: Data Engineer"
+                        />
+                      </label>
+
+                      <label>
+                        Start Date
+                        <input
+                          type="date"
+                          value={newEmployment.startDate}
+                          onChange={(e) =>
+                            setNewEmployment({ ...newEmployment, startDate: e.target.value })
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        End Date
+                        <input
+                          type="date"
+                          value={newEmployment.endDate}
+                          disabled={newEmployment.isCurrent}
+                          onChange={(e) =>
+                            setNewEmployment({ ...newEmployment, endDate: e.target.value })
+                          }
+                        />
+                      </label>
                     </div>
+
+                    <label className="manager-check">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(newEmployment.isCurrent)}
+                        onChange={(e) =>
+                          setNewEmployment({
+                            ...newEmployment,
+                            isCurrent: e.target.checked,
+                            endDate: e.target.checked ? "" : newEmployment.endDate,
+                          })
+                        }
+                      />
+                      I currently work here
+                    </label>
+
+                    <label>
+                      Description
+                      <textarea
+                        className="manager-small-textarea"
+                        value={newEmployment.description}
+                        onChange={(e) =>
+                          setNewEmployment({ ...newEmployment, description: e.target.value })
+                        }
+                        placeholder="Example: Built ETL pipelines using PySpark, SQL and Azure Data Factory"
+                      />
+                    </label>
+
+                    <button onClick={addEmployment}>+ Add Employment</button>
                   </div>
                 </>
               )}
@@ -974,7 +1194,13 @@ function CandidateProfilePage() {
 
             <input
               type="file"
-              accept={modal.includes("Video") ? "video/mp4,video/webm" : ".pdf,.png,.jpg,.jpeg,.webp"}
+              accept={
+                modal === "uploadResume"
+                  ? ".pdf,.doc,.docx"
+                  : modal.includes("Video")
+                  ? "video/mp4,video/webm"
+                  : ".pdf,.png,.jpg,.jpeg,.webp"
+              }
               onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
             />
 
@@ -1007,4 +1233,318 @@ function ManagerTitle({ icon, title, text }) {
   );
 }
 
-export default CandidateProfilePage;
+
+
+function ProfileViewsAnalytics({
+  candidateId,
+  goTo,
+  candidate,
+  profile,
+  savedUser,
+  profileStrength,
+  rating,
+  breakdown,
+}) 
+ {const profileImage =
+  candidate?.profileImageUrl ||
+  profile?.profileImageUrl ||
+  savedUser?.profileImageUrl ||
+  "/profile.png";
+
+const candidateName =
+  candidate?.name ||
+  savedUser?.name ||
+  "Candidate";
+
+const candidateRole =
+  candidate?.role ||
+  profile?.headline ||
+  savedUser?.role ||
+  "Professional";
+  const [viewsData, setViewsData] = useState({
+    totalViews: 0,
+    uniqueRecruiters: 0,
+    companiesViewed: 0,
+    shortlistedViews: 0,
+    lastViewed: null,
+    recentViews: [],
+    topCompanies: [],
+    trend: [],
+    heatmap: [],
+    experienceLevels: [],
+    insights: [],
+  });
+
+  const [viewsLoading, setViewsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchViews() {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await axios.get(
+          `${API_BASE}/api/profile-views/candidate/${candidateId}/analytics`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setViewsData(res.data);
+      } catch (error) {
+        console.error("Profile views error:", error);
+      } finally {
+        setViewsLoading(false);
+      }
+    }
+
+    if (candidateId) fetchViews();
+  }, [candidateId]);
+
+  if (viewsLoading) {
+    return <div className="cp-loading">Loading profile analytics...</div>;
+  }
+
+  const trend = viewsData.trend || [];
+  const maxTrend = Math.max(...trend.map((x) => x.count || 0), 1);
+
+  return (
+    <main className="pvx-page">
+      <aside className="pvx-sidebar">
+        <img className="pvx-logo" src="/logo.png" alt="NoPromptJobs" />
+
+        <div className="pvx-user-card">
+          <img
+  src={profileImage}
+  alt={candidateName}
+  onError={(e) => {
+    e.currentTarget.src = "/profile.png";
+  }}
+/>
+          <span>✓</span>
+          <h3>{candidateName}</h3>
+          <p>{candidateRole}</p>
+          <b>Verified Candidate</b>
+        </div>
+
+        <nav className="pvx-nav">
+          <button onClick={() => goTo(`/dashboard/${candidateId}`)}>
+  ⌘ Dashboard
+</button>
+          <button onClick={() => goTo("/applications")}>▣ Applications</button>
+          <button onClick={() => goTo("/auto-apply")}>↗ Auto Apply</button>
+          <button onClick={() => goTo("/job-alerts")}>🔔 Job Alerts</button>
+          <button onClick={() => goTo("/ai-workspace")}>✦ AI Workspace</button>
+          <button onClick={() => goTo("/resume-studio")}>📄 Resume Studio</button>
+          <button onClick={() => goTo("/question-bank")}>▣ Question Bank</button>
+          <button onClick={() => goTo("/trust-passport")}>ⓘ Trust Passport</button>
+          <button className="active">👁 Profile Views</button>
+        </nav>
+
+        <div className="pvx-bottom">
+          <button onClick={() => goTo("/settings")}>⚙ Settings</button>
+          <button className="logout" onClick={() => goTo("/candidate-login")}>↪ Logout</button>
+        </div>
+      </aside>
+
+      <section className="pvx-main">
+        <header className="pvx-topbar">
+          <button className="pvx-back" onClick={() => goTo(`/profile/${candidateId}`)}>
+            ← Back to Profile
+          </button>
+
+          <div className="pvx-mini-user">
+            <span>☼</span>
+            <img
+  src={profileImage}
+  alt={candidateName}
+  onError={(e) => {
+    e.currentTarget.src = "/profile.png";
+  }}
+/>
+            <section>
+              <h4>VENKATESHA A</h4>
+              <p>Data Engineer ✓</p>
+            </section>
+            <b>⌄</b>
+          </div>
+        </header>
+
+        <section className="pvx-title">
+          <div>
+            <h1>Profile View Analytics ↗</h1>
+            
+          </div>
+
+          <button onClick={() => window.print()}>⇩ Export Report</button>
+        </section>
+
+        <section className="pvx-kpis">
+          <PVXKpi icon="👁" title="Total Profile Views" value={viewsData.totalViews || 0} />
+          <PVXKpi icon="👥" title="Unique Recruiters" value={viewsData.uniqueRecruiters || 0} />
+          <PVXKpi icon="🏢" title="Companies Viewed" value={viewsData.companiesViewed || 0} />
+          <PVXKpi icon="⭐" title="Shortlisted Views" value={viewsData.shortlistedViews || 0} />
+          <PVXKpi
+            icon="📅"
+            title="Last Viewed"
+            value={viewsData.lastViewed ? new Date(viewsData.lastViewed).toLocaleDateString() : "No views"}
+          />
+        </section>
+
+        <section className="pvx-grid">
+          <article className="pvx-card pvx-chart-card">
+            <div className="pvx-card-head">
+              <h3>Profile Views Trend</h3>
+              <button>Last 30 Days⌄</button>
+            </div>
+
+            <div className="pvx-chart">
+              <div className="pvx-axis">
+                <span>4</span>
+                <span>3</span>
+                <span>2</span>
+                <span>1</span>
+                <span>0</span>
+              </div>
+
+              <div className="pvx-bars">
+                {trend.length === 0
+                  ? Array.from({ length: 30 }).map((_, i) => (
+                      <span key={i} style={{ height: "4px" }} />
+                    ))
+                  : trend.map((item) => (
+                      <span
+                        key={item.date}
+                        title={`${item.date}: ${item.count} views`}
+                        style={{
+                          height: `${Math.max(((item.count || 0) / maxTrend) * 100, 4)}%`,
+                        }}
+                      />
+                    ))}
+              </div>
+            </div>
+          </article>
+
+          <article className="pvx-card">
+            <div className="pvx-card-head">
+              <h3>Top Companies Viewing You</h3>
+            </div>
+
+            {viewsData.topCompanies?.length ? (
+              <div className="pvx-list">
+                {viewsData.topCompanies.map((c) => (
+                  <div key={c.companyName}>
+                    <span>{c.companyName?.[0] || "C"}</span>
+                    <b>{c.companyName}</b>
+                    <small>{c.views} views</small>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="pvx-empty">
+                <div>🏢🔍</div>
+                <p>No company views yet.</p>
+              </div>
+            )}
+          </article>
+
+          <article className="pvx-card">
+            <div className="pvx-card-head">
+              <h3>Recent Recruiter Activity</h3>
+            </div>
+
+            {viewsData.recentViews?.length ? (
+              <div className="pvx-activity">
+                {viewsData.recentViews.map((view) => (
+                  <div key={view._id}>
+                    <img src={view.recruiterPhoto || "/profile.png"} alt="" />
+                    <section>
+                      <b>{view.recruiterName}</b>
+                      <p>{view.companyName}</p>
+                    </section>
+                    <small>{new Date(view.viewedAt).toLocaleDateString()}</small>
+                    <button onClick={() => alert(view.recruiterEmail || "Email not available")}>
+                      👁
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="pvx-empty">
+                <div>👥</div>
+                <p>No recruiter has viewed your profile yet.</p>
+              </div>
+            )}
+          </article>
+
+          <article className="pvx-card pvx-heat-card">
+            <h3>Weekly Activity Heatmap</h3>
+
+            <div className="pvx-heat-grid">
+              {Array.from({ length: 35 }).map((_, i) => {
+                const count = viewsData.heatmap?.[i]?.count || 0;
+                return (
+                  <span
+                    key={i}
+                    className={`level-${Math.min(count + 1, 5)}`}
+                    title={viewsData.heatmap?.[i]?.date || ""}
+                  />
+                );
+              })}
+            </div>
+
+            <div className="pvx-heat-label">
+              <small>Low Activity</small>
+              <div><i /><i /><i /><i /><i /></div>
+              <small>High Activity</small>
+            </div>
+          </article>
+
+          <article className="pvx-card">
+            <h3>Profile Views by Experience Level</h3>
+
+            <div className="pvx-donut">
+              <strong>{viewsData.totalViews || 0}</strong>
+              <small>Total</small>
+            </div>
+
+            <div className="pvx-exp-list">
+              {(viewsData.experienceLevels || []).map((item) => (
+                <div key={item.label}>
+                  <span>{item.label.split(" ")[0]}</span>
+                  <b>{item.label}</b>
+                  <small>{item.count}</small>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="pvx-card pvx-ai">
+            <h3>✨ AI Insights</h3>
+
+            {(viewsData.insights || []).length ? (
+              viewsData.insights.map((item, index) => (
+                <p key={index}>{item}</p>
+              ))
+            ) : (
+              <p>No recruiter views yet. Improve your resume, skills and profile completeness.</p>
+            )}
+          </article>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+function PVXKpi({ icon, title, value }) {
+  return (
+    <article className="pvx-kpi">
+      <div>{icon}</div>
+      <section>
+        <p>{title}</p>
+        <h2>{value}</h2>
+      </section>
+    </article>
+  );
+}export default CandidateProfilePage;

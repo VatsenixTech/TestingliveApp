@@ -3186,8 +3186,17 @@ function App() {
 
   if (path === "/candidate") return <CandidateUpload />;
   if (path === "/mobile-dashboard") return <MobileCandidateDashboard />;
-  if (path === "/applications") return <ApplicationsPage />;
+  if (path === "/applications") return <ServicesPage />;
   if (path === "/career-roadmap") return <CareerRoadmapPage />;
+  
+  if (
+  path === "/profile" ||
+  path.startsWith("/profile/") ||
+  path === "/candidate-profile" ||
+  path.startsWith("/candidate-profile/")
+) {
+  return <CandidateProfilePage />;
+}
 
   if (path.startsWith("/dashboard/")) return <CandidateDashboard />;
 
@@ -4790,6 +4799,7 @@ function CandidateDashboard() {
   const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const [candidate, setCandidate] = useState(savedUser || null);
   const [jobs, setJobs] = useState([]);
+  const [interviewDrawer, setInterviewDrawer] = useState(false);
   const [applications, setApplications] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [interviews, setInterviews] = useState([]);
@@ -4800,6 +4810,7 @@ function CandidateDashboard() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const dashboardJobsRef = useRef(null);
+  
 
   const candidateId =
     window.location.pathname.split("/").pop() ||
@@ -4826,8 +4837,8 @@ function CandidateDashboard() {
     goTo("/notifications");
   };
 
-  const handleMessages = () => {
-    goTo("/messages");
+  const handleProfileViews = () => {
+    goTo(candidateId ? `/profile/${candidateId}/views` : "/candidate-login");
   };
 
   const handleProfile = () => {
@@ -5175,13 +5186,13 @@ return (
             ["▥", "Companies", "/companies"],
             ["▤", "Applications", "/services"],
             ["♡", "Saved Jobs", "/saved-jobs"],
-            ["✉", "Messages", "/notifications"],
+            ["👁", "Profile Views", candidateId ? `/profile/${candidateId}/views` : "/candidate-login"],
           ].map((item) => (
             <button key={item[1]} onClick={() => goTo(item[2])}>
               <span>{item[0]}</span>
               <b>{item[1]}</b>
-              {item[1] === "Messages" && unreadCount > 0 && (
-                <em>{unreadCount}</em>
+              {item[1] === "Profile Views" && (
+                <small>›</small>
               )}
             </button>
           ))}
@@ -5248,8 +5259,13 @@ return (
               🔔{unreadCount > 0 && <b>{unreadCount}</b>}
             </button>
 
-            <button type="button" onClick={handleMessages}>
-              ✉
+            <button
+              type="button"
+              onClick={handleProfileViews}
+              title="Profile Views"
+              className="npj-top-profile-view-btn"
+            >
+              👁
             </button>
 
             <div className="profile-dropdown-wrap">
@@ -5481,38 +5497,47 @@ return (
           <section className="compact-card interview-card">
             <div className="card-head">
               <h3>Upcoming Interviews</h3>
-              <a href="/interview-alerts">View All →</a>
+
+              <button
+                type="button"
+                className="interview-view-btn"
+                onClick={() => setInterviewDrawer(true)}
+              >
+                View All →
+              </button>
             </div>
 
             {interviews.length > 0 ? (
-              interviews.slice(0, 3).map((item, index) => (
-                <div className="interview-line" key={item._id || index}>
-                  <div>
-                    <span>
-                      {new Date(item.date || item.interviewDate || Date.now())
-                        .toLocaleString("en", { month: "short" })
-                        .toUpperCase()}
-                    </span>
-                    <b>
-                      {new Date(
-                        item.date || item.interviewDate || Date.now()
-                      ).getDate()}
-                    </b>
+              interviews.slice(0, 3).map((item, index) => {
+                const interviewDate = new Date(
+                  item.date || item.interviewDate || item.scheduledAt || Date.now()
+                );
+
+                return (
+                  <div className="interview-line" key={item._id || index}>
+                    <div>
+                      <span>
+                        {interviewDate
+                          .toLocaleString("en", { month: "short" })
+                          .toUpperCase()}
+                      </span>
+                      <b>{interviewDate.getDate()}</b>
+                    </div>
+
+                    <section>
+                      <h4>
+                        {item.round ||
+                          item.title ||
+                          item.jobTitle ||
+                          "Interview Scheduled"}
+                      </h4>
+                      <p>{item.company || item.companyName || "Company"}</p>
+                    </section>
+
+                    <small>{item.time || item.interviewTime || "Time not added"}</small>
                   </div>
-
-                  <section>
-                    <h4>
-                      {item.round ||
-                        item.title ||
-                        item.jobTitle ||
-                        "Interview Scheduled"}
-                    </h4>
-                    <p>{item.company || item.companyName || "Company"}</p>
-                  </section>
-
-                  <small>{item.time || item.interviewTime || "Time not added"}</small>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p>No interview scheduled yet.</p>
             )}
@@ -5570,13 +5595,11 @@ return (
             </div>
 
             <div>
-              {(candidate?.skills?.length ? candidate.skills : []).map(
-                (skill, i) => (
-                  <span key={i}>
-                    {typeof skill === "string" ? skill : skill?.name}
-                  </span>
-                )
-              )}
+              {(candidate?.skills?.length ? candidate.skills : []).map((skill, i) => (
+                <span key={i}>
+                  {typeof skill === "string" ? skill : skill?.name}
+                </span>
+              ))}
 
               {!candidate?.skills?.length && <p>No skills added yet.</p>}
             </div>
@@ -5621,108 +5644,236 @@ return (
       </section>
     </main>
 
+    {interviewDrawer && (
+      <div
+        className="interview-drawer-overlay"
+        role="presentation"
+        onClick={() => setInterviewDrawer(false)}
+      >
+        <aside
+          className="interview-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Interview notifications"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="interview-drawer-head">
+            <div>
+              <span className="interview-drawer-kicker">Interview Center</span>
+              <h2>Interview Notifications</h2>
+              <p>Small updates for scheduled, rescheduled, cancelled and completed interviews.</p>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Close interview notifications"
+              onClick={() => setInterviewDrawer(false)}
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="interview-drawer-summary">
+            <article>
+              <b>{interviews.length}</b>
+              <span>Total Updates</span>
+            </article>
+
+            <article>
+              <b>
+                {
+                  interviews.filter((item) =>
+                    `${item.status || ""}`.toLowerCase().includes("schedule")
+                  ).length
+                }
+              </b>
+              <span>Scheduled</span>
+            </article>
+
+            <article>
+              <b>
+                {
+                  interviews.filter((item) =>
+                    `${item.status || ""}`.toLowerCase().includes("reschedule")
+                  ).length
+                }
+              </b>
+              <span>Rescheduled</span>
+            </article>
+          </div>
+
+          <div className="interview-drawer-list">
+            {interviews.length > 0 ? (
+              interviews.map((item, index) => {
+                const status = `${item.status || "scheduled"}`.toLowerCase();
+                const interviewDate = new Date(
+                  item.date || item.interviewDate || item.scheduledAt || Date.now()
+                );
+
+                const icon =
+                  status.includes("reschedule")
+                    ? "🟡"
+                    : status.includes("cancel")
+                    ? "🔴"
+                    : status.includes("complete")
+                    ? "🟢"
+                    : "🎙️";
+
+                const title =
+                  status.includes("reschedule")
+                    ? "Interview Rescheduled"
+                    : status.includes("cancel")
+                    ? "Interview Cancelled"
+                    : status.includes("complete")
+                    ? "Interview Completed"
+                    : "Interview Scheduled";
+
+                return (
+                  <div className="interview-notice" key={item._id || index}>
+                    <span>{icon}</span>
+
+                    <section>
+                      <div className="interview-notice-title">
+                        <h3>{title}</h3>
+                        <small>
+                          {interviewDate.toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
+                        </small>
+                      </div>
+
+                      <p>
+                        {item.company || item.companyName || "Company"} •{" "}
+                        {item.round || item.title || item.jobTitle || "Interview"} •{" "}
+                        {item.time || item.interviewTime || "Time not added"}
+                      </p>
+                    </section>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="interview-notice empty">
+                <span>🎙️</span>
+
+                <section>
+                  <h3>No interview scheduled yet</h3>
+                  <p>
+                    When recruiters schedule, reschedule or cancel an interview,
+                    the notification will appear here.
+                  </p>
+                </section>
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+    )}
+
     <PremiumFooter />
   </>
 );
 }
-
 function PremiumFooter() {
+  const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const goTo = (path) => {
+    window.location.href = path;
+  };
+
+  const comingSoon = (name) => {
+    alert(`${name} coming soon`);
+  };
+
+  const subscribe = async () => {
+    if (!email.trim()) return alert("Please enter your email");
+
+    try {
+      setSubscribing(true);
+
+      await axios.post(`${API_URL}/api/subscribers`, {
+        email: email.trim(),
+        source: "candidate-dashboard-footer",
+      });
+
+      alert("Subscribed successfully");
+      setEmail("");
+    } catch (error) {
+      alert(error.response?.data?.message || "Subscription saved soon");
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   return (
-    <footer className="npj-footer-final">
-      <div className="npj-footer-inner">
-        <div className="npj-footer-brand">
-          <img src="/logo.png" alt="NoPromptJobs" />
-          <p>
-            A Vatsenix Software Pvt Ltd product for genuine candidates and
-            trusted employers.
-          </p>
+    <footer className="npj-premium-footer">
+      <div className="footer-brand">
+        <img src="/logo.png" alt="NoPromptJobs" />
+        <p>
+          A Vatsenix Software Pvt Ltd product for genuine candidates and trusted employers.
+        </p>
 
-          <div className="npj-footer-social">
-            <span>in</span>
-            <span>X</span>
-            <span>▶</span>
-            <span>f</span>
-          </div>
-        </div>
-
-        <div className="npj-footer-col">
-          <h3>Job Seekers</h3>
-          <a href="/jobs">Browse Jobs</a>
-          <a href="/applications">Applications</a>
-          <a href="/services">📄 Resume Studio</a>
-          <a href="/ai-interview-prep">AI Interview Prep</a>
-          <a href="/salary-predictor">Salary Predictor</a>
-          <a href="/trust-passport">Trust Passport</a>
-        </div>
-
-        <div className="npj-footer-col">
-          <h3>Employers</h3>
-          <a href="/recruiter-post-job">Post a Job</a>
-          <a href="/recruiter-search">Search Candidates</a>
-          <a href="/recruiter-dashboard">Recruiter Dashboard</a>
-          <a href="/recruiter-reports">Hiring Reports</a>
-          <a href="/recruiter-login">Employer Login</a>
-        </div>
-
-        <div className="npj-footer-col">
-          <h3>Company</h3>
-          <a href="/about">About Us</a>
-          <a href="/services">Services</a>
-          <a href="/products">Products</a>
-          <a href="/contact">Contact</a>
-          <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms of Use</a>
-        </div>
-
-        <div className="npj-footer-newsletter">
-          <h3>Stay updated</h3>
-          <p>Get job alerts and career tips.</p>
-
-          <div>
-            <input placeholder="Enter your email" />
-            <button>Subscribe →</button>
-          </div>
-
-          <small>🔒 We respect your privacy.</small>
+        <div className="footer-socials">
+          <button onClick={() => comingSoon("LinkedIn")}>in</button>
+          <button onClick={() => comingSoon("X")}>X</button>
+          <button onClick={() => comingSoon("YouTube")}>▶</button>
+          <button onClick={() => comingSoon("Facebook")}>f</button>
         </div>
       </div>
 
-      <div className="npj-footer-trust-final">
-        <div>
-          <b>🛡 Verified & Trusted</b>
-          <span>Trust-first profiles</span>
-        </div>
-
-        <div>
-          <b>🤖 AI Powered Tools</b>
-          <span>Practice. Improve. Grow.</span>
-        </div>
-
-        <div>
-          <b>🔒 Secure & Private</b>
-          <span>Your data is always safe</span>
-        </div>
-
-        <div>
-          <b>🎧 24/7 Support</b>
-          <span>We are here to help</span>
-        </div>
+      <div className="footer-col">
+        <h3>Services</h3>
+        {["Resume Studio", "AI Interview Prep", "Skill Assessment", "Salary Predictor", "Trust Passport", "Career Tools"].map((item) => (
+          <button key={item} onClick={() => goTo("/services")}>{item}</button>
+        ))}
       </div>
 
-      <div className="npj-footer-bottom-final">
-        <p>© 2026 Vatsenix Software Pvt Ltd. All rights reserved.</p>
+      <div className="footer-col">
+        <h3>Employers</h3>
+        {["Recruiter Login", "Post a Job", "Hiring Solutions", "Employer Dashboard"].map((item) => (
+          <button key={item} onClick={() => goTo("/recruiter-login")}>{item}</button>
+        ))}
+      </div>
 
+      <div className="footer-col">
+        <h3>Company</h3>
+        <button onClick={() => goTo("/about")}>About Us</button>
+        <button onClick={() => goTo("/services")}>Services</button>
+        <button onClick={() => goTo("/products")}>Products</button>
+        <button onClick={() => goTo("/contact")}>Contact Us</button>
+        <button onClick={() => goTo("/privacy-policy")}>Privacy Policy</button>
+        <button onClick={() => goTo("/terms-and-conditions")}>Terms & Conditions</button>
+      </div>
+
+      <div className="footer-subscribe">
+        <h3>Stay updated</h3>
+        <p>Get job alerts and career tips.</p>
+
+        <input
+          value={email}
+          placeholder="Enter your email"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <button onClick={subscribe} disabled={subscribing}>
+          {subscribing ? "Subscribing..." : "Subscribe"}
+        </button>
+
+        <small>🔒 We respect your privacy.</small>
+      </div>
+
+      <div className="footer-bottom">
+        <p>© 2026 Vatsenix Software Pvt. Ltd. All rights reserved.</p>
         <div>
-          <a href="/sitemap">Sitemap</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-          <a href="/cookies">Cookies</a>
+          <button onClick={() => goTo("/privacy-policy")}>Privacy Policy</button>
+          <button onClick={() => goTo("/terms-and-conditions")}>Terms & Conditions</button>
+          <button onClick={() => goTo("/sitemap")}>Sitemap</button>
         </div>
       </div>
     </footer>
   );
-}
-function TalentInsightPanel({ candidate, score }) {
+}function TalentInsightPanel({ candidate, score }) {
   const searchAppearances = candidate.profileViews || 0;
 
   const recruiterActions =
