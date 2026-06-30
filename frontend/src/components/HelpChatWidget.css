@@ -1,0 +1,226 @@
+/* .help-floating-btn {
+  position: fixed;
+  right: 34px;
+  bottom: 34px;
+  z-index: 99999;
+  width: 64px;
+  height: 64px;
+  border: 0;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  font-size: 26px;
+  box-shadow: 0 22px 55px rgba(89, 60, 255, 0.38);
+  cursor: pointer;
+}
+
+.help-widget {
+  position: fixed;
+  right: 34px;
+  bottom: 112px;
+  z-index: 99999;
+  width: 420px;
+  height: 640px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(219, 228, 255, 0.95);
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow:
+    0 35px 90px rgba(20, 36, 90, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.help-widget-head {
+  height: 86px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 22px;
+  border-bottom: 1px solid #edf1ff;
+  background: linear-gradient(180deg, #ffffff, #f8faff);
+}
+
+.bot-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #eef2ff, #f5efff);
+  box-shadow: inset 0 0 0 1px #dfe7ff;
+  font-size: 25px;
+}
+
+.help-widget-head h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #071436;
+  letter-spacing: -0.4px;
+}
+
+.help-widget-head p {
+  margin: 4px 0 0;
+  color: #647399;
+  font-weight: 700;
+}
+
+.help-widget-head button {
+  margin-left: auto;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 12px;
+  background: #f3f6ff;
+  color: #071436;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.online-row {
+  padding: 14px 24px 8px;
+  color: #10b981;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.online-row span {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  background: #10b981;
+  border-radius: 50%;
+  margin-right: 8px;
+  box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.12);
+}
+
+.help-messages {
+  flex: 1;
+  padding: 18px 20px;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.08), transparent 38%),
+    linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.help-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.help-messages::-webkit-scrollbar-thumb {
+  background: #d6def5;
+  border-radius: 999px;
+}
+
+.help-msg {
+  max-width: 84%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  margin-bottom: 14px;
+  line-height: 1.48;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: pre-line;
+}
+
+.help-msg.bot {
+  background: #f1f4ff;
+  color: #111d3f;
+  border: 1px solid #e3e9ff;
+  border-top-left-radius: 6px;
+  box-shadow: 0 10px 26px rgba(32, 49, 96, 0.06);
+}
+
+.help-msg.user {
+  margin-left: auto;
+  background: linear-gradient(135deg, #315efb, #8b2dff);
+  color: white;
+  border-top-right-radius: 6px;
+  box-shadow: 0 14px 30px rgba(91, 54, 255, 0.25);
+}
+
+.quick-help {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  padding: 14px 18px;
+  border-top: 1px solid #edf1ff;
+  background: #ffffff;
+}
+
+.quick-help button {
+  min-height: 42px;
+  border: 1px solid #dce5ff;
+  background: linear-gradient(180deg, #ffffff, #f8faff);
+  color: #5b35f5;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.quick-help button:hover {
+  border-color: #7c3aed;
+  transform: translateY(-1px);
+}
+
+.help-input {
+  display: grid;
+  grid-template-columns: 1fr 54px;
+  gap: 10px;
+  padding: 0 18px 12px;
+  background: #ffffff;
+}
+
+.help-input input {
+  height: 52px;
+  border: 1px solid #dce6ff;
+  border-radius: 16px;
+  padding: 0 16px;
+  outline: none;
+  font-weight: 800;
+  background: #f9fbff;
+  color: #071436;
+}
+
+.help-input input:focus {
+  border-color: #7c3aed;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+.help-input button {
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 12px 26px rgba(91, 54, 255, 0.28);
+}
+
+.powered {
+  text-align: center;
+  padding: 0 0 14px;
+  color: #8b97b8;
+  font-weight: 700;
+  background: white;
+}
+
+@media (max-width: 600px) {
+  .help-widget {
+    right: 12px;
+    left: 12px;
+    bottom: 96px;
+    width: auto;
+    height: 580px;
+  }
+
+  .help-floating-btn {
+    right: 20px;
+    bottom: 22px;
+  }
+} */

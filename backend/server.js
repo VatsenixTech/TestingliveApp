@@ -4,6 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
+const admin = require("firebase-admin");
 
 const passport = require("./config/passport");
 
@@ -23,14 +24,25 @@ const jobAlertRoutes = require("./routes/jobAlertRoutes");
 const careerRoadmapRoutes = require("./routes/careerRoadmapRoutes");
 const candidateProfileRoutes = require("./routes/candidateProfileRoutes");
 const profileViewRoutes = require("./routes/profileViewRoutes");
-
+const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
 
 const app = express();
 
+/* FIREBASE ADMIN */
+try {
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(
+        require("./firebase-service-account.json")
+      ),
+    });
+    console.log("Firebase Admin initialized");
+  }
+} catch (error) {
+  console.log("Firebase Admin Error:", error.message);
+}
 
-// ================================
-// CORS CONFIGURATION
-// ================================
+/* CORS */
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -40,16 +52,13 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-
-      // Postman or Mobile Apps
+    origin(origin, callback) {
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      // Allow Vercel Deployments
       if (origin.endsWith(".vercel.app")) {
         return callback(null, true);
       }
@@ -62,44 +71,17 @@ app.use(
   })
 );
 
-
-// ================================
-// MIDDLEWARES
-// ================================
+/* MIDDLEWARE */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
-// ================================
-// PASSPORT
-// ================================
 app.use(passport.initialize());
-app.use(
-  "/api/notifications",
-  notificationRoutes
-);
 
-app.use("/api/skill-analyzer", skillAnalyzerRoutes);
-app.use("/api/resume-studio", resumeStudioRoutes);
-app.use("/api/hidden-opportunities", hiddenOpportunityRoutes);
-app.use("/api/job-alerts", jobAlertRoutes);
-app.use("/api/career-roadmap", careerRoadmapRoutes);
-app.use("/api/candidate-profile", candidateProfileRoutes);
-app.use("/uploads", express.static("uploads"));
-app.use("/api/profile-views", profileViewRoutes);
-
-
-// ================================
-// HOME ROUTE
-// ================================
+/* HOME */
 app.get("/", (req, res) => {
   res.send("Backend Running Successfully");
 });
 
-
-// ================================
-// TEST ROUTE
-// ================================
+/* TEST */
 app.get("/api/test", (req, res) => {
   res.json({
     success: true,
@@ -107,14 +89,9 @@ app.get("/api/test", (req, res) => {
   });
 });
 
-
-// ================================
-// SMTP TEST ROUTE
-// ================================
+/* SMTP TEST */
 app.get("/api/mail-test", async (req, res) => {
   try {
-    console.log("SMTP TEST STARTED");
-
     if (!process.env.SMTP_HOST) {
       return res.status(500).json({
         success: false,
@@ -163,17 +140,15 @@ app.get("/api/mail-test", async (req, res) => {
       `,
     });
 
-    return res.json({
+    res.json({
       success: true,
       message: "SMTP connected successfully",
       user: process.env.SMTP_USER,
     });
-
   } catch (error) {
-
     console.log("SMTP ERROR:", error);
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "SMTP connection failed",
       error: error.message,
@@ -184,29 +159,28 @@ app.get("/api/mail-test", async (req, res) => {
   }
 });
 
-
-// ================================
-// API ROUTES
-// ================================
+/* API ROUTES */
 app.use("/api/auth", authRoutes);
-
 app.use("/api/candidates", candidateRoutes);
-
 app.use("/api/jobs", jobRoutes);
-
 app.use("/api/payments", paymentRoutes);
-
 app.use("/api/protected-pdf", protectedPdfRoutes);
-
 app.use("/api/ai", aiRoutes);
-
 app.use("/api/auto-apply", autoApplyRoutes);
 app.use("/api/recruiter", recruiterRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/skill-analyzer", skillAnalyzerRoutes);
+app.use("/api/resume-studio", resumeStudioRoutes);
+app.use("/api/hidden-opportunities", hiddenOpportunityRoutes);
+app.use("/api/job-alerts", jobAlertRoutes);
+app.use("/api/career-roadmap", careerRoadmapRoutes);
+app.use("/api/candidate-profile", candidateProfileRoutes);
+app.use("/api/profile-views", profileViewRoutes);
+app.use("/api/candidates/forgot-password", forgotPasswordRoutes);
 
+app.use("/uploads", express.static("uploads"));
 
-// ================================
-// 404 ROUTE
-// ================================
+/* 404 */
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -214,12 +188,8 @@ app.use((req, res) => {
   });
 });
 
-
-// ================================
-// GLOBAL ERROR HANDLER
-// ================================
+/* ERROR HANDLER */
 app.use((err, req, res, next) => {
-
   console.error("SERVER ERROR:", err);
 
   res.status(500).json({
@@ -227,13 +197,9 @@ app.use((err, req, res, next) => {
     message: "Internal Server Error",
     error: err.message,
   });
-
 });
 
-
-// ================================
-// MONGODB CONNECTION
-// ================================
+/* MONGODB */
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
@@ -243,10 +209,7 @@ mongoose
     console.log("MongoDB Connection Error:", err);
   });
 
-
-// ================================
-// SERVER
-// ================================
+/* SERVER */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

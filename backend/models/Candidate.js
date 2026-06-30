@@ -261,7 +261,43 @@ const candidateSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    settings: {
+      darkMode: {
+        type: Boolean,
+        default: false,
+      },
 
+      notifications: {
+        jobAlerts: {
+          type: Boolean,
+          default: true,
+        },
+        applicationUpdates: {
+          type: Boolean,
+          default: true,
+        },
+        interviewReminders: {
+          type: Boolean,
+          default: true,
+        },
+      },
+
+      privacy: {
+        profileVisibility: {
+          type: String,
+          enum: ["public", "private", "recruiters_only"],
+          default: "public",
+        },
+        showEmailToRecruiters: {
+          type: Boolean,
+          default: false,
+        },
+        showPhoneToRecruiters: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    },
     recruiterNotes: {
       type: [recruiterNoteSchema],
       default: [],

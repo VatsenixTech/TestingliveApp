@@ -1328,19 +1328,21 @@ const candidateRole =
           <b>Verified Candidate</b>
         </div>
 
-        <nav className="pvx-nav">
-          <button onClick={() => goTo(`/dashboard/${candidateId}`)}>
-  ⌘ Dashboard
-</button>
-          <button onClick={() => goTo("/applications")}>▣ Applications</button>
-          <button onClick={() => goTo("/auto-apply")}>↗ Auto Apply</button>
-          <button onClick={() => goTo("/job-alerts")}>🔔 Job Alerts</button>
-          <button onClick={() => goTo("/ai-workspace")}>✦ AI Workspace</button>
-          <button onClick={() => goTo("/resume-studio")}>📄 Resume Studio</button>
-          <button onClick={() => goTo("/question-bank")}>▣ Question Bank</button>
-          <button onClick={() => goTo("/trust-passport")}>ⓘ Trust Passport</button>
-          <button className="active">👁 Profile Views</button>
-        </nav>
+   <nav className="pvx-nav">
+  <button onClick={() => goTo(`/dashboard/${candidateId}`)}>
+    Dashboard
+  </button>
+
+  <button onClick={() => goTo("/services")}>▣ Applications</button>
+  <button onClick={() => goTo("/services")}>↗ Auto Apply</button>
+  <button onClick={() => goTo("/services")}>🔔 Job Alerts</button>
+  <button onClick={() => goTo("/services")}>✦ AI Workspace</button>
+  <button onClick={() => goTo("/services")}>📄 Resume Studio</button>
+  <button onClick={() => goTo("/services")}>▣ Question Bank</button>
+  <button onClick={() => goTo("/services")}>ⓘ Trust Passport</button>
+
+  <button className="active">👁 Profile Views</button>
+</nav>
 
         <div className="pvx-bottom">
           <button onClick={() => goTo("/settings")}>⚙ Settings</button>

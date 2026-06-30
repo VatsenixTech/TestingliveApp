@@ -38,7 +38,6 @@ function Login() {
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-
       const firebaseToken = await result.user.getIdToken();
 
       const response = await fetch(
@@ -112,7 +111,19 @@ function Login() {
           required
         />
 
-        <br />
+        <div style={{ textAlign: "right", marginTop: "10px" }}>
+          <Link
+            to="/candidate-forgot-password"
+            style={{
+              color: "#6d35ff",
+              fontWeight: "700",
+              textDecoration: "none",
+            }}
+          >
+            Forgot password?
+          </Link>
+        </div>
+
         <br />
 
         <button type="submit">Login</button>

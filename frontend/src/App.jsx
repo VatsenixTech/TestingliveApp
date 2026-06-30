@@ -18,6 +18,9 @@ import HiddenOpportunitiesPage from "./pages/HiddenOpportunitiesPage";
 import JobAlertsPage from "./pages/JobAlertsPage";
 import CareerRoadmapPage from "./pages/CareerRoadmapPage";
 import CandidateProfilePage from "./pages/CandidateProfilePage";
+import CandidateSettings from "./pages/CandidateSettings";
+import HelpChatWidget from "./components/HelpChatWidget";
+import CandidateForgotPassword from "./pages/CandidateForgotPassword";
 
 
 import "swiper/css";
@@ -25,8 +28,7 @@ import "swiper/css/navigation";
 
 
 
-
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 
 function LandingPage() {
@@ -292,15 +294,8 @@ function CandidateLogin() {
   const loginCandidate = async () => {
     setErrorMsg("");
 
-    if (!email.trim()) {
-      setErrorMsg("Email is required");
-      return;
-    }
-
-    if (!password.trim()) {
-      setErrorMsg("Password is required");
-      return;
-    }
+    if (!email.trim()) return setErrorMsg("Email is required");
+    if (!password.trim()) return setErrorMsg("Password is required");
 
     try {
       setLoading(true);
@@ -310,163 +305,208 @@ function CandidateLogin() {
         password,
       });
 
-      console.log("LOGIN RESPONSE:", response.data);
-
       const candidate = response.data.candidate || response.data.user;
 
+      localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(candidate));
 
-      const candidateId =
-        candidate?._id ||
-        candidate?.id ||
-        candidate?.candidateId;
+      const candidateId = candidate?._id || candidate?.id || candidate?.candidateId;
 
       window.location.href = candidateId
         ? `/dashboard/${candidateId}`
-        : "/candidate";
+        : "/dashboard";
     } catch (error) {
-      console.log("LOGIN ERROR:", error.response?.data || error.message);
+      setErrorMsg(error.response?.data?.message || "Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      setErrorMsg(
-        error.response?.data?.message ||
-          "Invalid email or password"
-      );
+  const googleLogin = async () => {
+    try {
+      setLoading(true);
+
+      const result = await signInWithPopup(auth, googleProvider);
+      const token = await result.user.getIdToken();
+
+      const response = await axios.post(`${API_URL}/api/candidates/firebase-login`, {
+        token,
+        provider: "google",
+      });
+
+      const candidate = response.data.candidate;
+      const candidateId = candidate._id || candidate.id;
+
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(candidate));
+
+      if (response.data?.isNewCandidate || !response.data?.hasPassword) {
+        localStorage.setItem("candidateSetPasswordId", candidateId);
+        localStorage.setItem("candidateSetPasswordEmail", candidate.email);
+        window.location.href = "/candidate-set-password?mode=google";
+      } else {
+        window.location.href = `/dashboard/${candidateId}`;
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || err.message || "Google login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="candidate-login-pro">
-      <section className="cl-left">
-        <div className="cl-bg-glow cl-glow-one"></div>
-        <div className="cl-bg-glow cl-glow-two"></div>
+    <main className="candidate-login-elite">
+      <section className="elite-left">
+        <div className="elite-overlay"></div>
 
-        <div className="cl-company-header">
-          <img
-            src="/logo.png"
-            alt="NoPromptJobs"
-            className="company-logo"
-          />
+        <div className="elite-brand">
+          <img src="/logo.png" alt="NoPrompt Jobs" />
+          <div>
+            <h3>NoPrompt <span>Jobs</span></h3>
+            <p>Your Career, Our Mission</p>
+          </div>
         </div>
 
-        <div className="cl-copy">
-          <div>
-            <h1>Candidate Trust Passport</h1>
-            <p>Your verified identity. Your career credibility.</p>
+        <div className="elite-copy">
+          <span className="elite-trust-badge">🛡 Trusted by verified professionals</span>
+
+          <h1>
+            Your Dream Job <br />
+            is <b>Closer</b> Than <br />
+            You Think
+          </h1>
+
+          <p>
+            Join verified professionals finding the right opportunities and
+            building successful careers every day.
+          </p>
+
+          <div className="elite-feature">
+            <span>✓</span>
+            <div>
+              <h4>Verified Opportunities</h4>
+              <p>All jobs are verified for your safety and career growth.</p>
+            </div>
           </div>
 
-          <span className="cl-status">🏅 Excellent</span>
+          <div className="elite-feature">
+            <span>⌕</span>
+            <div>
+              <h4>Smart Job Matching</h4>
+              <p>AI-powered matching connects you with the right opportunities.</p>
+            </div>
+          </div>
+
+          <div className="elite-feature">
+            <span>↗</span>
+            <div>
+              <h4>Career Growth</h4>
+              <p>Tools, resources and guidance to help you grow in your career.</p>
+            </div>
+          </div>
         </div>
 
-        <div className="cl-trust-image">
-          <img
-            src="/images/trust-passport-login.png"
-            alt="Candidate Trust Passport"
-          />
+        <div className="elite-photo-card">
+          <img src="/images/candidate-login-woman.png" alt="Candidate working" />
+        </div>
+
+        <div className="elite-secure-card">
+          <span>🔒</span>
+          <div>
+            <h4>Secure & Private</h4>
+            <p>Your data is always safe and protected with us.</p>
+          </div>
         </div>
       </section>
 
-      <section className="cl-right">
-        <div className="cl-login-card">
-          <span className="cl-pill">Candidate Portal</span>
+      <section className="elite-right">
+        <div className="elite-login-card">
+          <span className="elite-pill">👋 Welcome Back!</span>
 
-          <h1>Continue Your Career Journey</h1>
+          <h1>Candidate Login</h1>
+          <p>Sign in to continue your career journey</p>
 
-          <p>
-            Access your verified profile, Noprompt tools, interview preparation and
-            opportunities—all in one place.
-          </p>
+          {errorMsg && <div className="login-error-box">{errorMsg}</div>}
 
-          {errorMsg && (
-            <div className="login-error-box">
-              {errorMsg}
-            </div>
-          )}
-
-          <label>
-            Email Address
-            <div className="cl-input">
-              <span>✉</span>
-
-              <input
-                type="email"
-                placeholder="candidate@example.com"
-                value={email}
-                disabled={loading}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setErrorMsg("");
-                }}
-              />
-            </div>
-          </label>
-
-          <label>
-            Password
-            <div className="cl-input">
-              <span>🔒</span>
-
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter password"
-                value={password}
-                disabled={loading}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setErrorMsg("");
-                }}
-              />
-
-              <button
-                type="button"
-                className="password-eye-btn"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? "🙈" : "👁"}
-              </button>
-            </div>
-          </label>
-
-          <div className="cl-options">
-            <label>
-              <input type="checkbox" />
-              Remember me
-            </label>
-
-            <a href="/candidate-forgot-password">
-              Forgot password?
-            </a>
+          <label>Email Address</label>
+          <div className="elite-input">
+            <span>✉</span>
+            <input
+              type="email"
+              placeholder="Enter your email address"
+              value={email}
+              disabled={loading}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErrorMsg("");
+              }}
+            />
           </div>
 
-          <button
-            type="button"
-            className="cl-main-btn"
-            disabled={loading}
-            onClick={loginCandidate}
-          >
-            {loading
-              ? "Signing you in..."
-              : "Access Candidate Dashboard →"}
+          <label>Password</label>
+          <div className="elite-input">
+            <span>🔒</span>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              value={password}
+              disabled={loading}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setErrorMsg("");
+              }}
+            />
+            <button type="button" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? "🙈" : "👁"}
+            </button>
+          </div>
+
+          <div className="elite-options">
+            <label>
+              <input type="checkbox" /> Remember me
+            </label>
+            <a href="/candidate-forgot-password">Forgot password?</a>
+          </div>
+
+          <button className="elite-main-btn" onClick={loginCandidate} disabled={loading}>
+            {loading ? "Signing in..." : "↪ Access Dashboard"}
           </button>
 
-          <div className="cl-new-box">
-            <p>New candidate?</p>
-
-            <a href="/candidate-email-verify">
-              Create Verified Account
-            </a>
+          <div className="elite-divider">
+            <span></span>
+            <p>or continue with</p>
+            <span></span>
           </div>
 
-          <a className="cl-back" href="/">
-            ← Back to website
-          </a>
+          <div className="elite-socials">
+            <button onClick={googleLogin} disabled={loading}>
+              <FcGoogle /> Google
+            </button>
+            <button disabled>
+              <FaLinkedinIn /> LinkedIn
+            </button>
+            <button disabled>
+              <FaFacebookF /> Facebook
+            </button>
+          </div>
+
+          <div className="elite-new-box">
+            <h3>New to NoPrompt Jobs?</h3>
+            <p>Create your verified account and start your journey</p>
+            <a href="/candidate-email-verify">👥 Create New Account</a>
+          </div>
+        </div>
+
+        <div className="elite-bottom-trust">
+          <div>🔒 <b>Secure & Private</b></div>
+          <div>🛡 <b>Trusted Platform</b></div>
+          <div>✅ <b>100% Verified</b></div>
         </div>
       </section>
     </main>
   );
-}function CandidateEmailVerify() {
+}
+function CandidateEmailVerify() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
@@ -478,8 +518,7 @@ function CandidateLogin() {
       setLoading(true);
 
       const result = await signInWithPopup(auth, googleProvider);
-      const firebaseUser = result.user;
-      const token = await firebaseUser.getIdToken();
+      const token = await result.user.getIdToken();
 
       const response = await axios.post(
         `${API_URL}/api/candidates/firebase-login`,
@@ -499,15 +538,32 @@ function CandidateLogin() {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(candidate));
 
-      alert("Google login successful");
-      window.location.href = `/dashboard/${candidate._id || candidate.id}`;
-    } catch (error) {
-      console.error("GOOGLE LOGIN ERROR:", error);
-      alert(
-        error.response?.data?.message ||
-          error.message ||
-          "Google login failed"
-      );
+      const candidateId = candidate._id || candidate.id;
+
+if (response.data?.isNewCandidate || !response.data?.hasPassword) {
+  localStorage.setItem("candidateSetPasswordId", candidateId);
+  localStorage.setItem("candidateSetPasswordEmail", candidate.email);
+  window.location.href = "/candidate-set-password?mode=google";
+} else {
+  window.location.href = `/dashboard/${candidateId}`;
+}
+    } catch (err) {
+      console.log("GOOGLE LOGIN ERROR:", err);
+
+      const message =
+        err.response?.data?.message || err.message || "Google login failed";
+
+      if (err.code === "auth/popup-blocked") {
+        alert("Please allow popups for this website.");
+        return;
+      }
+
+      if (message.toLowerCase().includes("account does not exist")) {
+        alert("Account does not exist. Please create a new account.");
+        return;
+      }
+
+      alert(message);
     } finally {
       setLoading(false);
     }
@@ -534,7 +590,28 @@ function CandidateLogin() {
       setOtpSent(true);
       alert(response.data?.message || "OTP sent to your email");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to send OTP");
+      const message =
+        error.response?.data?.message || "Failed to send OTP";
+
+      if (
+        message.toLowerCase().includes("already registered") ||
+        message.toLowerCase().includes("please login")
+      ) {
+        alert("Account already exists. Redirecting to login.");
+
+        window.location.href = `/candidate-login?email=${encodeURIComponent(
+          signupEmail
+        )}`;
+
+        return;
+      }
+
+      if (message.toLowerCase().includes("permanently deleted")) {
+        alert("Account does not exist. Please create a new account.");
+        return;
+      }
+
+      alert(message);
     } finally {
       setLoading(false);
     }
@@ -571,6 +648,7 @@ function CandidateLogin() {
   const handleOtpChange = (index, value, input) => {
     const digit = value.replace(/\D/g, "").slice(0, 1);
     const arr = otp.split("");
+
     arr[index] = digit;
     setOtp(arr.join("").slice(0, 6));
 
@@ -730,76 +808,118 @@ function CandidateLogin() {
 function CandidateSetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const email = localStorage.getItem("candidateSignupEmail");
-  const otpVerified = localStorage.getItem("candidateOtpVerified") === "true";
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("mode");
 
-  useEffect(() => {
-    if (!email || !otpVerified) {
-      alert("Please verify your email first");
-      window.location.href = "/candidate-email-verify";
-    }
-  }, [email, otpVerified]);
+  const email = localStorage.getItem("candidateSignupEmail") || localStorage.getItem("candidateSetPasswordEmail");
+  const candidateId = localStorage.getItem("candidateSetPasswordId");
 
-  const savePassword = async () => {
+  const setLoginPassword = async () => {
     if (!password || !confirmPassword) {
-      alert("Please enter password and confirm password");
-      return;
+      return alert("Please enter password and confirm password");
     }
 
     if (password.length < 6) {
-      alert("Password must be at least 6 characters");
-      return;
+      return alert("Password must be at least 6 characters");
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
+      return alert("Passwords do not match");
     }
 
     try {
-      await axios.post(`${API_URL}/api/candidates/set-password`, {
-        email,
-        password,
-      });
+      setLoading(true);
 
-      localStorage.setItem("candidatePasswordSet", "true");
+      const payload =
+        mode === "google"
+          ? { candidateId, password }
+          : { email, password };
 
-      alert("Password set successfully. Now complete your candidate profile.");
-      window.location.href = "/candidate-register";
-    } catch (err) {
-      console.log("Set Password Error:", err.response?.data || err.message);
-      alert(err.response?.data?.message || "Failed to set password");
+      const response = await axios.post(
+        `${API_URL}/api/candidates/set-password`,
+        payload
+      );
+
+      if (!response.data?.success) {
+        alert(response.data?.message || "Failed to set password");
+        return;
+      }
+
+      const candidate = response.data.candidate;
+
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(candidate));
+
+      localStorage.removeItem("candidateSignupEmail");
+      localStorage.removeItem("candidateSignupMobile");
+      localStorage.removeItem("candidateOtpVerified");
+      localStorage.removeItem("candidateSetPasswordId");
+      localStorage.removeItem("candidateSetPasswordEmail");
+
+      alert("Password set successfully");
+      window.location.href = `/dashboard/${candidate._id || candidate.id}`;
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to set password");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1>Set Candidate Password</h1>
-        <p>Your verified email: {email}</p>
+    <main className="np-register-page">
+      <section className="np-register-right">
+        <div className="np-register-card">
+          <span className="np-register-badge">Secure Account</span>
 
-        <input
-          type="password"
-          placeholder="Create Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <h1>Set your password</h1>
 
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
+          <p className="np-register-sub">
+            Create a password so you can login using email and password also.
+          </p>
 
-        <button onClick={savePassword}>Save Password</button>
-        <a href="/candidate-email-verify">Back to Email Verification</a>
-      </div>
-    </div>
+          <label className="np-register-field">
+            New Password
+            <div>
+              <span>🔐</span>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                disabled={loading}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </label>
+
+          <label className="np-register-field">
+            Confirm Password
+            <div>
+              <span>🔐</span>
+              <input
+                type="password"
+                placeholder="Confirm password"
+                value={confirmPassword}
+                disabled={loading}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          </label>
+
+          <button
+            type="button"
+            className="np-register-primary"
+            onClick={setLoginPassword}
+            disabled={loading}
+          >
+            {loading ? "Saving..." : "Set Password & Open Dashboard →"}
+          </button>
+        </div>
+      </section>
+    </main>
   );
 }
-
 function RecruiterLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -3164,17 +3284,25 @@ function App() {
     }
   }, []);
 
-  const legalPage = getLegalPageData(path);
+const legalPage = getLegalPageData(path);
 
-  if (legalPage) {
-    return <LegalCenterPage page={legalPage} />;
-  }
+const withChat = (page) => (
+  <>
+    {page}
+    <HelpChatWidget />
+  </>
+);
+
+if (legalPage) {
+  return withChat(<LegalCenterPage page={legalPage} />);
+}
 
   if (path === "/") return <LandingPage />;
 
   if (path === "/login") return <LandingPage />;
   if (path === "/register") return <LandingPage />;
-
+if (path === "/candidate-forgot-password") return <CandidateForgotPassword />;
+if (path === "/forgot-password") return <CandidateForgotPassword />;
   if (path === "/candidate-login") return <CandidateLogin />;
   if (path === "/candidate-email-verify") return <CandidateEmailVerify />;
   if (path === "/candidate-set-password") return <CandidateSetPassword />;
@@ -3188,7 +3316,7 @@ function App() {
   if (path === "/mobile-dashboard") return <MobileCandidateDashboard />;
   if (path === "/applications") return <ServicesPage />;
   if (path === "/career-roadmap") return <CareerRoadmapPage />;
-  
+  if (path === "/settings") return withChat(<CandidateSettings />);
   if (
   path === "/profile" ||
   path.startsWith("/profile/") ||
@@ -3198,7 +3326,7 @@ function App() {
   return <CandidateProfilePage />;
 }
 
-  if (path.startsWith("/dashboard/")) return <CandidateDashboard />;
+  if (path.startsWith("/dashboard/")) return withChat(<CandidateDashboard />);
 
   if (path === "/companies") return <CompaniesPage />;
 
@@ -3258,8 +3386,10 @@ function App() {
   if (path === "/hidden-opportunities") return <HiddenOpportunitiesPage />;
   if (path === "/ai-interview-prep") return <AIInterviewPrepPage />;
   if (path === "/settings") return <SettingsPage />;
-  if (path === "/candidate-settings") return <SettingsPage />;
+  if (path === "/candidate-settings") return withChat(<CandidateSettings />);
   if (path === "/saved-jobs") return <SavedJobsPage />;
+  
+
 
   return <LandingPage />;
 }function Navbar({
