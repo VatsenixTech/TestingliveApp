@@ -8,16 +8,16 @@ const router = express.Router();
 const otpStore = new Map();
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: false,
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: Number(process.env.SMTP_PORT || 465),
+  secure: Number(process.env.SMTP_PORT || 465) === 465,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  tls: {
-    rejectUnauthorized: false,
-  },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 router.post("/send-otp", async (req, res) => {
@@ -25,13 +25,26 @@ router.post("/send-otp", async (req, res) => {
     const email = req.body.email?.trim().toLowerCase();
 
     if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      return res.status(500).json({
+        success: false,
+        message: "SMTP email configuration is missing",
+      });
     }
 
     const candidate = await Candidate.findOne({ email });
 
     if (!candidate) {
-      return res.status(404).json({ success: false, message: "Email not registered" });
+      return res.status(404).json({
+        success: false,
+        message: "Email not registered",
+      });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
