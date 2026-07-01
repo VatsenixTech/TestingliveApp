@@ -25,6 +25,7 @@ const careerRoadmapRoutes = require("./routes/careerRoadmapRoutes");
 const candidateProfileRoutes = require("./routes/candidateProfileRoutes");
 const profileViewRoutes = require("./routes/profileViewRoutes");
 const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
+app.use("/api/contact", contactRoutes);
 
 /* HOME */
 app.get("/", (req, res) => {

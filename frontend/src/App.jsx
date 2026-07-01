@@ -21,10 +21,13 @@ import CandidateProfilePage from "./pages/CandidateProfilePage";
 import CandidateSettings from "./pages/CandidateSettings";
 import HelpChatWidget from "./components/HelpChatWidget";
 import CandidateForgotPassword from "./pages/CandidateForgotPassword";
-
-
+import PremiumTermsPage from "./pages/PremiumTermsPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import PremiumContactPage from "./pages/PremiumContactPage";
 import "swiper/css";
 import "swiper/css/navigation";
+
+
 
 
 
@@ -362,8 +365,7 @@ function CandidateLogin() {
         <div className="elite-brand">
           <img src="/logo.png" alt="NoPrompt Jobs" />
           <div>
-            <h3>NoPrompt <span>Jobs</span></h3>
-            <p>Your Career, Our Mission</p>
+            
           </div>
         </div>
 
@@ -681,13 +683,11 @@ if (response.data?.isNewCandidate || !response.data?.hasPassword) {
           </p>
         </div>
 
-        <div className="np-boy-photo-wrap">
-          <img
-            src="/images/candidate-boy.png"
-            alt="Candidate using laptop"
-            className="np-boy-photo"
-          />
-        </div>
+ <img
+  className="login-woman-fixed"
+  src="/images/login-woman.png"
+  alt="Candidate working"
+/>
       </section>
 
       <section className="np-register-right">
@@ -3273,104 +3273,74 @@ function SavedJobsPage() {
   </>
 );
 }
+
 function App() {
   const path = window.location.pathname;
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
-
-    if (savedTheme) {
-      document.body.className = savedTheme;
-    }
+    if (savedTheme) document.body.className = savedTheme;
   }, []);
 
-const legalPage = getLegalPageData(path);
+  const withChat = (page) => (
+    <>
+      {page}
+      <HelpChatWidget />
+    </>
+  );
 
-const withChat = (page) => (
-  <>
-    {page}
-    <HelpChatWidget />
-  </>
-);
+  if (path === "/terms") {
+    return withChat(<PremiumTermsPage />);
+  }
 
-if (legalPage) {
-  return withChat(<LegalCenterPage page={legalPage} />);
-}
+  if (path === "/privacy") {
+    return withChat(<PrivacyPolicy />);
+  }
+
+  if (path === "/contact") {
+    return withChat(<PremiumContactPage />);
+  }
+
+  const legalPage = getLegalPageData(path);
+
+  if (legalPage) {
+    return withChat(<LegalCenterPage page={legalPage} />);
+  }
 
   if (path === "/") return <LandingPage />;
-
   if (path === "/login") return <LandingPage />;
   if (path === "/register") return <LandingPage />;
-if (path === "/candidate-forgot-password") return <CandidateForgotPassword />;
-if (path === "/forgot-password") return <CandidateForgotPassword />;
+
   if (path === "/candidate-login") return <CandidateLogin />;
   if (path === "/candidate-email-verify") return <CandidateEmailVerify />;
   if (path === "/candidate-set-password") return <CandidateSetPassword />;
-  if (path === "/recruiter-login") return <RecruiterLogin />;
-  if (path === "/job-alerts") return <JobAlertsPage />;
-
+  if (path === "/candidate-forgot-password") return <CandidateForgotPassword />;
+  if (path === "/forgot-password") return <CandidateForgotPassword />;
   if (path === "/candidate-register") return <CandidateRegister />;
-  if (path === "/recruiter-register") return <RecruiterRegister />;
-
   if (path === "/candidate") return <CandidateUpload />;
+
   if (path === "/mobile-dashboard") return <MobileCandidateDashboard />;
-  if (path === "/applications") return <ServicesPage />;
-  if (path === "/career-roadmap") return <CareerRoadmapPage />;
-  if (path === "/settings") return withChat(<CandidateSettings />);
+
   if (
-  path === "/profile" ||
-  path.startsWith("/profile/") ||
-  path === "/candidate-profile" ||
-  path.startsWith("/candidate-profile/")
-) {
-  return <CandidateProfilePage />;
-}
+    path === "/profile" ||
+    path.startsWith("/profile/") ||
+    path === "/candidate-profile" ||
+    path.startsWith("/candidate-profile/")
+  ) {
+    return <CandidateProfilePage />;
+  }
 
   if (path.startsWith("/dashboard/")) return withChat(<CandidateDashboard />);
 
   if (path === "/companies") return <CompaniesPage />;
 
-  if (
-  path === "/profile" ||
-  path.startsWith("/profile/") ||
-  path === "/candidate-profile" ||
-  path.startsWith("/candidate-profile/")
-) {
-  return <CandidateProfilePage />;
-}
-
-  if (path.startsWith("/recruiter-candidate-profile/")) {
-    return <RecruiterCandidateProfile />;
-  }
-
-  if (path === "/recruiter-dashboard") return <RecruiterDashboard />;
-  if (path === "/recruiter-post-job") return <RecruiterPostJobPage />;
-  if (path === "/recruiter-search") return <RecruiterTalentSearch />;
-  if (path === "/recruiter-shortlisted") return <RecruiterShortlistedPage />;
-  if (path === "/recruiter-applications") return <RecruiterApplicationsPage />;
-  if (path === "/recruiter-reports") return <RecruiterReportsPage />;
-  if (path === "/recruiter-profile") return <RecruiterProfilePage />;
-  if (path === "/company-profile") return <CompanyProfilePage />;
-  if (path === "/recruiter-settings") return <RecruiterSettingsPage />;
-  if (path === "/recruiter-notifications") return <RecruiterNotificationsPage />;
-
-  if (path === "/ultimate-dashboard") return <UltimateDashboard />;
-  if (path === "/salary-predictor") return <SalaryPredictorPage />;
-
-  if (path.startsWith("/recruiter-job-details/")) {
-    return <RecruiterJobDetailsPage />;
-  }
-
-  if (path === "/recruiter-ai-assistant") return <RecruiterAIAssistantPage />;
-  if (path === "/recruiter-interviews") return <RecruiterInterviewStagesPage />;
-  if (path === "/recruiter-screening") return <RecruiterScreeningPage />;
-  if (path === "/recruiter-team") return <RecruiterTeamPage />;
-  if (path === "/recruiter-billing") return <RecruiterBillingPage />;
-
-  if (path.startsWith("/jobs/")) return <JobDetailsPage />;
   if (path === "/jobs") return <JobsPage />;
+  if (path.startsWith("/jobs/")) return <JobDetailsPage />;
+
   if (path === "/services") return <ServicesPage />;
+  if (path === "/applications") return <ApplicationsPage />;
   if (path === "/notifications") return <NotificationsPage />;
+  if (path === "/job-alerts") return <JobAlertsPage />;
   if (path === "/interview-alerts") return <InterviewAlertsPage />;
 
   if (path === "/resume-studio") {
@@ -3385,14 +3355,46 @@ if (path === "/forgot-password") return <CandidateForgotPassword />;
   if (path === "/trust-passport") return <TrustPassportPage />;
   if (path === "/hidden-opportunities") return <HiddenOpportunitiesPage />;
   if (path === "/ai-interview-prep") return <AIInterviewPrepPage />;
-  if (path === "/settings") return <SettingsPage />;
+  if (path === "/salary-predictor") return <SalaryPredictorPage />;
+  if (path === "/career-roadmap") return <CareerRoadmapPage />;
+
+  if (path === "/settings") return withChat(<CandidateSettings />);
   if (path === "/candidate-settings") return withChat(<CandidateSettings />);
   if (path === "/saved-jobs") return <SavedJobsPage />;
-  
 
+  if (path === "/recruiter-login") return <RecruiterLogin />;
+  if (path === "/recruiter-register") return <RecruiterRegister />;
+  if (path === "/recruiter-dashboard") return <RecruiterDashboard />;
+  if (path === "/recruiter-post-job") return <RecruiterPostJobPage />;
+  if (path === "/recruiter-search") return <RecruiterTalentSearch />;
+  if (path === "/recruiter-shortlisted") return <RecruiterShortlistedPage />;
+  if (path === "/recruiter-applications") return <RecruiterApplicationsPage />;
+  if (path === "/recruiter-reports") return <RecruiterReportsPage />;
+  if (path === "/recruiter-profile") return <RecruiterProfilePage />;
+  if (path === "/company-profile") return <CompanyProfilePage />;
+  if (path === "/recruiter-settings") return <RecruiterSettingsPage />;
+  if (path === "/recruiter-notifications") return <RecruiterNotificationsPage />;
+
+  if (path.startsWith("/recruiter-candidate-profile/")) {
+    return <RecruiterCandidateProfile />;
+  }
+
+  if (path.startsWith("/recruiter-job-details/")) {
+    return <RecruiterJobDetailsPage />;
+  }
+
+  if (path === "/recruiter-ai-assistant") return <RecruiterAIAssistantPage />;
+  if (path === "/recruiter-interviews") return <RecruiterInterviewStagesPage />;
+  if (path === "/recruiter-screening") return <RecruiterScreeningPage />;
+  if (path === "/recruiter-team") return <RecruiterTeamPage />;
+  if (path === "/recruiter-billing") return <RecruiterBillingPage />;
+
+  if (path === "/ultimate-dashboard") return <UltimateDashboard />;
 
   return <LandingPage />;
-}function Navbar({
+}
+
+function Navbar({
   searchText = "",
   setSearchText = () => {},
   handleSearch = () => {},
