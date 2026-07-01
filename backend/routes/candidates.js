@@ -2,49 +2,17 @@ const express = require("express");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
-const path = require("path");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+const admin = require("../config/firebaseAdmin");
+const { getAuth } = require("firebase-admin/auth");
 
 const Candidate = require("../models/Candidate");
 const Notification = require("../models/Notification");
 
 const router = express.Router();
-
-let admin = null;
-let getAuth = null;
-
-try {
-  const firebaseAdmin = require("firebase-admin");
-  const firebaseApp = require("firebase-admin/app");
-  const firebaseAuth = require("firebase-admin/auth");
-
-  const serviceAccountPath = path.join(
-    __dirname,
-    "../config/firebase-service-account.json"
-  );
-
-  if (!fs.existsSync(serviceAccountPath)) {
-    throw new Error("firebase-service-account.json not found inside backend/config folder");
-  }
-
-  const serviceAccount = require(serviceAccountPath);
-
-  if (!firebaseApp.getApps().length) {
-    firebaseApp.initializeApp({
-      credential: firebaseApp.cert(serviceAccount),
-    });
-  }
-
-  admin = firebaseAdmin;
-  getAuth = firebaseAuth.getAuth;
-  console.log("✅ Firebase Admin connected");
-} catch (error) {
-  admin = null;
-  getAuth = null;
-  console.warn("❌ Firebase Admin disabled:", error.message);
-}
 
 const upload = multer({
   dest: "uploads/",
@@ -105,10 +73,22 @@ const safeJsonParse = (value, fallback) => {
   }
 };
 
+const createToken = (candidate) => {
+  return jwt.sign(
+    {
+      id: candidate._id,
+      email: candidate.email,
+      role: candidate.role || "candidate",
+    },
+    process.env.JWT_SECRET || "nopromptjobs_secret",
+    { expiresIn: "7d" }
+  );
+};
+
 router.get("/firebase-check", (req, res) => {
   return res.json({
-    success: !!admin,
-    message: admin
+    success: !!admin?.apps?.length,
+    message: admin?.apps?.length
       ? "Firebase Admin is configured"
       : "Firebase Admin is NOT configured",
   });
@@ -121,6 +101,7 @@ router.post("/send-otp", async (req, res) => {
     const method = req.body.method || "email";
 
     if (!email) return res.status(400).json({ message: "Email is required" });
+
     if (!email.includes("@")) {
       return res.status(400).json({ message: "Please enter valid email" });
     }
@@ -279,19 +260,9 @@ router.post("/set-password", async (req, res) => {
 
     await candidate.save();
 
-    if (email) {
-      delete global.candidateOtpStore[email];
-    }
+    if (email) delete global.candidateOtpStore[email];
 
-    const token = jwt.sign(
-      {
-        id: candidate._id,
-        email: candidate.email,
-        role: candidate.role || "candidate",
-      },
-      process.env.JWT_SECRET || "nopromptjobs_secret",
-      { expiresIn: "7d" }
-    );
+    const token = createToken(candidate);
 
     return res.json({
       success: true,
@@ -339,15 +310,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: candidate._id,
-        email: candidate.email,
-        role: candidate.role || "candidate",
-      },
-      process.env.JWT_SECRET || "nopromptjobs_secret",
-      { expiresIn: "7d" }
-    );
+    const token = createToken(candidate);
 
     return res.json({
       success: true,
@@ -367,7 +330,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/firebase-login", async (req, res) => {
   try {
-    if (!admin || !getAuth) {
+    if (!admin?.apps?.length) {
       return res.status(500).json({
         success: false,
         message: "Firebase Admin is not configured",
@@ -435,22 +398,13 @@ router.post("/firebase-login", async (req, res) => {
     } else {
       candidate.authProvider = candidate.authProvider || provider || "google";
       candidate.firebaseUid = candidate.firebaseUid || decoded.uid;
-      candidate.profileImageUrl =
-        candidate.profileImageUrl || profileImageUrl;
+      candidate.profileImageUrl = candidate.profileImageUrl || profileImageUrl;
       candidate.isEmailVerified = true;
 
       await candidate.save();
     }
 
-    const appToken = jwt.sign(
-      {
-        id: candidate._id,
-        email: candidate.email,
-        role: candidate.role || "candidate",
-      },
-      process.env.JWT_SECRET || "nopromptjobs_secret",
-      { expiresIn: "7d" }
-    );
+    const appToken = createToken(candidate);
 
     return res.json({
       success: true,
@@ -463,6 +417,7 @@ router.post("/firebase-login", async (req, res) => {
   } catch (error) {
     console.log("========== FIREBASE LOGIN FULL ERROR ==========");
     console.log(error);
+
     return res.status(500).json({
       success: false,
       message: error.message || "Firebase login failed",
@@ -540,10 +495,7 @@ router.post(
       };
 
       if (files.profileImage?.[0]) {
-        candidateData.profileImageUrl = await uploadFile(
-          files.profileImage[0],
-          "image"
-        );
+        candidateData.profileImageUrl = await uploadFile(files.profileImage[0], "image");
       }
 
       if (files.resume?.[0]) {
@@ -551,17 +503,11 @@ router.post(
       }
 
       if (files.selfIntroVideo?.[0]) {
-        candidateData.selfIntroVideoUrl = await uploadFile(
-          files.selfIntroVideo[0],
-          "video"
-        );
+        candidateData.selfIntroVideoUrl = await uploadFile(files.selfIntroVideo[0], "video");
       }
 
       if (files.projectVideo?.[0]) {
-        candidateData.projectVideoUrl = await uploadFile(
-          files.projectVideo[0],
-          "video"
-        );
+        candidateData.projectVideoUrl = await uploadFile(files.projectVideo[0], "video");
       }
 
       const candidate = await Candidate.create(candidateData);
@@ -581,15 +527,7 @@ router.post(
 
       delete global.candidateOtpStore[email];
 
-      const token = jwt.sign(
-        {
-          id: candidate._id,
-          email: candidate.email,
-          role: "candidate",
-        },
-        process.env.JWT_SECRET || "nopromptjobs_secret",
-        { expiresIn: "7d" }
-      );
+      const token = createToken(candidate);
 
       return res.status(201).json({
         success: true,

@@ -4,7 +4,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
-const admin = require("firebase-admin");
+
+require("./config/firebaseAdmin");
 
 const passport = require("./config/passport");
 
@@ -28,20 +29,6 @@ const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 
 const app = express();
-
-/* FIREBASE ADMIN */
-try {
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(
-        require("./firebase-service-account.json")
-      ),
-    });
-    console.log("Firebase Admin initialized");
-  }
-} catch (error) {
-  console.log("Firebase Admin Error:", error.message);
-}
 
 /* CORS */
 const allowedOrigins = [
@@ -76,7 +63,20 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
-app.use("/api/contact", contactRoutes);
+
+/* ROUTE CHECKER */
+const registerRoute = (path, route, routeName) => {
+  if (typeof route !== "function") {
+    console.error(`❌ Route Error: ${routeName} is not exporting router correctly`);
+    console.error(`Path: ${path}`);
+    console.error(`Received type: ${typeof route}`);
+    console.error(`Fix ${routeName}.js and add: module.exports = router;`);
+    process.exit(1);
+  }
+
+  app.use(path, route);
+  console.log(`✅ Route loaded: ${path}`);
+};
 
 /* HOME */
 app.get("/", (req, res) => {
@@ -131,7 +131,7 @@ app.get("/api/mail-test", async (req, res) => {
     await transporter.verify();
 
     await transporter.sendMail({
-      from: `"NoPromptJobs" <${process.env.SMTP_FROM}>`,
+      from: `"NoPromptJobs" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to: process.env.SMTP_USER,
       subject: "NoPromptJobs SMTP Test",
       html: `
@@ -162,23 +162,24 @@ app.get("/api/mail-test", async (req, res) => {
 });
 
 /* API ROUTES */
-app.use("/api/auth", authRoutes);
-app.use("/api/candidates", candidateRoutes);
-app.use("/api/jobs", jobRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/protected-pdf", protectedPdfRoutes);
-app.use("/api/ai", aiRoutes);
-app.use("/api/auto-apply", autoApplyRoutes);
-app.use("/api/recruiter", recruiterRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/skill-analyzer", skillAnalyzerRoutes);
-app.use("/api/resume-studio", resumeStudioRoutes);
-app.use("/api/hidden-opportunities", hiddenOpportunityRoutes);
-app.use("/api/job-alerts", jobAlertRoutes);
-app.use("/api/career-roadmap", careerRoadmapRoutes);
-app.use("/api/candidate-profile", candidateProfileRoutes);
-app.use("/api/profile-views", profileViewRoutes);
-app.use("/api/candidates/forgot-password", forgotPasswordRoutes);
+registerRoute("/api/contact", contactRoutes, "contactRoutes");
+registerRoute("/api/auth", authRoutes, "authRoutes");
+registerRoute("/api/candidates", candidateRoutes, "candidates");
+registerRoute("/api/jobs", jobRoutes, "jobs");
+registerRoute("/api/payments", paymentRoutes, "payments");
+registerRoute("/api/protected-pdf", protectedPdfRoutes, "protectedPdfRoutes");
+registerRoute("/api/ai", aiRoutes, "aiRoutes");
+registerRoute("/api/auto-apply", autoApplyRoutes, "autoApplyRoutes");
+registerRoute("/api/recruiter", recruiterRoutes, "recruiterRoutes");
+registerRoute("/api/notifications", notificationRoutes, "notificationRoutes");
+registerRoute("/api/skill-analyzer", skillAnalyzerRoutes, "skillAnalyzerRoutes");
+registerRoute("/api/resume-studio", resumeStudioRoutes, "resumeStudioRoutes");
+registerRoute("/api/hidden-opportunities", hiddenOpportunityRoutes, "hiddenOpportunityRoutes");
+registerRoute("/api/job-alerts", jobAlertRoutes, "jobAlertRoutes");
+registerRoute("/api/career-roadmap", careerRoadmapRoutes, "careerRoadmapRoutes");
+registerRoute("/api/candidate-profile", candidateProfileRoutes, "candidateProfileRoutes");
+registerRoute("/api/profile-views", profileViewRoutes, "profileViewRoutes");
+registerRoute("/api/candidates/forgot-password", forgotPasswordRoutes, "forgotPasswordRoutes");
 
 app.use("/uploads", express.static("uploads"));
 
