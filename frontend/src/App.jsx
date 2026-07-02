@@ -1951,22 +1951,58 @@ function ServicesPage() {
           <button onClick={() => goTo("/services")}>Services</button>
         </div>
 
-        <div>
-          <h4>Tools</h4>
-          <button onClick={() => goTo("/resume-studio")}>
-            AI Resume Studio
-          </button>
-          <button onClick={() => goTo("/ai-interview-prep")}>
-            Interview Prep
-          </button>
-          <button onClick={() => goTo("/skill-assessment")}>
-            Skill Assessment
-          </button>
-          <button onClick={() => goTo("/salary-predictor")}>
-            Salary Predictor
-          </button>
-        </div>
+        
+          <div>
+  <h4>Tools</h4>
 
+  <button
+    onClick={() => {
+      window.location.href = "/services";
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth",
+      });
+    }}
+  >
+    AI Resume Studio
+  </button>
+
+  <button
+    onClick={() => {
+      window.location.href = "/services";
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth",
+      });
+    }}
+  >
+    Interview Prep
+  </button>
+
+  <button
+    onClick={() => {
+      window.location.href = "/services";
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth",
+      });
+    }}
+  >
+    Skill Assessment
+  </button>
+
+  <button
+    onClick={() => {
+      window.location.href = "/services";
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth",
+      });
+    }}
+  >
+    Salary Predictor
+  </button>
+</div>
         <div>
           <h4>Company</h4>
           <button onClick={() => goTo("/about")}>About Us</button>
