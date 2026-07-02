@@ -1,9 +1,11 @@
+
 require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
+const hrRoutes = require("./routes/hrRoutes");
 
 require("./config/firebaseAdmin");
 
@@ -63,6 +65,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
+app.use("/api/hr", hrRoutes);
 
 /* ROUTE CHECKER */
 const registerRoute = (path, route, routeName) => {

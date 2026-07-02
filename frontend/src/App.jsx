@@ -1,3 +1,6 @@
+
+import HrOfferLetter from "./pages/HrOfferLetter";
+import HrOfferLetterDetails from "./pages/HrOfferLetterDetails";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
@@ -24,6 +27,7 @@ import CandidateForgotPassword from "./pages/CandidateForgotPassword";
 import PremiumTermsPage from "./pages/PremiumTermsPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PremiumContactPage from "./pages/PremiumContactPage";
+import HrPortalDashboard from "./pages/HrPortalDashboard";
 import "swiper/css";
 import "swiper/css/navigation";
 
@@ -3378,7 +3382,6 @@ function App() {
   if (path === "/notifications") return <NotificationsPage />;
   if (path === "/job-alerts") return <JobAlertsPage />;
   if (path === "/interview-alerts") return <InterviewAlertsPage />;
-
   if (path === "/resume-studio") {
     return (
       <UltimateDashboard>
@@ -3402,6 +3405,7 @@ function App() {
   if (path === "/recruiter-register") return <RecruiterRegister />;
   if (path === "/recruiter-dashboard") return <RecruiterDashboard />;
   if (path === "/recruiter-post-job") return <RecruiterPostJobPage />;
+   if (path === "/hr-portal") return <HrPortalDashboard />;
   if (path === "/recruiter-search") return <RecruiterTalentSearch />;
   if (path === "/recruiter-shortlisted") return <RecruiterShortlistedPage />;
   if (path === "/recruiter-applications") return <RecruiterApplicationsPage />;
@@ -3426,6 +3430,12 @@ function App() {
   if (path === "/recruiter-billing") return <RecruiterBillingPage />;
 
   if (path === "/ultimate-dashboard") return <UltimateDashboard />;
+  
+  if (path === "/hr-portal") return <HrPortalDashboard />;
+
+if (path === "/hr-offer-letter") return <HrOfferLetter />;
+
+if (path === "/hr-offer-letter-details") return <HrOfferLetterDetails />;
 
   return <LandingPage />;
 }
@@ -6571,15 +6581,28 @@ function RecruiterDashboard() {
             </div>
 
             <div className="saas-actions">
-              <button className="saas-search">Search candidates, jobs...</button>
-              <button className="saas-outline">Export Report</button>
-              <button
-                className="saas-primary"
-                onClick={() => (window.location.href = "/recruiter-post-job")}
-              >
-                + Post New Job
-              </button>
-            </div>
+  <button className="saas-search">
+    🔍 Search candidates, jobs...
+  </button>
+
+  <button
+    className="saas-outline"
+    onClick={() => (window.location.href = "/hr-portal")}
+  >
+    🏢 HR Portal
+  </button>
+
+  <button className="saas-outline">
+    📊 Export Report
+  </button>
+
+  <button
+    className="saas-primary"
+    onClick={() => (window.location.href = "/recruiter-post-job")}
+  >
+    + Post New Job
+  </button>
+</div>
           </section>
 
           <section className="saas-stats">
