@@ -70,14 +70,14 @@ async function generatePremiumOfferPdf(offer) {
     <div class="doc-footer">
       <div>
         <strong>REGISTERED OFFICE</strong>
-        #1189, 2nd Floor, 18th Cross,<br/>
-        Sector 3, HSR Layout,<br/>
-        Bengaluru – 560102,<br/>
+        # oxford Towers, 139 , <br/>
+        HAL Old Airfort Rd, Kodihalli<br/>
+        Bengaluru – 560068,<br/>
         Karnataka, India
       </div>
       <div><strong>EMAIL</strong>careers@vatsenix.com</div>
       <div><strong>WEBSITE</strong>www.vatsenix.com</div>
-      <div><strong>PHONE</strong>+91 80 4162 7001</div>
+      <div><strong>PHONE</strong>+91 8618912771</div>
       <small>Page ${pageNo} of 11</small>
     </div>
   `;
@@ -618,7 +618,10 @@ ul {
   });
 
   const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: "networkidle0" });
+  await page.setContent(html, {
+  waitUntil: "domcontentloaded",
+  timeout: 0,
+});
 
   await page.pdf({
     path: outputPath,
