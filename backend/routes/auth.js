@@ -10,95 +10,144 @@ const Candidate = require("../models/Candidate");
 const router = express.Router();
 const otpStore = new Map();
 
+const GOOGLE_OAUTH_ENABLED = Boolean(
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+);
+
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
 const generateOtp = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
 /* ================= GOOGLE LOGIN WITHOUT FIREBASE ================= */
 
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/api/auth/google/callback",
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value?.toLowerCase();
+if (GOOGLE_OAUTH_ENABLED) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL:
+          process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback",
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails?.[0]?.value?.trim().toLowerCase();
 
-        if (!email) {
-          return done(new Error("Google email not found"), null);
-        }
-
-        let candidate = await Candidate.findOne({ email });
-
-        if (!candidate) {
-          candidate = await Candidate.create({
-            name: profile.displayName || "Candidate",
-            email,
-            googleId: profile.id,
-            profileImageUrl: profile.photos?.[0]?.value || "",
-            authProvider: "google",
-            emailVerified: true,
-            otpVerified: true,
-            profileCompleted: false,
-            skills: [],
-            employment: [],
-            education: [],
-            projects: [],
-            status: "Applied",
-            shortlisted: false,
-            applied: false,
-          });
-        } else {
-          candidate.googleId = candidate.googleId || profile.id;
-          candidate.emailVerified = true;
-          candidate.otpVerified = true;
-
-          if (!candidate.profileImageUrl) {
-            candidate.profileImageUrl = profile.photos?.[0]?.value || "";
+          if (!email) {
+            return done(new Error("Google email not found"), null);
           }
 
-          await candidate.save();
+          let candidate = await Candidate.findOne({ email });
+
+          if (!candidate) {
+            candidate = await Candidate.create({
+              name: profile.displayName || "Candidate",
+              email,
+              googleId: profile.id,
+              profileImageUrl: profile.photos?.[0]?.value || "",
+              authProvider: "google",
+              emailVerified: true,
+              otpVerified: true,
+              profileCompleted: false,
+              skills: [],
+              employment: [],
+              education: [],
+              projects: [],
+              status: "Applied",
+              shortlisted: false,
+              applied: false,
+            });
+          } else {
+            candidate.googleId = candidate.googleId || profile.id;
+            candidate.emailVerified = true;
+            candidate.otpVerified = true;
+
+            if (!candidate.profileImageUrl && profile.photos?.[0]?.value) {
+              candidate.profileImageUrl = profile.photos[0].value;
+            }
+
+            await candidate.save();
+          }
+
+          return done(null, candidate);
+        } catch (error) {
+          return done(error, null);
         }
-
-        return done(null, candidate);
-      } catch (error) {
-        return done(error, null);
       }
-    }
-  )
-);
+    )
+  );
 
-router.get(
-  "/google",
-  passport.authenticate("google", {
+  console.log("✅ Google OAuth enabled");
+} else {
+  console.warn(
+    "⚠️ Google OAuth disabled: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET missing"
+  );
+}
+
+router.get("/google", (req, res, next) => {
+  if (!GOOGLE_OAUTH_ENABLED) {
+    return res.status(503).json({
+      success: false,
+      message: "Google login is not configured on backend.",
+    });
+  }
+
+  return passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
-  })
-);
+  })(req, res, next);
+});
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${process.env.FRONTEND_URL}/candidate-login?error=google-login-failed`,
-  }),
-  (req, res) => {
-    const token = jwt.sign(
-      {
-        id: req.user._id,
-        role: "candidate",
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+  (req, res, next) => {
+    if (!GOOGLE_OAUTH_ENABLED) {
+      return res.redirect(
+        `${FRONTEND_URL}/candidate-login?error=google_not_configured`
+      );
+    }
 
-    res.redirect(
-      `${process.env.FRONTEND_URL}/google-login-success?token=${token}&candidateId=${req.user._id}`
-    );
+    return passport.authenticate("google", {
+      session: false,
+      failureRedirect: `${FRONTEND_URL}/candidate-login?error=google_login_failed`,
+    })(req, res, next);
+  },
+  (req, res) => {
+    try {
+      const candidate = req.user;
+
+      if (!candidate) {
+        return res.redirect(
+          `${FRONTEND_URL}/candidate-login?error=candidate_not_found`
+        );
+      }
+
+      const candidateId = candidate._id.toString();
+
+      const token = jwt.sign(
+        {
+          id: candidateId,
+          role: "candidate",
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+
+      return res.redirect(
+        `${FRONTEND_URL}/google-auth-success?token=${encodeURIComponent(
+          token
+        )}&candidateId=${encodeURIComponent(candidateId)}`
+      );
+    } catch (error) {
+      console.error("Google callback error:", error);
+
+      return res.redirect(
+        `${FRONTEND_URL}/candidate-login?error=google_login_failed`
+      );
+    }
   }
 );
 
