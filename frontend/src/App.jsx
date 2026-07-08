@@ -1,5 +1,6 @@
-
+import { calculateProfileStrength } from "./utils/profileStrength";
 import HrOfferLetter from "./pages/HrOfferLetter";
+import CandidateLogin from "./pages/CandidateLogin";
 import HrOfferLetterDetails from "./pages/HrOfferLetterDetails";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
@@ -28,6 +29,7 @@ import PremiumTermsPage from "./pages/PremiumTermsPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import PremiumContactPage from "./pages/PremiumContactPage";
 import HrPortalDashboard from "./pages/HrPortalDashboard";
+import HelpCenterPage from "./pages/HelpCenterPage";
 import "swiper/css";
 import "swiper/css/navigation";
 
@@ -289,227 +291,6 @@ function Register() {
 
     </div>
     </>
-  );
-}
-function CandidateLogin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const loginCandidate = async () => {
-    setErrorMsg("");
-
-    if (!email.trim()) return setErrorMsg("Email is required");
-    if (!password.trim()) return setErrorMsg("Password is required");
-
-    try {
-      setLoading(true);
-
-      const response = await axios.post(`${API_URL}/api/candidates/login`, {
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
-      const candidate = response.data.candidate || response.data.user;
-
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(candidate));
-
-      const candidateId = candidate?._id || candidate?.id || candidate?.candidateId;
-
-      window.location.href = candidateId
-        ? `/dashboard/${candidateId}`
-        : "/dashboard";
-    } catch (error) {
-      setErrorMsg(error.response?.data?.message || "Invalid email or password");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const googleLogin = async () => {
-    try {
-      setLoading(true);
-
-      const result = await signInWithPopup(auth, googleProvider);
-      const token = await result.user.getIdToken();
-
-      const response = await axios.post(`${API_URL}/api/candidates/firebase-login`, {
-        token,
-        provider: "google",
-      });
-
-      const candidate = response.data.candidate;
-      const candidateId = candidate._id || candidate.id;
-
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(candidate));
-
-      if (response.data?.isNewCandidate || !response.data?.hasPassword) {
-        localStorage.setItem("candidateSetPasswordId", candidateId);
-        localStorage.setItem("candidateSetPasswordEmail", candidate.email);
-        window.location.href = "/candidate-set-password?mode=google";
-      } else {
-        window.location.href = `/dashboard/${candidateId}`;
-      }
-    } catch (err) {
-      setErrorMsg(err.response?.data?.message || err.message || "Google login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <main className="candidate-login-elite">
-      <section className="elite-left">
-        <div className="elite-overlay"></div>
-
-        <div className="elite-brand">
-          <img src="/logo.png" alt="NoPrompt Jobs" />
-          <div>
-            
-          </div>
-        </div>
-
-        <div className="elite-copy">
-          <span className="elite-trust-badge">🛡 Trusted by verified professionals</span>
-
-          <h1>
-            Your Dream Job <br />
-            is <b>Closer</b> Than <br />
-            You Think
-          </h1>
-
-          <p>
-            Join verified professionals finding the right opportunities and
-            building successful careers every day.
-          </p>
-
-          <div className="elite-feature">
-            <span>✓</span>
-            <div>
-              <h4>Verified Opportunities</h4>
-              <p>All jobs are verified for your safety and career growth.</p>
-            </div>
-          </div>
-
-          <div className="elite-feature">
-            <span>⌕</span>
-            <div>
-              <h4>Smart Job Matching</h4>
-              <p>AI-powered matching connects you with the right opportunities.</p>
-            </div>
-          </div>
-
-          <div className="elite-feature">
-            <span>↗</span>
-            <div>
-              <h4>Career Growth</h4>
-              <p>Tools, resources and guidance to help you grow in your career.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="elite-photo-card">
-          <img src="/images/candidate-login-woman.png" alt="Candidate working" />
-        </div>
-
-        <div className="elite-secure-card">
-          <span>🔒</span>
-          <div>
-            <h4>Secure & Private</h4>
-            <p>Your data is always safe and protected with us.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="elite-right">
-        <div className="elite-login-card">
-          <span className="elite-pill">👋 Welcome Back!</span>
-
-          <h1>Candidate Login</h1>
-          <p>Sign in to continue your career journey</p>
-
-          {errorMsg && <div className="login-error-box">{errorMsg}</div>}
-
-          <label>Email Address</label>
-          <div className="elite-input">
-            <span>✉</span>
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              value={email}
-              disabled={loading}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setErrorMsg("");
-              }}
-            />
-          </div>
-
-          <label>Password</label>
-          <div className="elite-input">
-            <span>🔒</span>
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
-              value={password}
-              disabled={loading}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setErrorMsg("");
-              }}
-            />
-            <button type="button" onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? "🙈" : "👁"}
-            </button>
-          </div>
-
-          <div className="elite-options">
-            <label>
-              <input type="checkbox" /> Remember me
-            </label>
-            <a href="/candidate-forgot-password">Forgot password?</a>
-          </div>
-
-          <button className="elite-main-btn" onClick={loginCandidate} disabled={loading}>
-            {loading ? "Signing in..." : "↪ Access Dashboard"}
-          </button>
-
-          <div className="elite-divider">
-            <span></span>
-            <p>or continue with</p>
-            <span></span>
-          </div>
-
-          <div className="elite-socials">
-            <button onClick={googleLogin} disabled={loading}>
-              <FcGoogle /> Google
-            </button>
-            <button disabled>
-              <FaLinkedinIn /> LinkedIn
-            </button>
-            <button disabled>
-              <FaFacebookF /> Facebook
-            </button>
-          </div>
-
-          <div className="elite-new-box">
-            <h3>New to NoPrompt Jobs?</h3>
-            <p>Create your verified account and start your journey</p>
-            <a href="/candidate-email-verify">👥 Create New Account</a>
-          </div>
-        </div>
-
-        <div className="elite-bottom-trust">
-          <div>🔒 <b>Secure & Private</b></div>
-          <div>🛡 <b>Trusted Platform</b></div>
-          <div>✅ <b>100% Verified</b></div>
-        </div>
-      </section>
-    </main>
   );
 }
 function CandidateEmailVerify() {
@@ -1048,17 +829,27 @@ function RecruiterRegister() {
 }
 
 function JobsPage() {
+  /* =========================================================
+     STATES
+     ========================================================= */
+
   const [jobs, setJobs] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [activeTab, setActiveTab] = useState("All Jobs");
+
   const [locationFilter, setLocationFilter] = useState("");
   const [experienceFilter, setExperienceFilter] = useState("");
   const [jobTypeFilter, setJobTypeFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
+
   const [jobAlertEnabled, setJobAlertEnabled] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const sliderRef = useRef(null);
+
+  /* =========================================================
+     USER DATA
+     ========================================================= */
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -1078,49 +869,138 @@ function JobsPage() {
     Number(localStorage.getItem("profileStrength")) ||
     90;
 
+  /* =========================================================
+     GLOBAL NAVIGATION
+     ========================================================= */
+
   const goTo = (path) => {
     window.location.href = path;
   };
 
+  /* =========================================================
+     FIND JOBS PAGE SIDEBAR NAVIGATION
+
+     IMPORTANT:
+
+     This function is passed to CandidatePremiumSidebar ONLY
+     from the JobsPage.
+
+     Therefore it changes navigation behavior ONLY on
+     the Find Jobs page.
+
+     Applications -> Services
+
+     Every other sidebar item keeps its normal route.
+     ========================================================= */
+
+  const handleFindJobsSidebarNavigation = (path) => {
+    if (path === "/applications") {
+      goTo("/services");
+      return;
+    }
+
+    goTo(path);
+  };
+
+  /* =========================================================
+     SEARCH
+     ========================================================= */
+
   const handleSearch = () => {
     const q = searchText.trim();
-    goTo(q ? `/jobs?search=${encodeURIComponent(q)}` : "/jobs");
+
+    goTo(
+      q
+        ? `/jobs?search=${encodeURIComponent(q)}`
+        : "/jobs"
+    );
   };
+
+  /* =========================================================
+     NOTIFICATIONS
+     ========================================================= */
 
   const handleNotifications = () => {
     goTo("/notifications");
   };
 
+  /* =========================================================
+     MESSAGES
+     ========================================================= */
+
   const handleMessages = () => {
     goTo("/messages");
   };
 
+  /* =========================================================
+     PROFILE
+     ========================================================= */
+
   const handleProfile = () => {
-    goTo(candidateId ? `/profile/${candidateId}` : "/candidate-login");
+    goTo(
+      candidateId
+        ? `/profile/${candidateId}`
+        : "/candidate-login"
+    );
   };
+
+  /* =========================================================
+     LOAD JOBS
+     ========================================================= */
 
   const loadJobs = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/jobs`);
-      const data = res.data.jobs || res.data.data || res.data || [];
+
+      const data =
+        res.data.jobs ||
+        res.data.data ||
+        res.data ||
+        [];
+
       setJobs(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.log("JOBS LOAD ERROR:", err.response?.data || err.message);
+      console.log(
+        "JOBS LOAD ERROR:",
+        err.response?.data || err.message
+      );
+
       setJobs([]);
     }
   };
 
+  /* =========================================================
+     INITIAL LOAD
+     ========================================================= */
+
   useEffect(() => {
     loadJobs();
-    setJobAlertEnabled(localStorage.getItem("jobAlertEnabled") === "true");
+
+    setJobAlertEnabled(
+      localStorage.getItem("jobAlertEnabled") === "true"
+    );
   }, []);
+
+  /* =========================================================
+     CREATE JOB ALERT
+     ========================================================= */
 
   const createJobAlert = () => {
     localStorage.setItem("jobAlertEnabled", "true");
-    localStorage.setItem("lastJobCount", jobs.length);
+
+    localStorage.setItem(
+      "lastJobCount",
+      jobs.length
+    );
+
     setJobAlertEnabled(true);
+
     alert("✅ Job alert created.");
   };
+
+  /* =========================================================
+     APPLY JOB
+     ========================================================= */
 
   const applyJob = async (jobId) => {
     if (!candidateId) {
@@ -1129,13 +1009,24 @@ function JobsPage() {
     }
 
     try {
-      await axios.post(`${API_URL}/api/jobs/${jobId}/apply/${candidateId}`);
+      await axios.post(
+        `${API_URL}/api/jobs/${jobId}/apply/${candidateId}`
+      );
+
       alert("Applied successfully");
+
       loadJobs();
     } catch (err) {
-      alert(err.response?.data?.message || "Apply failed");
+      alert(
+        err.response?.data?.message ||
+        "Apply failed"
+      );
     }
   };
+
+  /* =========================================================
+     SAVE JOB
+     ========================================================= */
 
   const saveJob = async (jobId) => {
     if (!candidateId) {
@@ -1144,44 +1035,130 @@ function JobsPage() {
     }
 
     try {
-      await axios.post(`${API_URL}/api/jobs/${jobId}/save/${candidateId}`);
+      await axios.post(
+        `${API_URL}/api/jobs/${jobId}/save/${candidateId}`
+      );
+
       alert("Job saved successfully");
     } catch (err) {
-      alert(err.response?.data?.message || "Save failed");
+      alert(
+        err.response?.data?.message ||
+        "Save failed"
+      );
     }
   };
+
+  /* =========================================================
+     FILTER JOBS
+     ========================================================= */
 
   const filteredJobs = jobs.filter((job) => {
     const search = searchText.toLowerCase();
 
-    const title = job.title || job.jobTitle || job.role || "";
-    const company = job.company || job.companyName || "";
-    const location = job.location || job.city || "";
-    const jobType = job.workMode || job.jobType || job.employmentType || "";
-    const experience = job.experience || job.experienceLevel || "";
-    const salary = job.salary || job.package || "";
+    const title =
+      job.title ||
+      job.jobTitle ||
+      job.role ||
+      "";
+
+    const company =
+      job.company ||
+      job.companyName ||
+      "";
+
+    const location =
+      job.location ||
+      job.city ||
+      "";
+
+    const jobType =
+      job.workMode ||
+      job.jobType ||
+      job.employmentType ||
+      "";
+
+    const experience =
+      job.experience ||
+      job.experienceLevel ||
+      "";
+
+    const salary =
+      job.salary ||
+      job.package ||
+      "";
 
     const skillsText = Array.isArray(job.skills)
-      ? job.skills.map((s) => (typeof s === "string" ? s : s?.name || "")).join(" ")
+      ? job.skills
+          .map((skill) =>
+            typeof skill === "string"
+              ? skill
+              : skill?.name || ""
+          )
+          .join(" ")
       : job.skills || "";
 
     return (
-      (!search ||
+      (
+        !search ||
         title.toLowerCase().includes(search) ||
         company.toLowerCase().includes(search) ||
         location.toLowerCase().includes(search) ||
-        skillsText.toLowerCase().includes(search)) &&
-      (!locationFilter || location.toLowerCase().includes(locationFilter.toLowerCase())) &&
-      (!experienceFilter || experience.toLowerCase().includes(experienceFilter.toLowerCase())) &&
-      (!jobTypeFilter || jobType.toLowerCase().includes(jobTypeFilter.toLowerCase())) &&
-      (!salaryFilter || salary.toLowerCase().includes(salaryFilter.toLowerCase()))
+        skillsText.toLowerCase().includes(search)
+      ) &&
+
+      (
+        !locationFilter ||
+        location
+          .toLowerCase()
+          .includes(locationFilter.toLowerCase())
+      ) &&
+
+      (
+        !experienceFilter ||
+        experience
+          .toLowerCase()
+          .includes(experienceFilter.toLowerCase())
+      ) &&
+
+      (
+        !jobTypeFilter ||
+        jobType
+          .toLowerCase()
+          .includes(jobTypeFilter.toLowerCase())
+      ) &&
+
+      (
+        !salaryFilter ||
+        salary
+          .toLowerCase()
+          .includes(salaryFilter.toLowerCase())
+      )
     );
   });
 
+  /* =========================================================
+     JOB GROUPS
+     ========================================================= */
+
   const recommendedJobs = filteredJobs.slice(0, 4);
+
   const latestJobs = filteredJobs.slice(4, 8);
-  const savedJobs = filteredJobs.filter((j) => j.saved || j.isSaved);
-  const appliedJobs = filteredJobs.filter((j) => j.applied || j.isApplied);
+
+  const savedJobs = filteredJobs.filter(
+    (job) =>
+      job.saved ||
+      job.isSaved
+  );
+
+  const appliedJobs = filteredJobs.filter(
+    (job) =>
+      job.applied ||
+      job.isApplied
+  );
+
+  /* =========================================================
+     ACTIVE SLIDER JOBS
+     ========================================================= */
 
   const currentSliderJobs =
     activeTab === "Saved"
@@ -1190,305 +1167,796 @@ function JobsPage() {
       ? appliedJobs
       : recommendedJobs;
 
+  /* =========================================================
+     TOP COMPANIES
+     ========================================================= */
+
   const companies = [
-    ...new Set(jobs.map((j) => j.company || j.companyName).filter(Boolean)),
+    ...new Set(
+      jobs
+        .map(
+          (job) =>
+            job.company ||
+            job.companyName
+        )
+        .filter(Boolean)
+    ),
   ]
     .slice(0, 5)
     .map((name) => ({
       name,
-      count: jobs.filter((j) => (j.company || j.companyName) === name).length,
+
+      count: jobs.filter(
+        (job) =>
+          (
+            job.company ||
+            job.companyName
+          ) === name
+      ).length,
     }));
 
+  /* =========================================================
+     RENDER JOB CARD
+     ========================================================= */
+
   const renderJobCard = (job, index) => {
-    const jobId = job._id || job.id;
-    const title = job.title || job.jobTitle || job.role || "Untitled Job";
-    const company = job.company || job.companyName || "Company";
-    const location = job.location || job.city || "Location";
-    const salary = job.salary || job.package || "Salary not disclosed";
-    const experience = job.experience || job.experienceLevel || "0-2 Yrs";
-    const workMode = job.workMode || job.jobType || job.employmentType || "Full-time";
-    const skills = Array.isArray(job.skills) ? job.skills : [];
+    const jobId =
+      job._id ||
+      job.id;
+
+    const title =
+      job.title ||
+      job.jobTitle ||
+      job.role ||
+      "Untitled Job";
+
+    const company =
+      job.company ||
+      job.companyName ||
+      "Company";
+
+    const location =
+      job.location ||
+      job.city ||
+      "Location";
+
+    const salary =
+      job.salary ||
+      job.package ||
+      "Salary not disclosed";
+
+    const experience =
+      job.experience ||
+      job.experienceLevel ||
+      "0-2 Yrs";
+
+    const workMode =
+      job.workMode ||
+      job.jobType ||
+      job.employmentType ||
+      "Full-time";
+
+    const skills =
+      Array.isArray(job.skills)
+        ? job.skills
+        : [];
 
     return (
-      <article className="fj-job-card" key={`${jobId || "job"}-${index}`}>
-        <button className="fj-save" onClick={() => saveJob(jobId)}>♡</button>
+      <article
+        className="fj-job-card"
+        key={`${jobId || "job"}-${index}`}
+      >
+        <button
+          type="button"
+          className="fj-save"
+          onClick={() => saveJob(jobId)}
+        >
+          ♡
+        </button>
 
-        <div className="fj-company-logo">{company.charAt(0).toUpperCase()}</div>
+        <div className="fj-company-logo">
+          {company.charAt(0).toUpperCase()}
+        </div>
 
         <h3>{title}</h3>
+
         <p>{company}</p>
 
         <div className="fj-meta">
           <span>⌖ {location}</span>
+
           <span>▣ {workMode}</span>
+
           <span>◷ {experience}</span>
         </div>
 
         <h4>{salary}</h4>
-        <small>{65 + (index % 4) * 7}% match</small>
+
+        <small>
+          {65 + (index % 4) * 7}% match
+        </small>
 
         <div className="fj-skills">
-          {(skills.length ? skills : ["React", "Node.js", "AWS"])
+          {(skills.length
+            ? skills
+            : ["React", "Node.js", "AWS"]
+          )
             .slice(0, 3)
-            .map((skill, i) => (
-              <span key={i}>{typeof skill === "string" ? skill : skill?.name}</span>
+            .map((skill, index) => (
+              <span key={index}>
+                {typeof skill === "string"
+                  ? skill
+                  : skill?.name}
+              </span>
             ))}
         </div>
 
-        <button className="fj-apply" onClick={() => applyJob(jobId)}>
+        <button
+          type="button"
+          className="fj-apply"
+          onClick={() => applyJob(jobId)}
+        >
           Apply Now →
         </button>
       </article>
     );
   };
 
+  /* =========================================================
+     RETURN
+     ========================================================= */
+
   return (
     <>
       <main className="fj-page">
+
+        {/* ===================================================
+            SIDEBAR
+
+            IMPORTANT:
+            Custom navigation is passed ONLY here.
+
+            Applications -> /services
+
+            Other sidebar links remain unchanged.
+            =================================================== */}
+
         <CandidatePremiumSidebar
           candidateId={candidateId}
           unreadCount={unreadCount}
           profileStrength={profileStrength}
-          goTo={goTo}
+          goTo={handleFindJobsSidebarNavigation}
         />
 
         <section className="fj-main">
+
+          {/* =================================================
+              TOPBAR
+              ================================================= */}
+
           <header className="npj-compact-topbar jobs-shared-topbar">
+
             <div className="npj-compact-search">
-              <button type="button" className="search-btn" onClick={handleSearch}>
+
+              <button
+                type="button"
+                className="search-btn"
+                onClick={handleSearch}
+              >
                 ⌕
               </button>
 
               <input
                 value={searchText}
                 placeholder="Search jobs, companies, skills..."
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) =>
+                  setSearchText(e.target.value)
+                }
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSearch();
+                  if (e.key === "Enter") {
+                    handleSearch();
+                  }
                 }}
               />
+
             </div>
 
             <div className="npj-compact-userarea">
-              <button type="button" onClick={handleNotifications}>
-                🔔<b>{jobAlertEnabled ? "✓" : unreadCount}</b>
+
+              <button
+                type="button"
+                onClick={handleNotifications}
+              >
+                🔔
+                <b>
+                  {jobAlertEnabled
+                    ? "✓"
+                    : unreadCount}
+                </b>
               </button>
 
-              <button type="button" onClick={handleMessages}>✉</button>
+              <button
+                type="button"
+                onClick={handleMessages}
+              >
+                ✉
+              </button>
 
               <div className="profile-dropdown-wrap">
+
                 <div
                   className="npj-compact-user"
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  onClick={() =>
+                    setShowProfileMenu(
+                      !showProfileMenu
+                    )
+                  }
                 >
-                  <img src={user?.profileImageUrl || "/profile.png"} alt="Candidate" />
+
+                  <img
+                    src={
+                      user?.profileImageUrl ||
+                      "/profile.png"
+                    }
+                    alt="Candidate"
+                  />
 
                   <div>
-                    <b>{user?.name || "VENKATESHA A"}</b>
+                    <b>
+                      {user?.name ||
+                        "VENKATESHA A"}
+                    </b>
+
                     <span>Candidate</span>
                   </div>
 
                   <small>⌄</small>
+
                 </div>
 
                 {showProfileMenu && (
+
                   <div className="profile-dropdown-menu">
-                    <button onClick={handleProfile}>
-                      <span>♙</span> My Profile
+
+                    <button
+                      type="button"
+                      onClick={handleProfile}
+                    >
+                      <span>♙</span>
+                      My Profile
                     </button>
 
-                    <button onClick={() => goTo(candidateId ? `/profile/${candidateId}?edit=true` : "/candidate-login")}>
-                      <span>✎</span> Edit Profile
+                    <button
+                      type="button"
+                      onClick={() =>
+                        goTo(
+                          candidateId
+                            ? `/profile/${candidateId}?edit=true`
+                            : "/candidate-login"
+                        )
+                      }
+                    >
+                      <span>✎</span>
+                      Edit Profile
                     </button>
 
-                    <button onClick={() => goTo("/settings")}>
-                      <span>⚙</span> Settings
+                    <button
+                      type="button"
+                      onClick={() =>
+                        goTo("/settings")
+                      }
+                    >
+                      <span>⚙</span>
+                      Settings
                     </button>
 
-                    <button onClick={() => goTo("/help-center")}>
-                      <span>?</span> Help Center
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+
+                        event.stopPropagation();
+
+                        setShowProfileMenu(false);
+
+                        window.location.assign(
+                          "/help-center?openChat=true"
+                        );
+                      }}
+                    >
+                      <span>?</span>
+                      Help Center
                     </button>
 
                     <hr />
 
                     <button
+                      type="button"
                       className="logout-menu-btn"
                       onClick={() => {
                         localStorage.clear();
-                        goTo("/candidate-login");
+
+                        goTo(
+                          "/candidate-login"
+                        );
                       }}
                     >
-                      <span>↳</span> Logout
+                      <span>↳</span>
+                      Logout
                     </button>
+
                   </div>
+
                 )}
+
               </div>
+
             </div>
+
           </header>
 
+          {/* =================================================
+              PAGE TITLE
+              ================================================= */}
+
           <section className="fj-title">
+
             <div>
               <h1>Find Jobs</h1>
-              <p>Discover roles that match your skills and preferences</p>
+
+              <p>
+                Discover roles that match your skills and preferences
+              </p>
             </div>
 
-            <button onClick={loadJobs}>Refresh jobs ↻</button>
+            <button
+              type="button"
+              className="fj-refresh-btn"
+              onClick={loadJobs}
+            >
+              Refresh jobs ↻
+            </button>
+
           </section>
 
+          {/* =================================================
+              FILTERS
+              ================================================= */}
+
           <section className="fj-filter">
+
             <div>
               <span>⌕</span>
+
               <input
                 value={searchText}
                 placeholder="Search job title, skills or company"
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) =>
+                  setSearchText(e.target.value)
+                }
               />
             </div>
 
-            <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-              <option value="">Location</option>
-              <option value="bangalore">Bangalore</option>
-              <option value="hyderabad">Hyderabad</option>
-              <option value="chennai">Chennai</option>
-              <option value="remote">Remote</option>
+            <select
+              value={locationFilter}
+              onChange={(e) =>
+                setLocationFilter(
+                  e.target.value
+                )
+              }
+            >
+              <option value="">
+                Location
+              </option>
+
+              <option value="bangalore">
+                Bangalore
+              </option>
+
+              <option value="hyderabad">
+                Hyderabad
+              </option>
+
+              <option value="chennai">
+                Chennai
+              </option>
+
+              <option value="remote">
+                Remote
+              </option>
             </select>
 
-            <select value={experienceFilter} onChange={(e) => setExperienceFilter(e.target.value)}>
-              <option value="">Experience</option>
-              <option value="0">0 Years</option>
-              <option value="1">1 Year</option>
-              <option value="2">2 Years</option>
+            <select
+              value={experienceFilter}
+              onChange={(e) =>
+                setExperienceFilter(
+                  e.target.value
+                )
+              }
+            >
+              <option value="">
+                Experience
+              </option>
+
+              <option value="0">
+                0 Years
+              </option>
+
+              <option value="1">
+                1 Year
+              </option>
+
+              <option value="2">
+                2 Years
+              </option>
             </select>
 
-            <select value={jobTypeFilter} onChange={(e) => setJobTypeFilter(e.target.value)}>
-              <option value="">Job Type</option>
-              <option value="remote">Remote</option>
-              <option value="hybrid">Hybrid</option>
-              <option value="full">Full-time</option>
+            <select
+              value={jobTypeFilter}
+              onChange={(e) =>
+                setJobTypeFilter(
+                  e.target.value
+                )
+              }
+            >
+              <option value="">
+                Job Type
+              </option>
+
+              <option value="remote">
+                Remote
+              </option>
+
+              <option value="hybrid">
+                Hybrid
+              </option>
+
+              <option value="full">
+                Full-time
+              </option>
             </select>
 
-            <select value={salaryFilter} onChange={(e) => setSalaryFilter(e.target.value)}>
-              <option value="">Salary</option>
-              <option value="5">5 LPA+</option>
-              <option value="10">10 LPA+</option>
+            <select
+              value={salaryFilter}
+              onChange={(e) =>
+                setSalaryFilter(
+                  e.target.value
+                )
+              }
+            >
+              <option value="">
+                Salary
+              </option>
+
+              <option value="5">
+                5 LPA+
+              </option>
+
+              <option value="10">
+                10 LPA+
+              </option>
             </select>
 
             <button
+              type="button"
+              className="fj-reset-btn"
               onClick={() => {
                 setSearchText("");
+
                 setLocationFilter("");
+
                 setExperienceFilter("");
+
                 setJobTypeFilter("");
+
                 setSalaryFilter("");
               }}
             >
               Reset
             </button>
+
           </section>
 
+          {/* =================================================
+              CONTENT
+              ================================================= */}
+
           <section className="fj-content">
+
             <section className="fj-left">
+
+              {/* ===============================================
+                  TABS
+                  =============================================== */}
+
               <div className="fj-tabs">
+
                 {[
-                  ["All Jobs", filteredJobs.length],
-                  ["Recommended", recommendedJobs.length],
-                  ["Top Match", recommendedJobs.length],
-                  ["Saved", savedJobs.length],
-                  ["Applied", appliedJobs.length],
+                  [
+                    "All Jobs",
+                    filteredJobs.length,
+                  ],
+
+                  [
+                    "Recommended",
+                    recommendedJobs.length,
+                  ],
+
+                  [
+                    "Top Match",
+                    recommendedJobs.length,
+                  ],
+
+                  [
+                    "Saved",
+                    savedJobs.length,
+                  ],
+
+                  [
+                    "Applied",
+                    appliedJobs.length,
+                  ],
                 ].map((tab) => (
+
                   <button
                     key={tab[0]}
-                    className={activeTab === tab[0] ? "active" : ""}
-                    onClick={() => setActiveTab(tab[0])}
+                    type="button"
+                    className={`fj-tab-btn ${
+                      activeTab === tab[0]
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setActiveTab(tab[0])
+                    }
                   >
-                    {tab[0]} <b>{tab[1]}</b>
+                    <span>
+                      {tab[0]}
+                    </span>
+
+                    <b>
+                      {tab[1]}
+                    </b>
+
                   </button>
+
                 ))}
 
                 <select>
-                  <option>Sort by: Most Recent</option>
-                  <option>Sort by: Salary</option>
-                  <option>Sort by: Match</option>
+                  <option>
+                    Sort by: Most Recent
+                  </option>
+
+                  <option>
+                    Sort by: Salary
+                  </option>
+
+                  <option>
+                    Sort by: Match
+                  </option>
                 </select>
+
               </div>
+
+              {/* ===============================================
+                  RECOMMENDED JOBS
+                  =============================================== */}
 
               <div className="fj-section-head">
-                <h3>Recommended for you</h3>
-                <button>View all</button>
+
+                <h3>
+                  Recommended for you
+                </h3>
+
+                <button
+                  type="button"
+                  className="fj-view-btn"
+                >
+                  View all
+                </button>
+
               </div>
 
-              <div className="fj-auto-scroll" ref={sliderRef}>
+              <div
+                className="fj-auto-scroll"
+                ref={sliderRef}
+              >
+
                 <div className="fj-scroll-track">
+
                   {currentSliderJobs.length > 0 ? (
-                    [...currentSliderJobs, ...currentSliderJobs, ...currentSliderJobs].map(renderJobCard)
+
+                    [
+                      ...currentSliderJobs,
+                      ...currentSliderJobs,
+                      ...currentSliderJobs,
+                    ].map(renderJobCard)
+
                   ) : (
-                    <div className="empty-premium-box">No recommended jobs found.</div>
+
+                    <div className="empty-premium-box">
+                      No recommended jobs found.
+                    </div>
+
                   )}
+
                 </div>
+
               </div>
 
+              {/* ===============================================
+                  LATEST JOBS
+                  =============================================== */}
+
               <div className="fj-section-head">
-                <h3>Latest Jobs</h3>
-                <button>View all</button>
+
+                <h3>
+                  Latest Jobs
+                </h3>
+
+                <button
+                  type="button"
+                  className="fj-view-btn"
+                >
+                  View all
+                </button>
+
               </div>
 
               <div className="fj-horizontal">
+
                 {latestJobs.length > 0 ? (
-                  latestJobs.map(renderJobCard)
+
+                  latestJobs.map(
+                    renderJobCard
+                  )
+
                 ) : (
-                  <div className="empty-premium-box">No jobs found.</div>
+
+                  <div className="empty-premium-box">
+                    No jobs found.
+                  </div>
+
                 )}
+
               </div>
+
             </section>
 
+            {/* =================================================
+                RIGHT SIDEBAR
+                ================================================= */}
+
             <aside className="fj-right">
+
+              {/* JOB ALERT */}
+
               <div className="fj-side-card">
-                <h3>🔔 Job Alerts</h3>
-                <p>Get notified about new jobs that match your preferences.</p>
-                <button onClick={createJobAlert}>
-                  {jobAlertEnabled ? "Alert Active ✓" : "Create Alert"}
+
+                <h3>
+                  🔔 Job Alerts
+                </h3>
+
+                <p>
+                  Get notified about new jobs that match your preferences.
+                </p>
+
+                <button
+                  type="button"
+                  className="fj-alert-btn"
+                  onClick={createJobAlert}
+                >
+                  {jobAlertEnabled
+                    ? "Alert Active ✓"
+                    : "Create Alert"}
                 </button>
+
               </div>
 
+              {/* TOP COMPANIES */}
+
               <div className="fj-side-card">
+
                 <div className="fj-side-head">
-                  <h3>Top Companies</h3>
-                  <button onClick={() => goTo("/companies")}>View all</button>
+
+                  <h3>
+                    Top Companies
+                  </h3>
+
+                  <button
+                    type="button"
+                    className="fj-mini-view-btn"
+                    onClick={() =>
+                      goTo("/companies")
+                    }
+                  >
+                    View all
+                  </button>
+
                 </div>
 
-                {companies.map((company) => (
-                  <div className="fj-company-line" key={company.name}>
-                    <span>{company.name.charAt(0).toUpperCase()}</span>
-                    <div>
-                      <b>{company.name}</b>
-                      <p>{company.count} open jobs</p>
+                {companies.map(
+                  (company) => (
+
+                    <div
+                      className="fj-company-line"
+                      key={company.name}
+                    >
+
+                      <span>
+                        {company.name
+                          .charAt(0)
+                          .toUpperCase()}
+                      </span>
+
+                      <div>
+
+                        <b>
+                          {company.name}
+                        </b>
+
+                        <p>
+                          {company.count} open jobs
+                        </p>
+
+                      </div>
+
                     </div>
-                  </div>
-                ))}
+
+                  )
+                )}
+
               </div>
+
+              {/* SALARY INSIGHTS */}
 
               <div className="fj-side-card">
+
                 <div className="fj-side-head">
-                  <h3>Salary Insights</h3>
-                  <button onClick={() => goTo("/services")}>View all</button>
+
+                  <h3>
+                    Salary Insights
+                  </h3>
+
+                  <button
+                    type="button"
+                    className="fj-mini-view-btn"
+                    onClick={() =>
+                      goTo("/services")
+                    }
+                  >
+                    View all
+                  </button>
+
                 </div>
 
-                <p>Average salary based on available jobs.</p>
-                <h2>₹ 8.5 LPA</h2>
-                <small>Market estimate</small>
+                <p>
+                  Average salary based on available jobs.
+                </p>
+
+                <h2>
+                  ₹ 8.5 LPA
+                </h2>
+
+                <small>
+                  Market estimate
+                </small>
+
               </div>
+
             </aside>
+
           </section>
+
         </section>
+
       </main>
 
       <PremiumFooter />
+
     </>
   );
-}
-
-
-function ServicesPage() {
+}function ServicesPage() {
   const scrollRef = useRef(null);
   const [search, setSearch] = useState("");
 
@@ -2218,9 +2686,14 @@ function NotificationsPage() {
                       <span>⚙</span> Settings
                     </button>
 
-                    <button onClick={() => goTo("/help-center")}>
-                      <span>?</span> Help Center
-                    </button>
+                  <button
+  onClick={() => {
+    setShowProfileMenu(false);
+    window.dispatchEvent(new Event("open-help-chat"));
+  }}
+>
+  <span>?</span> Help Center
+</button>
 
                     <hr />
 
@@ -3085,7 +3558,14 @@ function SavedJobsPage() {
   const goTo = (path) => {
     window.location.href = path;
   };
+ const handleSavedJobsSidebarNavigation = (path) => {
+  if (path === "/applications") {
+    window.location.href = "/services";
+    return;
+  }
 
+  window.location.href = path;
+};
   const loadSavedJobs = async () => {
     if (!candidateId) {
       goTo("/candidate-login");
@@ -3146,12 +3626,12 @@ function SavedJobsPage() {
   return (
   <>
     <main className="saved-jobs-page">
-      <CandidatePremiumSidebar
-        candidateId={candidateId}
-        unreadCount={unreadCount}
-        profileStrength={profileStrength}
-        goTo={goTo}
-      />
+     <CandidatePremiumSidebar
+  candidateId={candidateId}
+  unreadCount={unreadCount}
+  profileStrength={profileStrength}
+  goTo={handleSavedJobsSidebarNavigation}
+/>
 
       <section className="saved-jobs-main">
         <header className="npj-compact-topbar">
@@ -3329,23 +3809,17 @@ function App() {
     </>
   );
 
-  if (path === "/terms") {
-    return withChat(<PremiumTermsPage />);
-  }
+  if (path === "/terms") return withChat(<PremiumTermsPage />);
+  if (path === "/privacy") return withChat(<PrivacyPolicy />);
+  if (path === "/contact") return withChat(<PremiumContactPage />);
 
-  if (path === "/privacy") {
-    return withChat(<PrivacyPolicy />);
-  }
-
-  if (path === "/contact") {
-    return withChat(<PremiumContactPage />);
-  }
+  // ✅ Footer routes
+  if (path === "/privacy-policy") return withChat(<PrivacyPolicy />);
+  if (path === "/terms-and-conditions") return withChat(<PremiumTermsPage />);
+  if (path === "/help-center") return withChat(<HelpCenterPage />);
 
   const legalPage = getLegalPageData(path);
-
-  if (legalPage) {
-    return withChat(<LegalCenterPage page={legalPage} />);
-  }
+  if (legalPage) return withChat(<LegalCenterPage page={legalPage} />);
 
   if (path === "/") return <LandingPage />;
   if (path === "/login") return <LandingPage />;
@@ -3373,8 +3847,7 @@ function App() {
   if (path.startsWith("/dashboard/")) return withChat(<CandidateDashboard />);
 
   if (path === "/companies") return <CompaniesPage />;
-
-  if (path === "/jobs") return <JobsPage />;
+  if (path === "/jobs") return withChat(<JobsPage />);
   if (path.startsWith("/jobs/")) return <JobDetailsPage />;
 
   if (path === "/services") return <ServicesPage />;
@@ -3382,6 +3855,7 @@ function App() {
   if (path === "/notifications") return <NotificationsPage />;
   if (path === "/job-alerts") return <JobAlertsPage />;
   if (path === "/interview-alerts") return <InterviewAlertsPage />;
+
   if (path === "/resume-studio") {
     return (
       <UltimateDashboard>
@@ -3405,7 +3879,7 @@ function App() {
   if (path === "/recruiter-register") return <RecruiterRegister />;
   if (path === "/recruiter-dashboard") return <RecruiterDashboard />;
   if (path === "/recruiter-post-job") return <RecruiterPostJobPage />;
-   if (path === "/hr-portal") return <HrPortalDashboard />;
+  if (path === "/hr-portal") return <HrPortalDashboard />;
   if (path === "/recruiter-search") return <RecruiterTalentSearch />;
   if (path === "/recruiter-shortlisted") return <RecruiterShortlistedPage />;
   if (path === "/recruiter-applications") return <RecruiterApplicationsPage />;
@@ -3430,12 +3904,9 @@ function App() {
   if (path === "/recruiter-billing") return <RecruiterBillingPage />;
 
   if (path === "/ultimate-dashboard") return <UltimateDashboard />;
-  
-  if (path === "/hr-portal") return <HrPortalDashboard />;
 
-if (path === "/hr-offer-letter") return <HrOfferLetter />;
-
-if (path === "/hr-offer-letter-details") return <HrOfferLetterDetails />;
+  if (path === "/hr-offer-letter") return <HrOfferLetter />;
+  if (path === "/hr-offer-letter-details") return <HrOfferLetterDetails />;
 
   return <LandingPage />;
 }
@@ -4902,10 +5373,10 @@ function CandidatePremiumSidebar({
           <b>Companies</b>
         </button>
 
-        <button onClick={() => goTo("/applications")}>
-          <span>▤</span>
-          <b>Applications</b>
-        </button>
+    <button onClick={() => goTo("/services")}>
+  <span>▤</span>
+  <b>Applications</b>
+</button>
 
         <button onClick={() => goTo("/saved-jobs")}>
           <span>♡</span>
@@ -4983,12 +5454,12 @@ function CandidateDashboard() {
   const [interviews, setInterviews] = useState([]);
   const [savedJobs, setSavedJobs] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [dreamLocation, setDreamLocation] = useState("");
   const [loading, setLoading] = useState(true);
   const [applyingJobId, setApplyingJobId] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const dashboardJobsRef = useRef(null);
-  
 
   const candidateId =
     window.location.pathname.split("/").pop() ||
@@ -4999,29 +5470,6 @@ function CandidateDashboard() {
   const goTo = (path) => {
     window.location.href = path;
   };
-
-  const handleSearch = () => {
-    const query = searchText.trim();
-
-    if (!query) {
-      goTo("/jobs");
-      return;
-    }
-
-    goTo(`/jobs?search=${encodeURIComponent(query)}`);
-  };
-
-  const handleNotifications = () => {
-    goTo("/notifications");
-  };
-
-  const handleProfileViews = () => {
-    goTo(candidateId ? `/profile/${candidateId}/views` : "/candidate-login");
-  };
-
-  const handleProfile = () => {
-  goTo(candidateId ? `/profile/${candidateId}` : "/candidate-login");
-};
 
   const authHeaders = () => {
     const token = localStorage.getItem("token");
@@ -5049,23 +5497,45 @@ function CandidateDashboard() {
     savedUser?.profileImageUrl ||
     "/profile.png";
 
-  const calcProfileStrength = (c = {}) => {
-    const score =
-      30 +
-      (c.name ? 5 : 0) +
-      (c.email ? 5 : 0) +
-      (c.mobile ? 5 : 0) +
-      (c.resumeUrl ? 15 : 0) +
-      (c.profileImageUrl || c.photoUrl ? 10 : 0) +
-      (Array.isArray(c.skills) && c.skills.length ? 15 : 0) +
-      (c.profileSummary ? 10 : 0) +
-      (c.selfIntroVideoUrl ? 5 : 0);
+const profileStrength = calculateProfileStrength(candidate || {});
 
-    return Math.min(score, 100);
+const unreadCount = notifications.filter(
+  (n) => !n.read && !n.isRead
+).length;
+  const handleSearch = () => {
+    const query = searchText.trim();
+
+    if (!query) {
+      goTo("/jobs");
+      return;
+    }
+
+    goTo(`/jobs?search=${encodeURIComponent(query)}`);
   };
 
-  const profileStrength = calcProfileStrength(candidate || {});
-  const unreadCount = notifications.filter((n) => !n.read && !n.isRead).length;
+  const handleDreamSearch = () => {
+    const query = searchText.trim();
+    const location = dreamLocation.trim();
+
+    const params = new URLSearchParams();
+
+    if (query) params.set("search", query);
+    if (location) params.set("location", location);
+
+    goTo(params.toString() ? `/jobs?${params.toString()}` : "/jobs");
+  };
+
+  const handleNotifications = () => {
+    goTo("/notifications");
+  };
+
+  const handleProfileViews = () => {
+    goTo(candidateId ? `/profile/${candidateId}/views` : "/candidate-login");
+  };
+
+  const handleProfile = () => {
+    goTo(candidateId ? `/profile/${candidateId}` : "/candidate-login");
+  };
 
   const loadDashboard = async () => {
     if (!candidateId) {
@@ -5116,8 +5586,6 @@ function CandidateDashboard() {
         setApplications(
           safeArray(appsRes.value, ["applications", "items", "results"])
         );
-      } else if (Array.isArray(candidate?.applications)) {
-        setApplications(candidate.applications);
       }
 
       if (notifyRes.status === "fulfilled") {
@@ -5153,89 +5621,18 @@ function CandidateDashboard() {
     if (!slider) return;
 
     let autoTimer;
-    let resumeTimer;
-    let isDown = false;
-    let startX = 0;
-    let startScrollLeft = 0;
 
-    const startAutoScroll = () => {
-      clearInterval(autoTimer);
+    autoTimer = setInterval(() => {
+      if (!slider) return;
 
-      autoTimer = setInterval(() => {
-        if (!slider || isDown) return;
+      slider.scrollLeft += 1;
 
-        slider.scrollLeft += 1;
+      if (slider.scrollLeft >= slider.scrollWidth / 2) {
+        slider.scrollLeft = 0;
+      }
+    }, 18);
 
-        if (slider.scrollLeft >= slider.scrollWidth / 2) {
-          slider.scrollLeft = 0;
-        }
-      }, 18);
-    };
-
-    const stopAutoScroll = () => {
-      clearInterval(autoTimer);
-      clearTimeout(resumeTimer);
-    };
-
-    const resumeAutoScroll = () => {
-      clearTimeout(resumeTimer);
-      resumeTimer = setTimeout(startAutoScroll, 1200);
-    };
-
-    const handleMouseDown = (e) => {
-      isDown = true;
-      stopAutoScroll();
-      slider.classList.add("dragging");
-      startX = e.pageX - slider.offsetLeft;
-      startScrollLeft = slider.scrollLeft;
-    };
-
-    const handleMouseMove = (e) => {
-      if (!isDown) return;
-
-      e.preventDefault();
-
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - startX) * 2;
-
-      slider.scrollLeft = startScrollLeft - walk;
-    };
-
-    const handleMouseUp = () => {
-      if (!isDown) return;
-
-      isDown = false;
-      slider.classList.remove("dragging");
-      resumeAutoScroll();
-    };
-
-    const handleWheel = (e) => {
-      e.preventDefault();
-      stopAutoScroll();
-
-      slider.scrollLeft += e.deltaY;
-
-      resumeAutoScroll();
-    };
-
-    slider.addEventListener("mousedown", handleMouseDown);
-    slider.addEventListener("mousemove", handleMouseMove);
-    slider.addEventListener("mouseup", handleMouseUp);
-    slider.addEventListener("mouseleave", handleMouseUp);
-    slider.addEventListener("wheel", handleWheel, { passive: false });
-
-    startAutoScroll();
-
-    return () => {
-      clearInterval(autoTimer);
-      clearTimeout(resumeTimer);
-
-      slider.removeEventListener("mousedown", handleMouseDown);
-      slider.removeEventListener("mousemove", handleMouseMove);
-      slider.removeEventListener("mouseup", handleMouseUp);
-      slider.removeEventListener("mouseleave", handleMouseUp);
-      slider.removeEventListener("wheel", handleWheel);
-    };
+    return () => clearInterval(autoTimer);
   }, [jobs, searchText]);
 
   const applyJob = async (jobId) => {
@@ -5272,6 +5669,7 @@ function CandidateDashboard() {
       );
 
       await loadDashboard();
+      alert("Job saved successfully");
     } catch (err) {
       alert(err.response?.data?.message || "Save job failed");
     }
@@ -5336,560 +5734,663 @@ function CandidateDashboard() {
     ["🔔", "Job Alerts", "New jobs", "/notifications"],
   ];
 
- if (loading) return <div className="loading">Loading Dashboard...</div>;
+  if (loading) return <div className="loading">Loading Dashboard...</div>;
 
-return (
-  <>
-    <main className="npj-compact-page">
-      <aside className="npj-glass-sidebar">
-        <div className="npj-sidebar-bg-orb orb-one"></div>
-        <div className="npj-sidebar-bg-orb orb-two"></div>
+  return (
+    <>
+      <main className="npj-compact-page">
+        <aside className="npj-glass-sidebar">
+          <div className="npj-sidebar-bg-orb orb-one"></div>
+          <div className="npj-sidebar-bg-orb orb-two"></div>
 
-        <div className="npj-glass-logo-wrap">
-          <img src="/logo.png" alt="NoPromptJobs" />
-        </div>
-
-        <nav className="npj-glass-menu">
-          <p className="npj-menu-label">Overview</p>
-
-          <button className="active" onClick={() => goTo(`/dashboard/${candidateId}`)}>
-            <span>▦</span>
-            <b>Dashboard</b>
-          </button>
-
-          <p className="npj-menu-label">Main</p>
-
-          {[
-            ["⌕", "Find Jobs", "/jobs"],
-            ["▥", "Companies", "/companies"],
-            ["▤", "Applications", "/services"],
-            ["♡", "Saved Jobs", "/saved-jobs"],
-            ["👁", "Profile Views", candidateId ? `/profile/${candidateId}/views` : "/candidate-login"],
-          ].map((item) => (
-            <button key={item[1]} onClick={() => goTo(item[2])}>
-              <span>{item[0]}</span>
-              <b>{item[1]}</b>
-              {item[1] === "Profile Views" && (
-                <small>›</small>
-              )}
-            </button>
-          ))}
-
-          <p className="npj-menu-label">AI Tools</p>
-
-{[
-  ["◫", "Resume Studio"],
-  ["◉", "AI Interview Prep"],
-  ["◎", "Skill Assessment"],
-  ["◔", "Salary Predictor"],
-  ["▣", "Trust Passport"],
-  ["🔗", "Career Tools"],
-].map((item) => (
-  <button key={item[1]} onClick={() => goTo("/services")}>
-    <span>{item[0]}</span>
-    <b>{item[1]}</b>
-    {item[1] === "Trust Passport" && <i>{profileStrength}%</i>}
-    {item[1] === "Career Tools" && <small>›</small>}
-  </button>
-))}
-
-          <p className="npj-menu-label">Account</p>
-
-          <button onClick={() => goTo("/settings")}>
-            <span>⚙</span>
-            <b>Settings</b>
-          </button>
-
-          <button
-            onClick={() => {
-              localStorage.removeItem("user");
-              localStorage.removeItem("token");
-              goTo("/candidate-login");
-            }}
-          >
-            <span>↳</span>
-            <b>Logout</b>
-          </button>
-        </nav>
-
-       
-      </aside>
-
-      <section className="npj-compact-main">
-        <header className="npj-compact-topbar">
-          <div className="npj-compact-search">
-            <button type="button" className="search-btn" onClick={handleSearch}>
-              ⌕
-            </button>
-
-            <input
-              value={searchText}
-              placeholder="Search jobs, companies, skills..."
-              onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch();
-              }}
-            />
+          <div className="npj-glass-logo-wrap">
+            <img src="/logo.png" alt="NoPromptJobs" />
           </div>
 
-          <div className="npj-compact-userarea">
-            <button type="button" onClick={handleNotifications}>
-              🔔{unreadCount > 0 && <b>{unreadCount}</b>}
+          <nav className="npj-glass-menu">
+            <p className="npj-menu-label">Overview</p>
+
+            <button
+              className="active"
+              onClick={() => goTo(`/dashboard/${candidateId}`)}
+            >
+              <span>▦</span>
+              <b>Dashboard</b>
+            </button>
+
+            <p className="npj-menu-label">Main</p>
+
+            {[
+              ["⌕", "Find Jobs", "/jobs"],
+              ["▥", "Companies", "/companies"],
+              ["▤", "Applications", "/applications"],
+              ["♡", "Saved Jobs", "/saved-jobs"],
+              [
+                "👁",
+                "Profile Views",
+                candidateId ? `/profile/${candidateId}/views` : "/candidate-login",
+              ],
+            ].map((item) => (
+              <button key={item[1]} onClick={() => goTo(item[2])}>
+                <span>{item[0]}</span>
+                <b>{item[1]}</b>
+                {item[1] === "Profile Views" && <small>›</small>}
+              </button>
+            ))}
+
+            <p className="npj-menu-label">AI Tools</p>
+
+            {[
+              ["◫", "Resume Studio", "/resume-studio"],
+              ["◉", "AI Interview Prep", "/ai-interview-prep"],
+              ["◎", "Skill Assessment", "/skill-assessment"],
+              ["◔", "Salary Predictor", "/salary-predictor"],
+              ["▣", "Trust Passport", "/trust-passport"],
+              ["🔗", "Career Tools", "/services"],
+            ].map((item) => (
+              <button key={item[1]} onClick={() => goTo(item[2])}>
+                <span>{item[0]}</span>
+                <b>{item[1]}</b>
+                {item[1] === "Trust Passport" && <i>{profileStrength}%</i>}
+                {item[1] === "Career Tools" && <small>›</small>}
+              </button>
+            ))}
+
+            <p className="npj-menu-label">Account</p>
+
+            <button onClick={() => goTo("/settings")}>
+              <span>⚙</span>
+              <b>Settings</b>
             </button>
 
             <button
-              type="button"
-              onClick={handleProfileViews}
-              title="Profile Views"
-              className="npj-top-profile-view-btn"
-            >
-              👁
-            </button>
-
-            <div className="profile-dropdown-wrap">
-              <div
-                className="npj-compact-user"
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-              >
-                <img src={getProfileImage()} alt={getCandidateName()} />
-                <div>
-                  <b>{getCandidateName()}</b>
-                  <span>Candidate</span>
-                </div>
-                <small>⌄</small>
-              </div>
-
-              {showProfileMenu && (
-                <div className="profile-dropdown-menu">
-                  <button onClick={handleProfile}>
-                    <span>♙</span> My Profile
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      goTo(candidateId ? `/profile/${candidateId}?edit=true` : "/candidate-login")
-                    }
-                  >
-                    <span>✎</span> Edit Profile
-                  </button>
-
-                  <button onClick={() => goTo("/settings")}>
-                    <span>⚙</span> Settings
-                  </button>
-
-                  <button onClick={() => goTo("/help-center")}>
-                    <span>?</span> Help Center
-                  </button>
-
-                  <hr />
-
-                  <button
-                    className="logout-menu-btn"
-                    onClick={() => {
-                      localStorage.removeItem("user");
-                      localStorage.removeItem("token");
-                      goTo("/candidate-login");
-                    }}
-                  >
-                    <span>↳</span> Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
-        <section className="npj-compact-grid">
-          <section className="npj-compact-hero">
-            <div className="hero-profile">
-              <img src={getProfileImage()} alt={getCandidateName()} />
-
-              <div>
-                <h1>
-                  Good Evening,
-                  <br />
-                  {getCandidateName()} 👋
-                </h1>
-
-                <p>
-                  Your profile is {profileStrength}% complete. Complete your
-                  profile to get better job matches.
-                </p>
-
-                <button onClick={handleProfile}>Complete Profile →</button>
-              </div>
-            </div>
-
-            <div className="compact-score">
-              <h2>{profileStrength}%</h2>
-              <span>Profile Strength</span>
-              <small>● {profileStrength >= 80 ? "Strong" : "Improve"}</small>
-            </div>
-
-            <div className="compact-stats">
-              <div>
-                <b>{appliedCount}</b>
-                <span>Applications</span>
-              </div>
-              <div>
-                <b>{interviews.length}</b>
-                <span>Interviews</span>
-              </div>
-              <div>
-                <b>{offerCount}</b>
-                <span>Offers</span>
-              </div>
-              <div>
-                <b>{savedJobs.length}</b>
-                <span>Saved Jobs</span>
-              </div>
-            </div>
-          </section>
-
-          <section className="compact-card dream-card">
-            <h3>Find Your Dream Job</h3>
-            <p>Explore verified opportunities from trusted companies.</p>
-
-            <input
-              value={searchText}
-              placeholder="Job title, keyword or company"
-              onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch();
+              onClick={() => {
+                localStorage.removeItem("user");
+                localStorage.removeItem("token");
+                goTo("/candidate-login");
               }}
-            />
+            >
+              <span>↳</span>
+              <b>Logout</b>
+            </button>
+          </nav>
+        </aside>
 
-            <input placeholder="Location" />
-            <button onClick={handleSearch}>Search Jobs</button>
-          </section>
+        <section className="npj-compact-main">
+          <header className="npj-compact-topbar">
+            <div className="npj-compact-search">
+              <button type="button" className="search-btn" onClick={handleSearch}>
+                ⌕
+              </button>
 
-          <section className="compact-card activity-card">
-            <div className="card-head">
-              <h3>Application Activity</h3>
-              <a href="/applications">View All →</a>
+              <input
+                value={searchText}
+                placeholder="Search jobs, companies, skills..."
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSearch();
+                }}
+              />
             </div>
 
-            {[
-              ["Applied", appliedCount, "green"],
-              ["Under Review", underReviewCount, "orange"],
-              ["Interview Scheduled", interviews.length, "blue"],
-              ["Offers", offerCount, "teal"],
-              ["Rejected", rejectedCount, "red"],
-            ].map((item) => (
-              <div className="activity-line" key={item[0]}>
-                <span className={`dot ${item[2]}`}></span>
-                <p>{item[0]}</p>
-                <b>{item[1]}</b>
-              </div>
-            ))}
-          </section>
-
-          <section className="compact-card jobs-card unique-jobs-carousel">
-            <div className="card-head">
-              <div>
-                <h3>Recommended Jobs for You</h3>
-                <p>Fresh roles matched with your profile and activity.</p>
-              </div>
-
-              <a href="/jobs">View All Jobs →</a>
-            </div>
-
-            <div className="compact-job-grid" ref={dashboardJobsRef}>
-              {dashboardJobs.length > 0 ? (
-                [...dashboardJobs, ...dashboardJobs, ...dashboardJobs].map(
-                  (job, index) => {
-                    const jobId = job._id || job.id;
-                    const title =
-                      job.title || job.jobTitle || job.role || "Untitled Job";
-                    const company = job.company || job.companyName || "Company";
-                    const location =
-                      job.location || job.city || "Location not added";
-                    const salary =
-                      job.salary || job.package || "Salary not disclosed";
-
-                    return (
-                      <article
-                        className="compact-job unique-job-card premium-saas-job"
-                        key={`${jobId || "job"}-${index}`}
-                      >
-                        <div className="premium-job-topline">
-                          <div className="premium-company-mark">
-                            {company.charAt(0).toUpperCase()}
-                          </div>
-
-                          <button
-                            type="button"
-                            className="premium-save-btn"
-                            onClick={() => saveJob(jobId)}
-                          >
-                            ♡
-                          </button>
-                        </div>
-
-                        <div className="premium-job-match">
-                          <span>AI Match</span>
-                          <b>{88 + (index % 7)}%</b>
-                        </div>
-
-                        <h3>{title}</h3>
-                        <p className="premium-company-name">{company}</p>
-
-                        <div className="premium-job-meta">
-                          <span>📍 {location}</span>
-                          <span>⚡ {job.workMode || "Remote"}</span>
-                        </div>
-
-                        <div className="premium-job-tags">
-                          <em>
-                            {job.jobType || job.employmentType || "Full-time"}
-                          </em>
-                          <em>Verified</em>
-                        </div>
-
-                        <footer className="premium-job-footer">
-                          <div>
-                            <small>Package</small>
-                            <b>{salary}</b>
-                          </div>
-
-                          <button
-                            type="button"
-                            disabled={applyingJobId === jobId}
-                            onClick={() => applyJob(jobId)}
-                          >
-                            {applyingJobId === jobId
-                              ? "Applying..."
-                              : "Apply →"}
-                          </button>
-                        </footer>
-                      </article>
-                    );
-                  }
-                )
-              ) : (
-                <p>No jobs available from backend.</p>
-              )}
-            </div>
-          </section>
-
-          <section className="compact-card interview-card">
-            <div className="card-head">
-              <h3>Upcoming Interviews</h3>
+            <div className="npj-compact-userarea">
+              <button type="button" onClick={handleNotifications}>
+                🔔{unreadCount > 0 && <b>{unreadCount}</b>}
+              </button>
 
               <button
                 type="button"
-                className="interview-view-btn"
-                onClick={() => setInterviewDrawer(true)}
+                onClick={handleProfileViews}
+                title="Profile Views"
+                className="npj-top-profile-view-btn"
               >
-                View All →
+                👁
+              </button>
+
+              <div className="profile-dropdown-wrap">
+                <div
+                  className="npj-compact-user"
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                >
+                  <img src={getProfileImage()} alt={getCandidateName()} />
+
+                  <div>
+                    <b>{getCandidateName()}</b>
+                    <span>Candidate</span>
+                  </div>
+
+                  <small>⌄</small>
+                </div>
+
+                {showProfileMenu && (
+                  <div className="profile-dropdown-menu">
+                    <button onClick={handleProfile}>
+                      <span>♙</span> My Profile
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        goTo(
+                          candidateId
+                            ? `/profile/${candidateId}?edit=true`
+                            : "/candidate-login"
+                        )
+                      }
+                    >
+                      <span>✎</span> Edit Profile
+                    </button>
+
+                    <button onClick={() => goTo("/settings")}>
+                      <span>⚙</span> Settings
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        goTo("/help-center?openChat=true");
+                      }}
+                    >
+                      <span>?</span> Help Center
+                    </button>
+
+                    <hr />
+
+                    <button
+                      className="logout-menu-btn"
+                      onClick={() => {
+                        localStorage.removeItem("user");
+                        localStorage.removeItem("token");
+                        goTo("/candidate-login");
+                      }}
+                    >
+                      <span>↳</span> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
+          <section className="npj-compact-grid">
+            <section className="npj-compact-hero">
+              <div className="hero-profile">
+                <img src={getProfileImage()} alt={getCandidateName()} />
+
+                <div>
+                  <h1>
+                    Good Evening,
+                    <br />
+                    {getCandidateName()} 👋
+                  </h1>
+
+                  <p>
+                    Your profile is {profileStrength}% complete. Complete your
+                    profile to get better job matches.
+                  </p>
+
+                  <button onClick={handleProfile}>Complete Profile →</button>
+                </div>
+              </div>
+
+              <div className="compact-score">
+                <h2>{profileStrength}%</h2>
+                <span>Profile Strength</span>
+                <small>
+                  ●{" "}
+                  {profileStrength >= 90
+                    ? "Excellent"
+                    : profileStrength >= 75
+                    ? "Strong"
+                    : profileStrength >= 50
+                    ? "Good"
+                    : "Improve"}
+                </small>
+              </div>
+
+              <div className="compact-stats">
+                <div>
+                  <b>{appliedCount}</b>
+                  <span>Applications</span>
+                </div>
+
+                <div>
+                  <b>{interviews.length}</b>
+                  <span>Interviews</span>
+                </div>
+
+                <div>
+                  <b>{offerCount}</b>
+                  <span>Offers</span>
+                </div>
+
+                <div>
+                  <b>{savedJobs.length}</b>
+                  <span>Saved Jobs</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="compact-card dream-card">
+              <h3>Find Your Dream Job</h3>
+              <p>Explore verified opportunities from trusted companies.</p>
+
+              <input
+                value={searchText}
+                placeholder="Job title, keyword or company"
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleDreamSearch();
+                }}
+              />
+
+              <input
+                value={dreamLocation}
+                placeholder="Location"
+                onChange={(e) => setDreamLocation(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleDreamSearch();
+                }}
+              />
+
+              <button onClick={handleDreamSearch}>Search Jobs</button>
+            </section>
+
+            <section className="compact-card activity-card">
+              <div className="card-head">
+                <h3>Application Activity</h3>
+                <a href="/applications">View All →</a>
+              </div>
+
+              {[
+                ["Applied", appliedCount, "green"],
+                ["Under Review", underReviewCount, "orange"],
+                ["Interview Scheduled", interviews.length, "blue"],
+                ["Offers", offerCount, "teal"],
+                ["Rejected", rejectedCount, "red"],
+              ].map((item) => (
+                <div className="activity-line" key={item[0]}>
+                  <span className={`dot ${item[2]}`}></span>
+                  <p>{item[0]}</p>
+                  <b>{item[1]}</b>
+                </div>
+              ))}
+            </section>
+
+            <section className="compact-card jobs-card unique-jobs-carousel">
+              <div className="card-head">
+                <div>
+                  <h3>Recommended Jobs for You</h3>
+                  <p>Fresh roles matched with your profile and activity.</p>
+                </div>
+
+                <a href="/jobs">View All Jobs →</a>
+              </div>
+
+              <div className="compact-job-grid" ref={dashboardJobsRef}>
+                {dashboardJobs.length > 0 ? (
+                  [...dashboardJobs, ...dashboardJobs, ...dashboardJobs].map(
+                    (job, index) => {
+                      const jobId = job._id || job.id;
+                      const title =
+                        job.title || job.jobTitle || job.role || "Untitled Job";
+                      const company =
+                        job.company || job.companyName || "Company";
+                      const location =
+                        job.location || job.city || "Location not added";
+                      const salary =
+                        job.salary || job.package || "Salary not disclosed";
+
+                      const matchScore =
+                        job.matchScore ||
+                        job.aiMatchScore ||
+                        job.profileMatch ||
+                        job.matchPercentage ||
+                        null;
+
+                      return (
+                        <article
+                          className="compact-job unique-job-card premium-saas-job"
+                          key={`${jobId || "job"}-${index}`}
+                        >
+                          <div className="premium-job-topline">
+                            <div className="premium-company-mark">
+                              {company.charAt(0).toUpperCase()}
+                            </div>
+
+                            <button
+                              type="button"
+                              className="premium-save-btn"
+                              onClick={() => saveJob(jobId)}
+                            >
+                              ♡
+                            </button>
+                          </div>
+
+                          <div className="premium-job-match">
+                            <span>AI Match</span>
+                            <b>
+                              {matchScore
+                                ? `${matchScore}%`
+                                : "Not calculated"}
+                            </b>
+                          </div>
+
+                          <h3>{title}</h3>
+                          <p className="premium-company-name">{company}</p>
+
+                          <div className="premium-job-meta">
+                            <span>📍 {location}</span>
+                            <span>
+                              ⚡{" "}
+                              {job.workMode ||
+                                job.jobType ||
+                                job.employmentType ||
+                                "Not specified"}
+                            </span>
+                          </div>
+
+                          <div className="premium-job-tags">
+                            <em>
+                              {job.jobType ||
+                                job.employmentType ||
+                                "Job type not added"}
+                            </em>
+
+                            <em>
+                              {job.verified || job.isVerified
+                                ? "Verified"
+                                : "Verification pending"}
+                            </em>
+                          </div>
+
+                          <footer className="premium-job-footer">
+                            <div>
+                              <small>Package</small>
+                              <b>{salary}</b>
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={applyingJobId === jobId}
+                              onClick={() => applyJob(jobId)}
+                            >
+                              {applyingJobId === jobId ? "Applying..." : "Apply →"}
+                            </button>
+                          </footer>
+                        </article>
+                      );
+                    }
+                  )
+                ) : (
+                  <p>No jobs available from backend.</p>
+                )}
+              </div>
+            </section>
+
+            <section className="compact-card interview-card">
+              <div className="card-head">
+                <h3>Upcoming Interviews</h3>
+
+                <button
+                  type="button"
+                  className="interview-view-btn"
+                  onClick={() => setInterviewDrawer(true)}
+                >
+                  View All →
+                </button>
+              </div>
+
+              {interviews.length > 0 ? (
+                interviews.slice(0, 3).map((item, index) => {
+                  const interviewDate = new Date(
+                    item.date ||
+                      item.interviewDate ||
+                      item.scheduledAt ||
+                      Date.now()
+                  );
+
+                  return (
+                    <div className="interview-line" key={item._id || index}>
+                      <div>
+                        <span>
+                          {interviewDate
+                            .toLocaleString("en", { month: "short" })
+                            .toUpperCase()}
+                        </span>
+
+                        <b>{interviewDate.getDate()}</b>
+                      </div>
+
+                      <section>
+                        <h4>
+                          {item.round ||
+                            item.title ||
+                            item.jobTitle ||
+                            "Interview Scheduled"}
+                        </h4>
+
+                        <p>{item.company || item.companyName || "Company"}</p>
+                      </section>
+
+                      <small>
+                        {item.time || item.interviewTime || "Time not added"}
+                      </small>
+                    </div>
+                  );
+                })
+              ) : (
+                <p>No interview scheduled yet.</p>
+              )}
+            </section>
+
+            <section className="quick-tools">
+              {tools.map((item) => (
+                <div key={item[1]} onClick={() => goTo(item[3])}>
+                  <span>{item[0]}</span>
+
+                  <section>
+                    <h3>{item[1]}</h3>
+                    <p>{item[2]}</p>
+                  </section>
+                </div>
+              ))}
+            </section>
+
+            <section className="compact-card market-card">
+              <div className="card-head">
+                <h3>Job Market Insights</h3>
+                <button onClick={loadDashboard}>Refresh</button>
+              </div>
+
+              <div>
+                <article>
+                  <span>Active Jobs</span>
+                  <b>{jobs.length}</b>
+                  <p>Live backend</p>
+                </article>
+
+                <article>
+                  <span>Companies Hiring</span>
+                  <b>{companiesCount}</b>
+                  <p>From jobs</p>
+                </article>
+
+                <article>
+                  <span>Applications</span>
+                  <b>{appliedCount}</b>
+                  <p>Your data</p>
+                </article>
+
+                <article>
+                  <span>Alerts</span>
+                  <b>{notifications.length}</b>
+                  <p>Notifications</p>
+                </article>
+              </div>
+            </section>
+
+            <section className="compact-card skills-card">
+  <div className="card-head">
+    <h3>Your Skills</h3>
+
+    <button
+      type="button"
+      className="skill-improve-btn"
+      onClick={() => {
+        window.location.href = "/services";
+      }}
+    >
+      Improve →
+    </button>
+  </div>
+
+  <div>
+    {(candidate?.skills?.length ? candidate.skills : []).map(
+      (skill, i) => (
+        <span key={i}>
+          {typeof skill === "string"
+            ? skill
+            : skill?.name}
+        </span>
+      )
+    )}
+
+    {!candidate?.skills?.length && (
+      <p>No skills added yet.</p>
+    )}
+  </div>
+</section>
+            <section className="compact-card recent-card">
+  <div className="card-head">
+    <h3>Recent Applications</h3>
+
+    <button
+      type="button"
+      className="view-all-btn"
+      onClick={() => goTo("/services")}
+    >
+      View All →
+    </button>
+  </div>
+
+              {applications.length > 0 ? (
+                applications.slice(0, 3).map((app, index) => (
+                  <div
+  className="recent-line"
+  key={app._id || index}
+  onClick={() => goTo("/services")}
+>
+                    <span>💼</span>
+
+                    <section>
+                      <h4>{app.jobTitle || app.job?.title || "Applied Job"}</h4>
+
+                      <p>
+                        {app.company ||
+                          app.companyName ||
+                          app.job?.company ||
+                          "Company"}
+                      </p>
+                    </section>
+
+                    <div>
+                      <b>{app.status || "Applied"}</b>
+
+                      <small>
+                        {app.createdAt
+                          ? new Date(app.createdAt).toLocaleDateString()
+                          : "Recently"}
+                      </small>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p>No applications found.</p>
+              )}
+            </section>
+          </section>
+
+          <PremiumFooter />
+        </section>
+      </main>
+
+      {interviewDrawer && (
+        <div
+          className="interview-drawer-overlay"
+          role="presentation"
+          onClick={() => setInterviewDrawer(false)}
+        >
+          <aside
+            className="interview-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Interview notifications"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="interview-drawer-head">
+              <div>
+                <span className="interview-drawer-kicker">Interview Center</span>
+                <h2>Interview Notifications</h2>
+                <p>
+                  Small updates for scheduled, rescheduled, cancelled and
+                  completed interviews.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Close interview notifications"
+                onClick={() => setInterviewDrawer(false)}
+              >
+                ×
               </button>
             </div>
 
-            {interviews.length > 0 ? (
-              interviews.slice(0, 3).map((item, index) => {
-                const interviewDate = new Date(
-                  item.date || item.interviewDate || item.scheduledAt || Date.now()
-                );
-
-                return (
-                  <div className="interview-line" key={item._id || index}>
-                    <div>
-                      <span>
-                        {interviewDate
-                          .toLocaleString("en", { month: "short" })
-                          .toUpperCase()}
-                      </span>
-                      <b>{interviewDate.getDate()}</b>
-                    </div>
-
-                    <section>
-                      <h4>
-                        {item.round ||
-                          item.title ||
-                          item.jobTitle ||
-                          "Interview Scheduled"}
-                      </h4>
-                      <p>{item.company || item.companyName || "Company"}</p>
-                    </section>
-
-                    <small>{item.time || item.interviewTime || "Time not added"}</small>
-                  </div>
-                );
-              })
-            ) : (
-              <p>No interview scheduled yet.</p>
-            )}
-          </section>
-
-          <section className="quick-tools">
-            {tools.map((item) => (
-              <div key={item[1]} onClick={() => goTo(item[3])}>
-                <span>{item[0]}</span>
-                <section>
-                  <h3>{item[1]}</h3>
-                  <p>{item[2]}</p>
-                </section>
-              </div>
-            ))}
-          </section>
-
-          <section className="compact-card market-card">
-            <div className="card-head">
-              <h3>Job Market Insights</h3>
-              <button onClick={loadDashboard}>Refresh</button>
-            </div>
-
-            <div>
+            <div className="interview-drawer-summary">
               <article>
-                <span>Active Jobs</span>
-                <b>{jobs.length}</b>
-                <p>Live backend</p>
+                <b>{interviews.length}</b>
+                <span>Total Updates</span>
               </article>
 
               <article>
-                <span>Companies Hiring</span>
-                <b>{companiesCount}</b>
-                <p>From jobs</p>
+                <b>
+                  {
+                    interviews.filter((item) =>
+                      `${item.status || ""}`.toLowerCase().includes("schedule")
+                    ).length
+                  }
+                </b>
+                <span>Scheduled</span>
               </article>
 
               <article>
-                <span>Applications</span>
-                <b>{appliedCount}</b>
-                <p>Your data</p>
+                <b>
+                  {
+                    interviews.filter((item) =>
+                      `${item.status || ""}`
+                        .toLowerCase()
+                        .includes("reschedule")
+                    ).length
+                  }
+                </b>
+                <span>Rescheduled</span>
               </article>
-
-              <article>
-                <span>Alerts</span>
-                <b>{notifications.length}</b>
-                <p>Notifications</p>
-              </article>
-            </div>
-          </section>
-
-          <section className="compact-card skills-card">
-            <div className="card-head">
-              <h3>Your Skills</h3>
-              <a href="/skill-assessment">Improve →</a>
             </div>
 
-            <div>
-              {(candidate?.skills?.length ? candidate.skills : []).map((skill, i) => (
-                <span key={i}>
-                  {typeof skill === "string" ? skill : skill?.name}
-                </span>
-              ))}
+            <div className="interview-drawer-list">
+              {interviews.length > 0 ? (
+                interviews.map((item, index) => {
+                  const status = `${item.status || "scheduled"}`.toLowerCase();
 
-              {!candidate?.skills?.length && <p>No skills added yet.</p>}
-            </div>
-          </section>
+                  const interviewDate = new Date(
+                    item.date ||
+                      item.interviewDate ||
+                      item.scheduledAt ||
+                      Date.now()
+                  );
 
-          <section className="compact-card recent-card">
-            <div className="card-head">
-              <h3>Recent Applications</h3>
-              <a href="/applications">View All →</a>
-            </div>
-
-            {applications.length > 0 ? (
-              applications.slice(0, 3).map((app, index) => (
-                <div className="recent-line" key={app._id || index}>
-                  <span>💼</span>
-
-                  <section>
-                    <h4>{app.jobTitle || app.job?.title || "Applied Job"}</h4>
-                    <p>
-                      {app.company ||
-                        app.companyName ||
-                        app.job?.company ||
-                        "Company"}
-                    </p>
-                  </section>
-
-                  <div>
-                    <b>{app.status || "Applied"}</b>
-                    <small>
-                      {app.createdAt
-                        ? new Date(app.createdAt).toLocaleDateString()
-                        : "Recently"}
-                    </small>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p>No applications found.</p>
-            )}
-          </section>
-        </section>
-      </section>
-    </main>
-
-    {interviewDrawer && (
-      <div
-        className="interview-drawer-overlay"
-        role="presentation"
-        onClick={() => setInterviewDrawer(false)}
-      >
-        <aside
-          className="interview-drawer"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Interview notifications"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="interview-drawer-head">
-            <div>
-              <span className="interview-drawer-kicker">Interview Center</span>
-              <h2>Interview Notifications</h2>
-              <p>Small updates for scheduled, rescheduled, cancelled and completed interviews.</p>
-            </div>
-
-            <button
-              type="button"
-              aria-label="Close interview notifications"
-              onClick={() => setInterviewDrawer(false)}
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="interview-drawer-summary">
-            <article>
-              <b>{interviews.length}</b>
-              <span>Total Updates</span>
-            </article>
-
-            <article>
-              <b>
-                {
-                  interviews.filter((item) =>
-                    `${item.status || ""}`.toLowerCase().includes("schedule")
-                  ).length
-                }
-              </b>
-              <span>Scheduled</span>
-            </article>
-
-            <article>
-              <b>
-                {
-                  interviews.filter((item) =>
-                    `${item.status || ""}`.toLowerCase().includes("reschedule")
-                  ).length
-                }
-              </b>
-              <span>Rescheduled</span>
-            </article>
-          </div>
-
-          <div className="interview-drawer-list">
-            {interviews.length > 0 ? (
-              interviews.map((item, index) => {
-                const status = `${item.status || "scheduled"}`.toLowerCase();
-                const interviewDate = new Date(
-                  item.date || item.interviewDate || item.scheduledAt || Date.now()
-                );
-
-                const icon =
-                  status.includes("reschedule")
+                  const icon = status.includes("reschedule")
                     ? "🟡"
                     : status.includes("cancel")
                     ? "🔴"
@@ -5897,8 +6398,7 @@ return (
                     ? "🟢"
                     : "🎙️";
 
-                const title =
-                  status.includes("reschedule")
+                  const title = status.includes("reschedule")
                     ? "Interview Rescheduled"
                     : status.includes("cancel")
                     ? "Interview Cancelled"
@@ -5906,152 +6406,127 @@ return (
                     ? "Interview Completed"
                     : "Interview Scheduled";
 
-                return (
-                  <div className="interview-notice" key={item._id || index}>
-                    <span>{icon}</span>
+                  return (
+                    <div className="interview-notice" key={item._id || index}>
+                      <span>{icon}</span>
 
-                    <section>
-                      <div className="interview-notice-title">
-                        <h3>{title}</h3>
-                        <small>
-                          {interviewDate.toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
-                        </small>
-                      </div>
+                      <section>
+                        <div className="interview-notice-title">
+                          <h3>{title}</h3>
 
-                      <p>
-                        {item.company || item.companyName || "Company"} •{" "}
-                        {item.round || item.title || item.jobTitle || "Interview"} •{" "}
-                        {item.time || item.interviewTime || "Time not added"}
-                      </p>
-                    </section>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="interview-notice empty">
-                <span>🎙️</span>
+                          <small>
+                            {interviewDate.toLocaleDateString("en-IN", {
+                              day: "2-digit",
+                              month: "short",
+                            })}
+                          </small>
+                        </div>
 
-                <section>
-                  <h3>No interview scheduled yet</h3>
-                  <p>
-                    When recruiters schedule, reschedule or cancel an interview,
-                    the notification will appear here.
-                  </p>
-                </section>
-              </div>
-            )}
-          </div>
-        </aside>
-      </div>
-    )}
+                        <p>
+                          {item.company || item.companyName || "Company"} •{" "}
+                          {item.round ||
+                            item.title ||
+                            item.jobTitle ||
+                            "Interview"}{" "}
+                          • {item.time || item.interviewTime || "Time not added"}
+                        </p>
+                      </section>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="interview-notice empty">
+                  <span>🎙️</span>
 
-    <PremiumFooter />
-  </>
-);
-}
-function PremiumFooter() {
-  const [email, setEmail] = useState("");
-  const [subscribing, setSubscribing] = useState(false);
-
+                  <section>
+                    <h3>No interview scheduled yet</h3>
+                    <p>
+                      When recruiters schedule, reschedule or cancel an
+                      interview, the notification will appear here.
+                    </p>
+                  </section>
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
+  );
+}function PremiumFooter() {
   const goTo = (path) => {
+    if (window.location.pathname === path) return;
     window.location.href = path;
   };
 
-  const comingSoon = (name) => {
-    alert(`${name} coming soon`);
+  const openHelpCenter = () => {
+    window.location.href = "/help-center?openChat=true";
   };
 
-  const subscribe = async () => {
-    if (!email.trim()) return alert("Please enter your email");
-
-    try {
-      setSubscribing(true);
-
-      await axios.post(`${API_URL}/api/subscribers`, {
-        email: email.trim(),
-        source: "candidate-dashboard-footer",
-      });
-
-      alert("Subscribed successfully");
-      setEmail("");
-    } catch (error) {
-      alert(error.response?.data?.message || "Subscription saved soon");
-    } finally {
-      setSubscribing(false);
+  const openExternal = (url) => {
+    if (!url || url.startsWith("YOUR_")) {
+      console.warn("Social media URL is not configured.");
+      return;
     }
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <footer className="npj-premium-footer">
-      <div className="footer-brand">
-        <img src="/logo.png" alt="NoPromptJobs" />
-        <p>
-          A Vatsenix Software Pvt Ltd product for genuine candidates and trusted employers.
-        </p>
-
-        <div className="footer-socials">
-          <button onClick={() => comingSoon("LinkedIn")}>in</button>
-          <button onClick={() => comingSoon("X")}>X</button>
-          <button onClick={() => comingSoon("YouTube")}>▶</button>
-          <button onClick={() => comingSoon("Facebook")}>f</button>
-        </div>
-      </div>
-
-      <div className="footer-col">
-        <h3>Services</h3>
-        {["Resume Studio", "AI Interview Prep", "Skill Assessment", "Salary Predictor", "Trust Passport", "Career Tools"].map((item) => (
-          <button key={item} onClick={() => goTo("/services")}>{item}</button>
-        ))}
-      </div>
-
-      <div className="footer-col">
-        <h3>Employers</h3>
-        {["Recruiter Login", "Post a Job", "Hiring Solutions", "Employer Dashboard"].map((item) => (
-          <button key={item} onClick={() => goTo("/recruiter-login")}>{item}</button>
-        ))}
-      </div>
-
-      <div className="footer-col">
-        <h3>Company</h3>
-        <button onClick={() => goTo("/about")}>About Us</button>
-        <button onClick={() => goTo("/services")}>Services</button>
-        <button onClick={() => goTo("/products")}>Products</button>
-        <button onClick={() => goTo("/contact")}>Contact Us</button>
-        <button onClick={() => goTo("/privacy-policy")}>Privacy Policy</button>
-        <button onClick={() => goTo("/terms-and-conditions")}>Terms & Conditions</button>
-      </div>
-
-      <div className="footer-subscribe">
-        <h3>Stay updated</h3>
-        <p>Get job alerts and career tips.</p>
-
-        <input
-          value={email}
-          placeholder="Enter your email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <button onClick={subscribe} disabled={subscribing}>
-          {subscribing ? "Subscribing..." : "Subscribe"}
+    <footer className="npj-dashboard-footer">
+      <div className="npj-dashboard-footer-brand">
+        <button
+          type="button"
+          className="npj-footer-logo-button"
+          aria-label="Go to dashboard"
+          onClick={() => goTo("/ultimate-dashboard")}
+        >
+          <img className="npj-footer-logo" src="/logo.png" alt="NoPromptJobs" />
         </button>
 
-        <small>🔒 We respect your privacy.</small>
+        <span className="npj-footer-copyright">
+          © 2026 NoPromptJobs. All rights reserved.
+        </span>
       </div>
 
-      <div className="footer-bottom">
-        <p>© 2026 Vatsenix Software Pvt. Ltd. All rights reserved.</p>
-        <div>
-          <button onClick={() => goTo("/privacy-policy")}>Privacy Policy</button>
-          <button onClick={() => goTo("/terms-and-conditions")}>Terms & Conditions</button>
-          <button onClick={() => goTo("/sitemap")}>Sitemap</button>
-        </div>
+      <nav className="npj-dashboard-footer-links" aria-label="Footer navigation">
+        <button type="button" onClick={() => goTo("/privacy-policy")}>
+          Privacy Policy
+        </button>
+
+        <span className="npj-footer-divider" />
+
+        <button type="button" onClick={() => goTo("/terms-and-conditions")}>
+          Terms of Service
+        </button>
+
+        <span className="npj-footer-divider" />
+
+        <button type="button" onClick={openHelpCenter}>
+          ? Help Center
+        </button>
+      </nav>
+
+      <div className="npj-dashboard-footer-socials">
+        <button type="button" onClick={() => openExternal("YOUR_LINKEDIN_URL")}>
+          in
+        </button>
+
+        <button type="button" onClick={() => openExternal("YOUR_X_URL")}>
+          X
+        </button>
+
+        <button type="button" onClick={() => openExternal("YOUR_INSTAGRAM_URL")}>
+          ◎
+        </button>
+
+        <button type="button" onClick={() => openExternal("YOUR_YOUTUBE_URL")}>
+          ▶
+        </button>
       </div>
     </footer>
   );
-}function TalentInsightPanel({ candidate, score }) {
+}
+function TalentInsightPanel({ candidate, score }) {
   const searchAppearances = candidate.profileViews || 0;
 
   const recruiterActions =
@@ -6259,86 +6734,240 @@ function InterviewAlertsPage() {
   const [interviewAlerts, setInterviewAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const candidateId = user?._id || user?.id || user?.candidateId;
+
+  const authHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  const goTo = (path) => {
+    window.location.href = path;
+  };
 
   useEffect(() => {
     const loadInterviewAlerts = async () => {
-      try {
-        if (!candidateId) {
-          setInterviewAlerts([]);
-          return;
-        }
-
-        const res = await axios.get(
-          `${API_URL}/api/candidates/${candidateId}/interviews`
-        );
-
-        setInterviewAlerts(res.data.interviews || res.data.data || []);
-      } catch (error) {
-        console.log("INTERVIEW ALERTS ERROR:", error.response?.data || error.message);
-        setInterviewAlerts([]);
-      } finally {
+      if (!candidateId) {
         setLoading(false);
+        return;
       }
+
+      const urls = [
+        `${API_URL}/api/candidates/${candidateId}/interviews`,
+        `${API_URL}/api/interviews/candidate/${candidateId}`,
+        `${API_URL}/api/applications/candidate/${candidateId}`,
+      ];
+
+      for (const url of urls) {
+        try {
+          const res = await axios.get(url, { headers: authHeaders() });
+
+          const data =
+            res.data?.interviews ||
+            res.data?.data ||
+            res.data?.applications ||
+            res.data ||
+            [];
+
+          const list = Array.isArray(data) ? data : [];
+
+          const onlyInterviews = list.filter((item) => {
+            const status = String(item.status || "").toLowerCase();
+            const type = String(item.type || item.round || "").toLowerCase();
+
+            return (
+              status.includes("interview") ||
+              status.includes("scheduled") ||
+              type.includes("interview") ||
+              item.interviewDate ||
+              item.scheduledAt ||
+              item.date
+            );
+          });
+
+          setInterviewAlerts(onlyInterviews.length ? onlyInterviews : list);
+          break;
+        } catch (error) {
+          console.log("INTERVIEW API FAILED:", url, error.response?.data || error.message);
+        }
+      }
+
+      setLoading(false);
     };
 
     loadInterviewAlerts();
   }, [candidateId]);
 
+  const getDate = (item) => {
+    const raw = item.date || item.interviewDate || item.scheduledAt || item.createdAt;
+    if (!raw) return "Date not added";
+
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return raw;
+
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const getTime = (item) => {
+    if (item.time || item.interviewTime) return item.time || item.interviewTime;
+
+    const raw = item.scheduledAt || item.date || item.interviewDate;
+    if (!raw) return "Time not added";
+
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return "Time not added";
+
+    return date.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const upcoming = interviewAlerts.filter((item) => {
+    const status = String(item.status || "").toLowerCase();
+    return !status.includes("reject") && !status.includes("cancel");
+  });
+
   return (
     <>
       <Navbar />
 
-      <main className="interview-alerts-page">
-        <section className="interview-alerts-hero">
+      <main className="premium-interview-page">
+        <section className="premium-interview-hero">
           <div>
-            <span>🎤 Interview Center</span>
+            <span>🎙 Interview Center</span>
             <h1>Interview Alerts</h1>
-            <p>Track scheduled interviews, recruiter calls and hiring rounds.</p>
+            <p>Track recruiter calls, technical rounds, HR rounds and scheduled interviews.</p>
           </div>
 
-          <h2>{interviewAlerts.length}</h2>
+          <div className="interview-hero-count">
+            <b>{upcoming.length}</b>
+            <small>Upcoming</small>
+          </div>
         </section>
 
-        <section className="interview-alerts-card">
-          {loading ? (
-            <p>Loading interview alerts...</p>
-          ) : interviewAlerts.length > 0 ? (
-            interviewAlerts.map((item, index) => (
-              <div className="interview-alert-row" key={item._id || index}>
-                <div className="interview-icon">🎤</div>
+        <section className="interview-dashboard-grid">
+          <article className="interview-stat-card">
+            <span>📅</span>
+            <b>{interviewAlerts.length}</b>
+            <p>Total Interviews</p>
+          </article>
 
-                <div>
-                  <h3>{item.round || item.title || item.jobTitle || "Interview Scheduled"}</h3>
-                  <p>{item.company || item.companyName || "Company not added"}</p>
-                  <small>
-                    {item.date || item.interviewDate || "Date not added"} •{" "}
-                    {item.time || item.interviewTime || "Time not added"}
-                  </small>
-                </div>
+          <article className="interview-stat-card">
+            <span>✅</span>
+            <b>{upcoming.length}</b>
+            <p>Scheduled</p>
+          </article>
 
-                <span className="interview-status">
-                  {item.status || "Scheduled"}
-                </span>
+          <article className="interview-stat-card">
+            <span>🎯</span>
+            <b>
+              {
+                interviewAlerts.filter((x) =>
+                  String(x.round || x.type || "").toLowerCase().includes("technical")
+                ).length
+              }
+            </b>
+            <p>Technical Rounds</p>
+          </article>
+
+          <article className="interview-stat-card">
+            <span>👥</span>
+            <b>
+              {
+                interviewAlerts.filter((x) =>
+                  String(x.round || x.type || "").toLowerCase().includes("hr")
+                ).length
+              }
+            </b>
+            <p>HR Rounds</p>
+          </article>
+        </section>
+
+        <section className="premium-interview-layout">
+          <section className="premium-interview-list">
+            <div className="interview-section-head">
+              <div>
+                <h2>Scheduled Interviews</h2>
+                <p>Real interview records from your backend.</p>
               </div>
-            ))
-          ) : (
-            <div className="empty-interview-box">
-              <h2>No interview scheduled yet</h2>
-              <p>When recruiters schedule an interview, it will appear here.</p>
 
-              <button onClick={() => (window.location.href = "/jobs")}>
-                Explore Jobs
-              </button>
+              <button onClick={() => goTo("/jobs")}>Explore Jobs →</button>
             </div>
-          )}
+
+            {loading ? (
+              <div className="interview-empty-card">Loading interview alerts...</div>
+            ) : interviewAlerts.length > 0 ? (
+              interviewAlerts.map((item, index) => (
+                <article className="premium-interview-row" key={item._id || item.id || index}>
+                  <div className="interview-date-box">
+                    <b>{getDate(item).split(" ")[0]}</b>
+                    <span>{getDate(item).split(" ").slice(1).join(" ")}</span>
+                  </div>
+
+                  <div className="interview-main-info">
+                    <h3>
+                      {item.round ||
+                        item.title ||
+                        item.interviewType ||
+                        item.jobTitle ||
+                        item.job?.title ||
+                        "Interview Scheduled"}
+                    </h3>
+
+                    <p>
+                      {item.company ||
+                        item.companyName ||
+                        item.job?.company ||
+                        "Company not added"}
+                    </p>
+
+                    <div>
+                      <span>🕒 {getTime(item)}</span>
+                      <span>📍 {item.location || item.mode || "Online / Not added"}</span>
+                    </div>
+                  </div>
+
+                  <span className="interview-status-pill">
+                    {item.status || "Scheduled"}
+                  </span>
+                </article>
+              ))
+            ) : (
+              <div className="interview-empty-card">
+                <h2>No interview scheduled yet</h2>
+                <p>When recruiters schedule an interview, it will appear here automatically.</p>
+                <button onClick={() => goTo("/jobs")}>Explore Jobs</button>
+              </div>
+            )}
+          </section>
+
+          <aside className="interview-side-panel">
+            <h2>Interview Prep</h2>
+            <p>Prepare before your next recruiter call.</p>
+
+            <button onClick={() => goTo("/ai-interview-prep")}>
+              🎙 Start AI Mock Interview
+            </button>
+
+            <button onClick={() => goTo("/resume-studio")}>
+              📄 Improve Resume
+            </button>
+
+            <button onClick={() => goTo("/question-bank")}>
+              📚 Question Bank
+            </button>
+          </aside>
         </section>
       </main>
     </>
   );
-}
-function ProFeaturesPage() {
+}function ProFeaturesPage() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const pendingPlan = localStorage.getItem("pendingPlan");
 
@@ -9479,33 +10108,46 @@ function CompaniesPage() {
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-const candidateId =
-  user?.candidateId ||
-  user?._id ||
-  user?.id ||
-  "";
+  const candidateId = user?.candidateId || user?._id || user?.id || "";
 
-const unreadCount =
-  Number(user?.unreadMessages) ||
-  Number(localStorage.getItem("unreadMessages")) ||
-  6;
+  const unreadCount =
+    Number(user?.unreadMessages) ||
+    Number(localStorage.getItem("unreadMessages")) ||
+    6;
 
-const profileStrength =
-  Number(user?.profileStrength) ||
-  Number(localStorage.getItem("profileStrength")) ||
-  90;
+  const profileStrength =
+    Number(user?.profileStrength) ||
+    Number(localStorage.getItem("profileStrength")) ||
+    90;
 
-const goTo = (path) => {
-  window.location.href = path;
-};
+  const goTo = (path) => {
+    window.location.href = path;
+  };
 
-const openProfile = () => {
-  if (candidateId) {
-    window.location.href = `/profile/${candidateId}`;
-  } else {
-    window.location.href = "/candidate-login";
+  const handleMessages = () => {
+    goTo("/services");
+  };
+
+  const handleNotifications = () => {
+    goTo("/notifications");
+  };
+
+  const handleHelpCenter = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setShowProfileMenu(false);
+    goTo("/help-center?openChat=true");
+  };
+
+const handleSidebarNavigation = (path) => {
+  if (path === "/applications") {
+    goTo("/services");
+    return;
   }
+
+  goTo(path);
 };
+
   const loadCompanies = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/jobs`);
@@ -9574,7 +10216,7 @@ const openProfile = () => {
           candidateId={candidateId}
           unreadCount={unreadCount}
           profileStrength={profileStrength}
-          goTo={goTo}
+          goTo={handleSidebarNavigation}
         />
 
         <section className="companies-saas-main">
@@ -9592,284 +10234,285 @@ const openProfile = () => {
             </div>
 
             <div className="npj-compact-userarea">
-              <button type="button">🔔{unreadCount > 0 && <b>{unreadCount}</b>}</button>
-              <button type="button">✉</button>
+              <button type="button" onClick={handleNotifications}>
+                🔔{unreadCount > 0 && <b>{unreadCount}</b>}
+              </button>
+
+              <button type="button" onClick={handleMessages}>
+                ✉
+              </button>
 
               <div className="company-profile-wrapper">
+                <div
+                  className="npj-compact-user"
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <img src={user?.profileImageUrl || "/profile.png"} alt="Candidate" />
 
-  <div
-    className="npj-compact-user"
-    onClick={() => setShowProfileMenu(!showProfileMenu)}
-    style={{ cursor: "pointer" }}
-  >
-    <img
-      src={user?.profileImageUrl || "/profile.png"}
-      alt="Candidate"
-    />
+                  <div>
+                    <b>{user?.name || "VENKATESHA A"}</b>
+                    <span>Candidate</span>
+                  </div>
 
-    <div>
-      <b>{user?.name || "VENKATESHA A"}</b>
-      <span>Candidate</span>
-    </div>
+                  <small>⌄</small>
+                </div>
 
-    <small>⌄</small>
-  </div>
+                {showProfileMenu && (
+                  <div className="profile-dropdown">
+                    <div
+                      onClick={() =>
+                        goTo(candidateId ? `/profile/${candidateId}` : "/candidate-login")
+                      }
+                    >
+                      👤 My Profile
+                    </div>
 
-  {showProfileMenu && (
+                    <div
+                      onClick={() =>
+                        goTo(
+                          candidateId
+                            ? `/profile/${candidateId}?edit=true`
+                            : "/candidate-login"
+                        )
+                      }
+                    >
+                      ✏ Edit Profile
+                    </div>
 
-    <div className="profile-dropdown">
+                    <div onClick={() => goTo("/candidate-settings")}>
+                      ⚙ Settings
+                    </div>
 
-      <div
-        onClick={() =>
-          window.location.href = `/profile/${candidateId}`
-        }
-      >
-        👤 My Profile
-      </div>
+                    <div onClick={handleHelpCenter}>❓ Help Center</div>
 
-      <div
-        onClick={() =>
-          window.location.href = `/profile/${candidateId}`
-        }
-      >
-        ✏ Edit Profile
-      </div>
+                    <hr />
 
-      <div
-        onClick={() =>
-          window.location.href = "/candidate-settings"
-        }
-      >
-        ⚙ Settings
-      </div>
-
-      <div>
-        ❓ Help Center
-      </div>
-
-      <hr />
-
-      <div
-        onClick={() => {
-          localStorage.removeItem("user");
-          window.location.href = "/";
-        }}
-      >
-        ↳ Logout
-      </div>
-
-    </div>
-
-  )}
-
-</div>
+                    <div
+                      onClick={() => {
+                        localStorage.removeItem("user");
+                        localStorage.removeItem("token");
+                        goTo("/candidate-login");
+                      }}
+                    >
+                      ↳ Logout
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </header>
 
           <section className="companies-hero-premium companies-hero-visual">
-  <div className="companies-hero-left">
-    <span>🛡 Verified Employer Network</span>
+            <div className="companies-hero-left">
+              <span>🛡 Verified Employer Network</span>
 
-    <h1>Explore companies hiring genuine talent</h1>
+              <h1>Explore companies hiring genuine talent</h1>
 
-    <p>
-      Discover trusted employers, active openings, company insights and
-      verified hiring opportunities.
-    </p>
+              <p>
+                Discover trusted employers, active openings, company insights and
+                verified hiring opportunities.
+              </p>
 
-    <div className="companies-hero-stats">
-      <b>🏢 {companies.length} Companies</b>
-      <b>💼 {jobs.length} Active Jobs</b>
-      <b>📍 {totalLocations} Locations</b>
-    </div>
-  </div>
-
-  <div className="companies-hero-art">
-    <div className="city-bg"></div>
-    <div className="hero-badge top-rated">⭐ Top Rated</div>
-    <div className="hero-badge hiring">👥 Actively Hiring</div>
-    <div className="magnifier">⌕</div>
-    <div className="person one">👩‍💼</div>
-    <div className="person two">👨‍💼</div>
-    <div className="shield">✅</div>
-  </div>
-</section>
-
-<section className="companies-filter-premium">
-  <input
-    value={searchText}
-    placeholder="Search companies by name, industry or location"
-    onChange={(e) => setSearchText(e.target.value)}
-  />
-
-  <select
-    value={industryFilter}
-    onChange={(e) => setIndustryFilter(e.target.value)}
-  >
-    <option value="">All Industries</option>
-    <option value="technology">Technology</option>
-    <option value="data">Data</option>
-    <option value="finance">Finance</option>
-    <option value="consulting">Consulting</option>
-  </select>
-
-  <select
-    value={locationFilter}
-    onChange={(e) => setLocationFilter(e.target.value)}
-  >
-    <option value="">All Locations</option>
-    <option value="bangalore">Bangalore</option>
-    <option value="hyderabad">Hyderabad</option>
-    <option value="chennai">Chennai</option>
-    <option value="remote">Remote</option>
-  </select>
-
-  <button
-    onClick={() => {
-      setSearchText("");
-      setIndustryFilter("");
-      setLocationFilter("");
-    }}
-  >
-    Reset
-  </button>
-</section>
-
-<section className="companies-layout-premium">
-  <section className="companies-left-premium">
-    <div className="company-section-head">
-      <div>
-        <h3>🏢 Top Companies</h3>
-        <p>Discover top employers with exciting job opportunities.</p>
-      </div>
-
-      <button onClick={() => goTo("/jobs")}>View All →</button>
-    </div>
-
-    <div className="companies-scroll-wrapper">
-      <div className="companies-auto-track">
-        {[...filteredCompanies, ...filteredCompanies, ...filteredCompanies].map(
-          (company, index) => (
-            <article
-              className="company-premium-card company-scroll-card"
-              key={`${company.name}-${index}`}
-            >
-              <div className="company-card-top">
-                <div className="company-logo-premium">
-                  {company.logo}
-                </div>
-
-                <span>{88 + (index % 8)}% Match</span>
+              <div className="companies-hero-stats">
+                <b>🏢 {companies.length} Companies</b>
+                <b>💼 {jobs.length} Active Jobs</b>
+                <b>📍 {totalLocations} Locations</b>
               </div>
-
-              <h3>{company.name}</h3>
-              <p>{company.industry}</p>
-
-              <div className="company-meta-premium">
-                <span>📍 {company.location}</span>
-                <span>💼 {company.jobs} open jobs</span>
-              </div>
-
-              <div className="company-tags-premium">
-                <em>Verified</em>
-                <em>Actively Hiring</em>
-              </div>
-
-              <button onClick={() => goTo(`/jobs?search=${company.name}`)}>
-                View Jobs →
-              </button>
-            </article>
-          )
-        )}
-      </div>
-    </div>
-
-    <section className="why-company-grid">
-      <article>
-        <span>🛡</span>
-        <h4>Verified Employers</h4>
-        <p>All companies are verified for genuine job openings.</p>
-      </article>
-
-      <article>
-        <span>📅</span>
-        <h4>Active Opportunities</h4>
-        <p>New jobs added regularly from trusted companies.</p>
-      </article>
-
-      <article>
-        <span>👥</span>
-        <h4>Company Insights</h4>
-        <p>Get insights on company culture and job trends.</p>
-      </article>
-
-      <article>
-        <span>✅</span>
-        <h4>Easy Applications</h4>
-        <p>Apply directly to companies with one click.</p>
-      </article>
-    </section>
-  </section>
-
-  <aside className="companies-right-premium">
-    <div className="company-insight-card">
-      <h3>📊 Company Insights</h3>
-
-      <div>
-        <article>
-          <span>🏢</span>
-          <b>{companies.length}</b>
-          <p>Total Companies</p>
-        </article>
-
-        <article>
-          <span>💼</span>
-          <b>{jobs.length}</b>
-          <p>Active Jobs</p>
-        </article>
-
-        <article>
-          <span>🌍</span>
-          <b>{totalLocations}</b>
-          <p>Locations</p>
-        </article>
-
-        <article>
-          <span>📈</span>
-          <b>{totalIndustries}</b>
-          <p>Industries</p>
-        </article>
-      </div>
-    </div>
-
-    <div className="company-insight-card top-industries-card">
-      <h3>🏙 Top Industries</h3>
-
-      {[...new Set(companies.map((c) => c.industry))]
-        .slice(0, 5)
-        .map((industry, index) => (
-          <div className="industry-progress" key={industry}>
-            <div>
-              <span>{industry}</span>
-              <b>{companies.filter((c) => c.industry === industry).length} Companies</b>
             </div>
 
-            <em>
-              <i style={{ width: `${85 - index * 12}%` }}></i>
-            </em>
-          </div>
-        ))}
-    </div>
-  </aside>
-</section>
+            <div className="companies-hero-art">
+              <div className="city-bg"></div>
+              <div className="hero-badge top-rated">⭐ Top Rated</div>
+              <div className="hero-badge hiring">👥 Actively Hiring</div>
+              <div className="magnifier">⌕</div>
+              <div className="person one">👩‍💼</div>
+              <div className="person two">👨‍💼</div>
+              <div className="shield">✅</div>
+            </div>
+          </section>
+
+          <section className="companies-filter-premium">
+            <input
+              value={searchText}
+              placeholder="Search companies by name, industry or location"
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+
+            <select
+              value={industryFilter}
+              onChange={(e) => setIndustryFilter(e.target.value)}
+            >
+              <option value="">All Industries</option>
+              <option value="technology">Technology</option>
+              <option value="data">Data</option>
+              <option value="finance">Finance</option>
+              <option value="consulting">Consulting</option>
+            </select>
+
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+            >
+              <option value="">All Locations</option>
+              <option value="bangalore">Bangalore</option>
+              <option value="hyderabad">Hyderabad</option>
+              <option value="chennai">Chennai</option>
+              <option value="remote">Remote</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearchText("");
+                setIndustryFilter("");
+                setLocationFilter("");
+              }}
+            >
+              Reset
+            </button>
+          </section>
+
+          <section className="companies-layout-premium">
+            <section className="companies-left-premium">
+              <div className="company-section-head">
+                <div>
+                  <h3>🏢 Top Companies</h3>
+                  <p>Discover top employers with exciting job opportunities.</p>
+                </div>
+
+                <button type="button" onClick={() => goTo("/jobs")}>
+                  View All →
+                </button>
+              </div>
+
+              <div className="companies-scroll-wrapper">
+                <div className="companies-auto-track">
+                  {[...filteredCompanies, ...filteredCompanies, ...filteredCompanies].map(
+                    (company, index) => (
+                      <article
+                        className="company-premium-card company-scroll-card"
+                        key={`${company.name}-${index}`}
+                      >
+                        <div className="company-card-top">
+                          <div className="company-logo-premium">{company.logo}</div>
+
+                          <span>{88 + (index % 8)}% Match</span>
+                        </div>
+
+                        <h3>{company.name}</h3>
+                        <p>{company.industry}</p>
+
+                        <div className="company-meta-premium">
+                          <span>📍 {company.location}</span>
+                          <span>💼 {company.jobs} open jobs</span>
+                        </div>
+
+                        <div className="company-tags-premium">
+                          <em>Verified</em>
+                          <em>Actively Hiring</em>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => goTo(`/jobs?search=${company.name}`)}
+                        >
+                          View Jobs →
+                        </button>
+                      </article>
+                    )
+                  )}
+                </div>
+              </div>
+
+              <section className="why-company-grid">
+                <article>
+                  <span>🛡</span>
+                  <h4>Verified Employers</h4>
+                  <p>All companies are verified for genuine job openings.</p>
+                </article>
+
+                <article>
+                  <span>📅</span>
+                  <h4>Active Opportunities</h4>
+                  <p>New jobs added regularly from trusted companies.</p>
+                </article>
+
+                <article>
+                  <span>👥</span>
+                  <h4>Company Insights</h4>
+                  <p>Get insights on company culture and job trends.</p>
+                </article>
+
+                <article>
+                  <span>✅</span>
+                  <h4>Easy Applications</h4>
+                  <p>Apply directly to companies with one click.</p>
+                </article>
+              </section>
+            </section>
+
+            <aside className="companies-right-premium">
+              <div className="company-insight-card">
+                <h3>📊 Company Insights</h3>
+
+                <div>
+                  <article>
+                    <span>🏢</span>
+                    <b>{companies.length}</b>
+                    <p>Total Companies</p>
+                  </article>
+
+                  <article>
+                    <span>💼</span>
+                    <b>{jobs.length}</b>
+                    <p>Active Jobs</p>
+                  </article>
+
+                  <article>
+                    <span>🌍</span>
+                    <b>{totalLocations}</b>
+                    <p>Locations</p>
+                  </article>
+
+                  <article>
+                    <span>📈</span>
+                    <b>{totalIndustries}</b>
+                    <p>Industries</p>
+                  </article>
+                </div>
+              </div>
+
+              <div className="company-insight-card top-industries-card">
+                <h3>🏙 Top Industries</h3>
+
+                {[...new Set(companies.map((c) => c.industry))]
+                  .slice(0, 5)
+                  .map((industry, index) => (
+                    <div className="industry-progress" key={industry}>
+                      <div>
+                        <span>{industry}</span>
+                        <b>
+                          {companies.filter((c) => c.industry === industry).length}{" "}
+                          Companies
+                        </b>
+                      </div>
+
+                      <em>
+                        <i style={{ width: `${85 - index * 12}%` }}></i>
+                      </em>
+                    </div>
+                  ))}
+              </div>
+            </aside>
+          </section>
         </section>
       </main>
 
       <PremiumFooter />
     </>
   );
-}
-function RecruiterSearch() {
+}function RecruiterSearch() {
   const [filters, setFilters] = useState({
     keyword: "",
     skill: "",

@@ -1,15 +1,19 @@
-
 require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
-const hrRoutes = require("./routes/hrRoutes");
 
 require("./config/firebaseAdmin");
 
 const passport = require("./config/passport");
+
+const app = express();
+
+/* ROUTE IMPORTS */
+const hrRoutes = require("./routes/hrRoutes");
+const helpRoutes = require("./routes/helpRoutes");
 
 const aiRoutes = require("./routes/aiRoutes");
 const candidateRoutes = require("./routes/candidates");
@@ -30,8 +34,6 @@ const profileViewRoutes = require("./routes/profileViewRoutes");
 const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 
-const app = express();
-
 /* CORS */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -49,23 +51,34 @@ app.use(
         return callback(null, true);
       }
 
-      if (origin.endsWith(".vercel.app")) {
-        return callback(null, true);
+      try {
+        const hostname = new URL(origin).hostname;
+
+        if (hostname.endsWith(".vercel.app")) {
+          return callback(null, true);
+        }
+      } catch (error) {
+        return callback(new Error("Invalid request origin"));
       }
 
-      return callback(new Error("Not allowed by CORS"));
+      return callback(new Error(`Origin ${origin} is not allowed by CORS`));
     },
+
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
     allowedHeaders: ["Content-Type", "Authorization"],
+
+    optionsSuccessStatus: 204,
   })
 );
 
 /* MIDDLEWARE */
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 app.use(passport.initialize());
-app.use("/api/hr", hrRoutes);
+app.use("/uploads", express.static("uploads"));
 
 /* ROUTE CHECKER */
 const registerRoute = (path, route, routeName) => {
@@ -81,16 +94,23 @@ const registerRoute = (path, route, routeName) => {
   console.log(`✅ Route loaded: ${path}`);
 };
 
-/* HOME */
+/* BASIC ROUTES */
 app.get("/", (req, res) => {
-  res.send("Backend Running Successfully");
+  res.send("NoPromptJobs Backend Running Successfully");
 });
 
-/* TEST */
 app.get("/api/test", (req, res) => {
   res.json({
     success: true,
     message: "API test route working",
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "NoPromptJobs backend is healthy",
+    mongoDB: mongoose.connection.readyState === 1 ? "connected" : "not connected",
   });
 });
 
@@ -165,6 +185,8 @@ app.get("/api/mail-test", async (req, res) => {
 });
 
 /* API ROUTES */
+registerRoute("/api/help", helpRoutes, "helpRoutes");
+registerRoute("/api/hr", hrRoutes, "hrRoutes");
 registerRoute("/api/contact", contactRoutes, "contactRoutes");
 registerRoute("/api/auth", authRoutes, "authRoutes");
 registerRoute("/api/candidates", candidateRoutes, "candidates");
@@ -183,8 +205,6 @@ registerRoute("/api/career-roadmap", careerRoadmapRoutes, "careerRoadmapRoutes")
 registerRoute("/api/candidate-profile", candidateProfileRoutes, "candidateProfileRoutes");
 registerRoute("/api/profile-views", profileViewRoutes, "profileViewRoutes");
 registerRoute("/api/candidates/forgot-password", forgotPasswordRoutes, "forgotPasswordRoutes");
-
-app.use("/uploads", express.static("uploads"));
 
 /* 404 */
 app.use((req, res) => {
@@ -205,19 +225,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-/* MONGODB */
+/* DATABASE + SERVER */
+const PORT = process.env.PORT || 5000;
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("MongoDB Connected Successfully");
+    console.log("✅ MongoDB Connected Successfully");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
   })
   .catch((err) => {
-    console.log("MongoDB Connection Error:", err);
+    console.log("❌ MongoDB Connection Error:", err);
+    process.exit(1);
   });
-
-/* SERVER */
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});

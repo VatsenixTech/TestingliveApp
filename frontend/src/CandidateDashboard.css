@@ -373,4 +373,45 @@
   .metric-grid {
     grid-template-columns: 1fr;
   }
+}.candidate-dashboard-footer {
+  margin-top: 34px;
+  padding: 18px 4px 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.candidate-dashboard-footer .footer-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.candidate-dashboard-footer a {
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.candidate-dashboard-footer a:hover {
+  color: #2563eb;
+}
+
+@media (max-width: 900px) {
+  .candidate-dashboard-footer {
+    flex-direction: column;
+    text-align: center;
+    padding-bottom: 20px;
+  }
+
+  .candidate-dashboard-footer .footer-right {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+  }
 }

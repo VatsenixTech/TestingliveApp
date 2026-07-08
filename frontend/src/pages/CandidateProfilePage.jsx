@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./CandidateProfilePage.css";
+import { calculateProfileStrength } from "../utils/profileStrength";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const LEVELS = ["Beginner", "Intermediate", "Advanced", "Expert"];
@@ -764,44 +765,186 @@ if (isProfileViewsPage) {
             <div className="cp-card resume">
               <div className="card-head">
                 <h3>Resume</h3>
-                <button onClick={() => openUpload("uploadResume")}>+ Update Resume</button>
+                <button onClick={() => openUpload("uploadResume")}>
+                  + Update Resume
+                </button>
               </div>
 
               {resumeDoc ? (
-                <div className="file-row">
-                  <span>📄</span>
-                  <section>
+                <div className="cp-action-row">
+                  <span className="cp-action-icon">📄</span>
+
+                  <section className="cp-action-info">
                     <b>{resumeDoc.fileName}</b>
-                    <p>Uploaded on {new Date(resumeDoc.uploadedAt).toLocaleDateString()}</p>
+                    <p>
+                      Uploaded on{" "}
+                      {new Date(resumeDoc.uploadedAt).toLocaleDateString()}
+                    </p>
                   </section>
-                  <button onClick={() => window.open(`${API_BASE}${resumeDoc.fileUrl}`, "_blank")}>Open</button>
-                  <button onClick={() => deleteDocument(resumeDoc._id)}>Delete</button>
+
+                  <div className="cp-right-actions">
+                    <button
+                      className="cp-open-btn"
+                      onClick={() =>
+                        window.open(
+                          resumeDoc.fileUrl.startsWith("http")
+                            ? resumeDoc.fileUrl
+                            : `${API_BASE}${resumeDoc.fileUrl}`,
+                          "_blank"
+                        )
+                      }
+                    >
+                      Open
+                    </button>
+
+                    <button
+                      className="cp-delete-btn"
+                      onClick={() => deleteDocument(resumeDoc._id)}
+                    >
+                      🗑 Delete
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p>No resume uploaded.</p>
               )}
             </div>
 
-            <div className="cp-card">
+            <div className="cp-card cp-video-card">
               <div className="card-head">
                 <h3>Self Intro & Videos</h3>
-                <button onClick={() => openUpload("uploadSelfIntro")}>+ Upload Video</button>
+
+                <button onClick={() => openUpload("uploadSelfIntro")}>
+                  + Upload Video
+                </button>
               </div>
 
-              <div className="video-row">
-                <button>▶</button>
-                <section>
+              <div className="cp-action-row">
+                <button
+                  className="cp-action-icon"
+                  onClick={() =>
+                    selfIntroVideo
+                      ? window.open(
+                          selfIntroVideo.fileUrl.startsWith("http")
+                            ? selfIntroVideo.fileUrl
+                            : `${API_BASE}${selfIntroVideo.fileUrl}`,
+                          "_blank"
+                        )
+                      : openUpload("uploadSelfIntro")
+                  }
+                >
+                  ▶
+                </button>
+
+                <section className="cp-action-info">
                   <b>Self Intro Video</b>
-                  <p>{selfIntroVideo ? `Uploaded ${new Date(selfIntroVideo.uploadedAt).toLocaleDateString()}` : "Missing"}</p>
+
+                  <p>
+                    {selfIntroVideo
+                      ? `Uploaded ${new Date(
+                          selfIntroVideo.uploadedAt
+                        ).toLocaleDateString()}`
+                      : "Missing"}
+                  </p>
                 </section>
+
+                {selfIntroVideo ? (
+                  <div className="cp-right-actions">
+                    <button
+                      className="cp-review-btn"
+                      onClick={() =>
+                        window.open(
+                          selfIntroVideo.fileUrl.startsWith("http")
+                            ? selfIntroVideo.fileUrl
+                            : `${API_BASE}${selfIntroVideo.fileUrl}`,
+                          "_blank"
+                        )
+                      }
+                    >
+                      ▶ Review
+                    </button>
+
+                    <button
+                      className="cp-delete-btn"
+                      onClick={() => deleteDocument(selfIntroVideo._id)}
+                    >
+                      🗑 Delete
+                    </button>
+                  </div>
+                ) : (
+                  <div className="cp-right-actions">
+                    <button
+                      className="cp-upload-btn"
+                      onClick={() => openUpload("uploadSelfIntro")}
+                    >
+                      + Upload
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <div className="video-row">
-                <button onClick={() => openUpload("uploadProjectVideo")}>▶</button>
-                <section>
+              <div className="cp-action-row">
+                <button
+                  className="cp-action-icon"
+                  onClick={() =>
+                    projectVideo
+                      ? window.open(
+                          projectVideo.fileUrl.startsWith("http")
+                            ? projectVideo.fileUrl
+                            : `${API_BASE}${projectVideo.fileUrl}`,
+                          "_blank"
+                        )
+                      : openUpload("uploadProjectVideo")
+                  }
+                >
+                  ▶
+                </button>
+
+                <section className="cp-action-info">
                   <b>Project Explanation</b>
-                  <p>{projectVideo ? `Uploaded ${new Date(projectVideo.uploadedAt).toLocaleDateString()}` : "Missing"}</p>
+
+                  <p>
+                    {projectVideo
+                      ? `Uploaded ${new Date(
+                          projectVideo.uploadedAt
+                        ).toLocaleDateString()}`
+                      : "Missing"}
+                  </p>
                 </section>
+
+                {projectVideo ? (
+                  <div className="cp-right-actions">
+                    <button
+                      className="cp-review-btn"
+                      onClick={() =>
+                        window.open(
+                          projectVideo.fileUrl.startsWith("http")
+                            ? projectVideo.fileUrl
+                            : `${API_BASE}${projectVideo.fileUrl}`,
+                          "_blank"
+                        )
+                      }
+                    >
+                      ▶ Review
+                    </button>
+
+                    <button
+                      className="cp-delete-btn"
+                      onClick={() => deleteDocument(projectVideo._id)}
+                    >
+                      🗑 Delete
+                    </button>
+                  </div>
+                ) : (
+                  <div className="cp-right-actions">
+                    <button
+                      className="cp-upload-btn"
+                      onClick={() => openUpload("uploadProjectVideo")}
+                    >
+                      + Upload
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1549,4 +1692,6 @@ function PVXKpi({ icon, title, value }) {
       </section>
     </article>
   );
-}export default CandidateProfilePage;
+}
+
+export default CandidateProfilePage;

@@ -30165,4 +30165,985 @@ body,
   .premium-contact-hero {
     padding: 34px;
   }
+}.premium-interview-page {
+  min-height: 100vh;
+  padding: 34px;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(124, 58, 237, 0.20), transparent 30%),
+    radial-gradient(circle at 90% 5%, rgba(37, 99, 235, 0.22), transparent 34%),
+    linear-gradient(135deg, #eef3ff 0%, #f8fbff 42%, #eef4ff 100%);
+  color: #071333;
+}
+
+.premium-interview-hero {
+  margin-top: 28px;
+  border-radius: 34px;
+  padding: 34px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255,255,255,.94), rgba(239,246,255,.82));
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 30px 80px rgba(30, 64, 175, 0.14);
+}
+
+.premium-interview-hero span {
+  color: #6d28d9;
+  font-weight: 900;
+}
+
+.premium-interview-hero h1 {
+  margin: 8px 0;
+  font-size: 42px;
+  letter-spacing: -1.4px;
+}
+
+.premium-interview-hero p {
+  margin: 0;
+  color: #475569;
+  font-weight: 600;
+}
+
+.interview-hero-count {
+  width: 130px;
+  height: 130px;
+  border-radius: 32px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  box-shadow: 0 26px 50px rgba(79, 70, 229, 0.35);
+}
+
+.interview-hero-count b {
+  font-size: 42px;
+  line-height: 1;
+}
+
+.interview-hero-count small {
+  margin-top: -24px;
+  font-weight: 800;
+}
+
+.interview-dashboard-grid {
+  margin: 22px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.interview-stat-card {
+  border-radius: 26px;
+  padding: 24px;
+  background: rgba(255,255,255,.88);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 20px 50px rgba(30, 64, 175, 0.10);
+}
+
+.interview-stat-card span {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #eff6ff, #ede9fe);
+  font-size: 24px;
+}
+
+.interview-stat-card b {
+  display: block;
+  margin-top: 16px;
+  font-size: 34px;
+  color: #0f172a;
+}
+
+.interview-stat-card p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.premium-interview-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 22px;
+}
+
+.premium-interview-list,
+.interview-side-panel {
+  border-radius: 32px;
+  background: rgba(255,255,255,.9);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 28px 70px rgba(30, 64, 175, 0.12);
+  padding: 26px;
+}
+
+.interview-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.interview-section-head h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.interview-section-head p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.interview-section-head button,
+.interview-empty-card button,
+.interview-side-panel button {
+  border: 0;
+  border-radius: 16px;
+  padding: 14px 18px;
+  color: white;
+  font-weight: 900;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  cursor: pointer;
+}
+
+.premium-interview-row {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  margin-bottom: 14px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #f8fbff, #eef4ff);
+  border: 1px solid rgba(148, 163, 184, 0.20);
+}
+
+.interview-date-box {
+  height: 82px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #1e293b, #312e81);
+  color: white;
+}
+
+.interview-date-box b {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.interview-date-box span {
+  font-size: 12px;
+  font-weight: 800;
+  color: #c7d2fe;
+}
+
+.interview-main-info h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.interview-main-info p {
+  margin: 5px 0 10px;
+  color: #475569;
+  font-weight: 800;
+}
+
+.interview-main-info div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.interview-main-info div span {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: white;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.interview-status-pill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  font-weight: 900;
+}
+
+.interview-empty-card {
+  min-height: 260px;
+  border-radius: 26px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 34px;
+  background: linear-gradient(135deg, #f8fbff, #eef4ff);
+  border: 1px dashed rgba(99, 102, 241, 0.35);
+}
+
+.interview-empty-card h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.interview-empty-card p {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.interview-side-panel {
+  position: sticky;
+  top: 24px;
+  height: fit-content;
+  background:
+    radial-gradient(circle at top right, rgba(124,58,237,.22), transparent 36%),
+    linear-gradient(145deg, #07122f, #020617);
+  color: white;
+}
+
+.interview-side-panel h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.interview-side-panel p {
+  color: #c7d2fe;
+}
+
+.interview-side-panel button {
+  width: 100%;
+  margin-top: 12px;
+  text-align: left;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.14);
+}
+
+.interview-side-panel button:hover {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+@media (max-width: 1000px) {
+  .interview-dashboard-grid,
+  .premium-interview-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .premium-interview-row {
+    grid-template-columns: 1fr;
+  }
+
+  .premium-interview-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}/* =========================================================
+   NOPROMPTJOBS - COMPACT DASHBOARD FOOTER
+   ========================================================= */
+
+.npj-dashboard-footer {
+  width: 100%;
+  min-height: 78px;
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+
+  gap: 28px;
+
+  margin-top: 28px;
+  padding: 14px 22px;
+
+  border: 1px solid #e4eaff;
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.97),
+      rgba(248, 250, 255, 0.94)
+    );
+
+  box-shadow:
+    0 16px 45px rgba(30, 64, 175, 0.08);
+
+  backdrop-filter: blur(20px);
+}
+
+
+/* BRAND */
+
+.npj-dashboard-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  min-width: 0;
+}
+
+.npj-dashboard-footer-brand img {
+  width: 48px;
+  height: 48px;
+
+  flex: 0 0 48px;
+
+  object-fit: contain;
+}
+
+.npj-dashboard-footer-brand span {
+  color: #475569;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+
+/* LINKS */
+
+.npj-dashboard-footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 22px;
+
+  min-width: 0;
+}
+
+.npj-dashboard-footer-links button {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 7px 2px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #475569;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.npj-dashboard-footer-links button:hover {
+  color: #2563eb;
+
+  transform: translateY(-1px);
+}
+
+
+.footer-divider {
+  width: 1px;
+  height: 18px;
+
+  background: #d8e0f5;
+}
+
+
+.help-icon {
+  width: 20px;
+  height: 20px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid #94a3b8;
+  border-radius: 50%;
+
+  font-size: 11px;
+  font-weight: 900;
+}
+
+
+/* SOCIALS */
+
+.npj-dashboard-footer-socials {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+.npj-dashboard-footer-socials button {
+  width: 32px;
+  height: 32px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 1px solid #dce5ff;
+  border-radius: 9px;
+
+  background: #f8faff;
+
+  color: #2563eb;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  transition:
+    transform 180ms ease,
+    color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.npj-dashboard-footer-socials button:hover {
+  transform: translateY(-2px);
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #7c3aed
+    );
+
+  box-shadow:
+    0 8px 20px rgba(79, 70, 229, 0.2);
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 1100px) {
+  .npj-dashboard-footer {
+    grid-template-columns: 1fr auto;
+  }
+
+  .npj-dashboard-footer-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+
+    justify-content: flex-start;
+  }
+}
+
+
+@media (max-width: 700px) {
+  .npj-dashboard-footer {
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 14px;
+
+    padding: 18px;
+  }
+
+  .npj-dashboard-footer-brand span {
+    white-space: normal;
+  }
+
+  .npj-dashboard-footer-links {
+    flex-wrap: wrap;
+
+    justify-content: flex-start;
+
+    gap: 12px;
+  }
+
+  .footer-divider {
+    display: none;
+  }
+}.npj-dashboard-footer {
+  width: 100%;
+  min-height: 78px;
+  margin-top: 28px;
+  margin-bottom: 18px;
+  padding: 14px 22px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e4eaff;
+  box-shadow: 0 18px 50px rgba(30, 64, 175, 0.1);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+}
+
+.npj-dashboard-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.npj-dashboard-footer-brand img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.npj-dashboard-footer-brand span {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.npj-dashboard-footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.npj-dashboard-footer-links button {
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.npj-dashboard-footer-links button:hover {
+  color: #2563eb;
+}
+
+.npj-dashboard-footer-links span {
+  width: 1px;
+  height: 18px;
+  background: #d8e0f5;
+}
+
+.npj-dashboard-footer-socials {
+  display: flex;
+  gap: 10px;
+}
+
+.npj-dashboard-footer-socials button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .npj-dashboard-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .npj-dashboard-footer-links {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}/* =========================================================
+   NOPROMPTJOBS - UNIVERSAL PREMIUM DASHBOARD FOOTER
+   Dashboard / Find Jobs / Companies / Applications / Saved Jobs
+   ========================================================= */
+
+:root {
+  --npj-sidebar-width: 330px;
+}
+
+.npj-dashboard-footer,
+.npj-dashboard-footer * {
+  box-sizing: border-box;
+}
+
+.npj-dashboard-footer {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+
+  min-height: 96px;
+  margin: 32px 0 24px 0 !important;
+  padding: 22px 30px !important;
+
+  display: grid !important;
+  grid-template-columns: minmax(260px, 1fr) auto auto;
+  align-items: center;
+  column-gap: 28px;
+  row-gap: 14px;
+
+  position: relative !important;
+  z-index: 1;
+
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  float: none !important;
+  clear: both;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(248, 250, 255, 0.96)
+  );
+
+  border: 1px solid #dbe5ff;
+  border-radius: 26px;
+  box-shadow: 0 18px 52px rgba(30, 64, 175, 0.09);
+  overflow: hidden;
+  color: #475569;
+}
+
+/* Footer inside right/main content */
+.fj-main > .npj-dashboard-footer,
+.dashboard-main > .npj-dashboard-footer,
+.dashboard-content > .npj-dashboard-footer,
+.dashboard-right > .npj-dashboard-footer,
+.candidate-dashboard-main > .npj-dashboard-footer,
+.candidate-dashboard-content > .npj-dashboard-footer,
+.candidate-dashboard-right > .npj-dashboard-footer,
+.saved-jobs-main > .npj-dashboard-footer,
+.saved-jobs-content > .npj-dashboard-footer,
+.companies-main > .npj-dashboard-footer,
+.companies-content > .npj-dashboard-footer,
+.company-main > .npj-dashboard-footer,
+.company-content > .npj-dashboard-footer,
+.applications-main > .npj-dashboard-footer,
+.applications-content > .npj-dashboard-footer,
+.notifications-saas-main > .npj-dashboard-footer,
+.trust-passport-main > .npj-dashboard-footer {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Footer outside main page wrapper */
+.fj-page + .npj-dashboard-footer,
+.dashboard-page + .npj-dashboard-footer,
+.ultimate-pro-page + .npj-dashboard-footer,
+.candidate-dashboard-page + .npj-dashboard-footer,
+.notifications-saas-page + .npj-dashboard-footer,
+.applications-page + .npj-dashboard-footer,
+.saved-jobs-page + .npj-dashboard-footer,
+.companies-page + .npj-dashboard-footer,
+.company-page + .npj-dashboard-footer {
+  width: calc(100% - var(--npj-sidebar-width)) !important;
+  margin-left: var(--npj-sidebar-width) !important;
+  margin-right: 0 !important;
+}
+
+/* Companies page extra fix */
+body:has(.companies-page) .npj-dashboard-footer,
+body:has(.companies-main) .npj-dashboard-footer,
+body:has(.company-page) .npj-dashboard-footer,
+body:has(.company-main) .npj-dashboard-footer {
+  width: calc(100% - var(--npj-sidebar-width)) !important;
+  margin-left: var(--npj-sidebar-width) !important;
+  margin-right: 0 !important;
+}
+
+/* But if footer is actually inside company right content */
+body:has(.companies-main > .npj-dashboard-footer) .npj-dashboard-footer,
+body:has(.companies-content > .npj-dashboard-footer) .npj-dashboard-footer,
+body:has(.company-main > .npj-dashboard-footer) .npj-dashboard-footer,
+body:has(.company-content > .npj-dashboard-footer) .npj-dashboard-footer {
+  width: 100% !important;
+  margin-left: 0 !important;
+}
+
+/* Brand */
+.npj-dashboard-footer-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.npj-footer-logo-button {
+  width: auto;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.npj-footer-logo {
+  width: 112px;
+  height: 40px;
+  display: block;
+  object-fit: contain;
+}
+
+.npj-footer-copyright {
+  min-width: 0;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Links */
+.npj-dashboard-footer-links {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.npj-dashboard-footer-links button {
+  margin: 0;
+  padding: 8px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #475569;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.npj-dashboard-footer-links button:hover {
+  color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.npj-footer-divider {
+  width: 1px;
+  height: 22px;
+  flex: 0 0 1px;
+  background: #dbe5ff;
+}
+
+/* Socials */
+.npj-dashboard-footer-socials {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.npj-dashboard-footer-socials button {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  margin: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  outline: 0;
+  border-radius: 13px;
+
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+
+  cursor: pointer;
+  box-shadow: 0 9px 22px rgba(79, 70, 229, 0.22);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.npj-dashboard-footer-socials button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 13px 28px rgba(79, 70, 229, 0.3);
+}
+
+/* Container safety */
+.fj-main,
+.dashboard-main,
+.dashboard-content,
+.dashboard-right,
+.candidate-dashboard-main,
+.candidate-dashboard-content,
+.candidate-dashboard-right,
+.saved-jobs-main,
+.saved-jobs-content,
+.companies-main,
+.companies-content,
+.company-main,
+.company-content,
+.applications-main,
+.applications-content,
+.notifications-saas-main,
+.trust-passport-main {
+  min-width: 0;
+}
+
+/* Responsive */
+@media (max-width: 1300px) {
+  .npj-dashboard-footer {
+    grid-template-columns: minmax(220px, 1fr) auto;
+    padding: 20px 24px !important;
+  }
+
+  .npj-dashboard-footer-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .npj-dashboard-footer-socials {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .npj-dashboard-footer-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1100px) {
+  .npj-dashboard-footer,
+  .fj-page + .npj-dashboard-footer,
+  .dashboard-page + .npj-dashboard-footer,
+  .ultimate-pro-page + .npj-dashboard-footer,
+  .candidate-dashboard-page + .npj-dashboard-footer,
+  .notifications-saas-page + .npj-dashboard-footer,
+  .applications-page + .npj-dashboard-footer,
+  .saved-jobs-page + .npj-dashboard-footer,
+  .companies-page + .npj-dashboard-footer,
+  .company-page + .npj-dashboard-footer {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 850px) {
+  .npj-dashboard-footer {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 22px !important;
+    border-radius: 22px;
+  }
+
+  .npj-dashboard-footer-brand {
+    grid-column: 1;
+    grid-row: 1;
+    flex-wrap: wrap;
+  }
+
+  .npj-dashboard-footer-links {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .npj-dashboard-footer-socials {
+    grid-column: 1;
+    grid-row: 3;
+    justify-content: flex-start;
+  }
+
+  .npj-footer-copyright {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 550px) {
+  .npj-dashboard-footer {
+    min-height: auto;
+    margin-top: 24px !important;
+    padding: 20px 18px !important;
+    row-gap: 18px;
+  }
+
+  .npj-dashboard-footer-brand {
+    gap: 12px;
+  }
+
+  .npj-footer-logo {
+    width: 105px;
+    height: 38px;
+  }
+
+  .npj-footer-copyright {
+    font-size: 12px;
+  }
+
+  .npj-dashboard-footer-links {
+    gap: 12px;
+  }
+
+  .npj-dashboard-footer-links button {
+    font-size: 12px;
+  }
+
+  .npj-footer-divider {
+    display: none;
+  }
+
+  .npj-dashboard-footer-socials button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+}/* =========================================================
+   FORCE COMPANIES FOOTER FIX
+   ========================================================= */
+
+body:has(.cp-page) .npj-dashboard-footer,
+body:has(.company-dashboard-page) .npj-dashboard-footer,
+body:has(.companies-dashboard-page) .npj-dashboard-footer,
+body:has(.companies-saas-page) .npj-dashboard-footer,
+body:has(.companies-page) .npj-dashboard-footer,
+body:has(.companies-main) .npj-dashboard-footer {
+  width: calc(100vw - 330px) !important;
+  max-width: calc(100vw - 330px) !important;
+  margin-left: 330px !important;
+  margin-right: 0 !important;
+}
+
+/* remove footer content squeezing */
+body:has(.companies-main) .npj-dashboard-footer {
+  grid-template-columns: minmax(320px, 1fr) auto auto !important;
+}
+
+/* desktop only */
+@media (max-width: 1100px) {
+  body:has(.cp-page) .npj-dashboard-footer,
+  body:has(.company-dashboard-page) .npj-dashboard-footer,
+  body:has(.companies-dashboard-page) .npj-dashboard-footer,
+  body:has(.companies-saas-page) .npj-dashboard-footer,
+  body:has(.companies-page) .npj-dashboard-footer,
+  body:has(.companies-main) .npj-dashboard-footer {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+  }
 }

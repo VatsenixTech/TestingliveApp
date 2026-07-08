@@ -4,35 +4,14 @@ import "./ApplicationsPage.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const STATUS_OPTIONS = [
-  "Applied",
-  "Under Review",
-  "Interview",
-  "Offered",
-  "Rejected",
-  "Saved",
-];
-
-export default function ApplicationsPage() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  const candidateId = user?.candidateId || user?._id || user?.id || "";
-  const name = user?.name || "VENKATESHA A";
-
+function ApplicationsPage() {
   const [applications, setApplications] = useState([]);
-  const [hiddenJobs, setHiddenJobs] = useState([]);
-  const [emergencyJobs, setEmergencyJobs] = useState([]);
-  const [activeTab, setActiveTab] = useState("All");
-  const [searchText, setSearchText] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({
-    role: "",
-    company: "",
-    location: "",
-    status: "Applied",
-  });
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const candidateId = user?.candidateId || user?._id || user?.id || "";
 
   const goTo = (path) => {
     window.location.href = path;
@@ -43,7 +22,7 @@ export default function ApplicationsPage() {
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
-  const fetchApplications = async () => {
+  const loadData = async () => {
     if (!candidateId) {
       goTo("/candidate-login");
       return;
@@ -52,421 +31,254 @@ export default function ApplicationsPage() {
     try {
       setLoading(true);
 
-      const endpoints = [
-        `${API_URL}/api/applications/candidate/${candidateId}`,
-        `${API_URL}/api/candidates/${candidateId}/applications`,
-      ];
+      const [appRes, jobRes] = await Promise.allSettled([
+        axios.get(`${API_URL}/api/applications/candidate/${candidateId}`, {
+          headers: authHeaders(),
+        }),
+        axios.get(`${API_URL}/api/jobs`, {
+          headers: authHeaders(),
+        }),
+      ]);
 
-      let data = [];
-
-      for (const url of endpoints) {
-        try {
-          const res = await axios.get(url, { headers: authHeaders() });
-          data = res.data?.applications || res.data?.data || res.data || [];
-          if (Array.isArray(data)) break;
-        } catch {
-          data = [];
-        }
+      if (appRes.status === "fulfilled") {
+        const data =
+          appRes.value.data?.applications ||
+          appRes.value.data?.data ||
+          appRes.value.data ||
+          [];
+        setApplications(Array.isArray(data) ? data : []);
       }
 
-      setApplications(Array.isArray(data) ? data : []);
-      localStorage.setItem("applicationsCount", String(Array.isArray(data) ? data.length : 0));
+      if (jobRes.status === "fulfilled") {
+        const data =
+          jobRes.value.data?.jobs ||
+          jobRes.value.data?.data ||
+          jobRes.value.data ||
+          [];
+        setJobs(Array.isArray(data) ? data : []);
+      }
     } catch (err) {
-      console.log("APPLICATIONS ERROR:", err.response?.data || err.message);
-      setApplications([]);
+      console.log("APPLICATIONS LOAD ERROR:", err.response?.data || err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchHiddenJobs = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/jobs/hidden`, {
-        headers: authHeaders(),
-      });
-      const data = res.data?.jobs || res.data?.data || res.data || [];
-      setHiddenJobs(Array.isArray(data) ? data : []);
-    } catch {
-      setHiddenJobs([]);
-    }
-  };
-
-  const fetchEmergencyJobs = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/jobs/emergency`, {
-        headers: authHeaders(),
-      });
-      const data = res.data?.jobs || res.data?.data || res.data || [];
-      setEmergencyJobs(Array.isArray(data) ? data : []);
-    } catch {
-      setEmergencyJobs([]);
-    }
-  };
-
   useEffect(() => {
-    fetchApplications();
-    fetchHiddenJobs();
-    fetchEmergencyJobs();
+    loadData();
   }, [candidateId]);
 
-  const addApplication = async () => {
-    if (!form.role.trim() || !form.company.trim()) {
-      alert("Please enter role and company");
-      return;
-    }
+  const filteredApps = useMemo(() => {
+    const q = search.toLowerCase();
 
-    try {
-      await axios.post(
-        `${API_URL}/api/applications`,
-        {
-          candidateId,
-          role: form.role.trim(),
-          company: form.company.trim(),
-          location: form.location.trim(),
-          status: form.status,
-          appliedDate: new Date(),
-        },
-        { headers: authHeaders() }
-      );
-
-      setShowAdd(false);
-      setForm({
-        role: "",
-        company: "",
-        location: "",
-        status: "Applied",
-      });
-
-      fetchApplications();
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to add application");
-    }
-  };
-
-  const updateStatus = async (id, status) => {
-    if (!id) return;
-
-    try {
-      await axios.put(
-        `${API_URL}/api/applications/${id}`,
-        { status },
-        { headers: authHeaders() }
-      );
-      fetchApplications();
-    } catch {
-      alert("Status update failed");
-    }
-  };
-
-  const deleteApplication = async (id) => {
-    if (!id) return;
-    if (!window.confirm("Delete this application?")) return;
-
-    try {
-      await axios.delete(`${API_URL}/api/applications/${id}`, {
-        headers: authHeaders(),
-      });
-      fetchApplications();
-    } catch {
-      alert("Delete failed");
-    }
-  };
-
-  const filteredApplications = useMemo(() => {
     return applications.filter((app) => {
-      const status = app.status || app.applicationStatus || "Applied";
-
-      const title = app.role || app.title || app.jobTitle || app.job?.title || "";
+      const title = app.jobTitle || app.title || app.job?.title || "";
       const company = app.company || app.companyName || app.job?.company || "";
-      const location = app.location || app.job?.location || "";
+      const status = app.status || "";
 
-      const matchesTab =
-        activeTab === "All" ||
-        status.toLowerCase() === activeTab.toLowerCase();
-
-      const text = `${title} ${company} ${location} ${status}`.toLowerCase();
-
-      return matchesTab && text.includes(searchText.toLowerCase());
+      return (
+        title.toLowerCase().includes(q) ||
+        company.toLowerCase().includes(q) ||
+        status.toLowerCase().includes(q)
+      );
     });
-  }, [applications, activeTab, searchText]);
+  }, [applications, search]);
 
-  const total = applications.length;
+  const underReview = applications.filter((a) =>
+    String(a.status || "").toLowerCase().includes("review")
+  );
 
-  const getStatusCount = (statusName) =>
-    applications.filter((a) =>
-      String(a.status || a.applicationStatus || "")
-        .toLowerCase()
-        .includes(statusName.toLowerCase())
-    ).length;
+  const interviews = applications.filter((a) =>
+    String(a.status || "").toLowerCase().includes("interview")
+  );
 
-  const applied = getStatusCount("Applied");
-  const underReview = getStatusCount("Review");
-  const interview = getStatusCount("Interview");
-  const offered = getStatusCount("Offer");
-  const rejected = getStatusCount("Reject");
-  const saved = getStatusCount("Saved");
-  const successRate = total ? Math.round((offered / total) * 100) : 0;
+  const offers = applications.filter((a) =>
+    String(a.status || "").toLowerCase().includes("offer")
+  );
 
-  const getTitle = (app) =>
-    app.role || app.title || app.jobTitle || app.job?.title || "Job Role";
+  const successRate =
+    applications.length > 0
+      ? Math.round(((interviews.length + offers.length) / applications.length) * 100)
+      : null;
 
-  const getCompany = (app) =>
-    app.company || app.companyName || app.job?.company || "Company";
-
-  const getLocation = (app) =>
-    app.location || app.job?.location || "Location not added";
-
-  const getStatus = (app) => app.status || app.applicationStatus || "Applied";
-
-  const getDate = (app) => {
-    const date = app.appliedDate || app.appliedAt || app.createdAt || app.updatedAt;
-    return date ? new Date(date).toLocaleDateString() : "Today";
-  };
+  const recommendedJobs = jobs.slice(0, 3);
 
   return (
-    <section className="apps-page-content">
-      <section className="apps-hero">
-        <div>
-          <span>Welcome back, {name}! 👋</span>
-          <h1>Your Applications Command Center</h1>
-          <p>
-            Track every application, recruiter response, interview stage and
-            hiring progress in one premium dashboard.
-          </p>
-        </div>
+    <main className="ua-page">
+      <aside className="ua-sidebar">
+        <img src="/logo.png" alt="NoPromptJobs" />
 
-        <aside>
-          <div>👑</div>
-          <h3>Ultimate Access Active</h3>
-          <p>All premium tools unlocked</p>
-          <button onClick={() => goTo("/ultimate-dashboard")}>
-            View Dashboard →
-          </button>
-        </aside>
-      </section>
+        <button onClick={() => goTo("/ultimate-dashboard")}>🏠 Dashboard</button>
+        <button className="active">▣ Applications <b>{applications.length}</b></button>
+        <button onClick={() => goTo("/ai-workspace")}>🤖 AI Workspace</button>
+        <button onClick={() => goTo("/resume-studio")}>📄 Resume Studio</button>
+        <button onClick={() => goTo("/ai-interview-prep")}>🎙 AI Interview Prep</button>
+        <button onClick={() => goTo("/skill-analyzer")}>📊 Skill Analyzer</button>
+        <button onClick={() => goTo("/salary-predictor")}>💰 Salary Predictor</button>
+        <button onClick={() => goTo("/job-alerts")}>🔔 Job Alerts</button>
+        <button onClick={() => goTo("/saved-jobs")}>❤️ Saved Jobs</button>
+        <button onClick={() => goTo("/hidden-opportunities")}>💎 Hidden Opportunities</button>
+      </aside>
 
-      <section className="stats-grid">
-        <Stat title="Total Applications" value={total} icon="💼" />
-        <Stat title="Applied" value={applied} icon="✅" />
-        <Stat title="Under Review" value={underReview} icon="👁" />
-        <Stat title="Interviews" value={interview} icon="🎤" />
-        <Stat title="Success Rate" value={`${successRate}%`} icon="📈" />
-      </section>
+      <section className="ua-main">
+        <header className="ua-topbar">
+          <button className="ua-menu">☰</button>
 
-      <section className="apps-content-grid">
-        <section className="apps-panel">
-          <div className="apps-title-row">
+          <div className="ua-search">
+            <span>⌕</span>
+            <input
+              placeholder="Search applications, companies, status..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <kbd>⌘ K</kbd>
+          </div>
+
+          <button className="ua-ai">✨ AI Assistant</button>
+
+          <button className="ua-icon">🔔</button>
+          <button className="ua-icon">💬</button>
+
+          <div className="ua-user">
+            <img src={user?.profileImageUrl || "/profile.png"} alt="Candidate" />
             <div>
-              <h2>Applications Pipeline</h2>
-              <p>Live status from your real applied jobs</p>
-            </div>
-
-            <div className="apps-actions">
-              <div className="apps-search-inline">
-                <span>⌕</span>
-                <input
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="Search applications..."
-                />
-              </div>
-
-              <button className="ghost" onClick={() => window.print()}>
-                Export
-              </button>
-
-              <button className="primary" onClick={() => setShowAdd(true)}>
-                + Add Application
-              </button>
+              <b>{user?.name || "Candidate"}</b>
+              <span>Verified Candidate 💙</span>
             </div>
           </div>
+        </header>
 
-          <div className="tabs">
-            {["All", ...STATUS_OPTIONS].map((tab) => (
-              <button
-                key={tab}
-                className={activeTab === tab ? "active" : ""}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </button>
-            ))}
+        <section className="ua-hero">
+          <div>
+            <span>APPLICATION INTELLIGENCE</span>
+            <h1>Applications Command Center</h1>
+            <p>
+              Track every application, recruiter response, interview stage and hiring progress from live backend data.
+            </p>
           </div>
 
-          <div className="application-list">
-            {loading && (
-              <div className="apps-empty-state">
-                <div className="apps-empty-icon">⏳</div>
-                <h3>Loading applications...</h3>
-                <p>Please wait while we fetch your real application data.</p>
-              </div>
-            )}
-
-            {!loading && filteredApplications.length === 0 && (
-              <div className="apps-empty-state">
-                <div className="apps-empty-icon">📭</div>
-                <h3>No applications found</h3>
-                <p>Click Add Application to add your first real application.</p>
-                <button onClick={() => setShowAdd(true)}>+ Add Application</button>
-              </div>
-            )}
-
-            {!loading &&
-              filteredApplications.map((app, index) => {
-                const id = app._id || app.id || app.applicationId || index;
-
-                return (
-                  <article className="app-row" key={id}>
-                    <div className="company-logo">
-                      {getCompany(app).charAt(0).toUpperCase()}
-                    </div>
-
-                    <section className="app-info">
-                      <div>
-                        <h3>{getTitle(app)}</h3>
-                        <span>{getStatus(app)}</span>
-                      </div>
-
-                      <p>
-                        {getCompany(app)} • {getLocation(app)}
-                      </p>
-
-                      <div className="app-meta">
-                        <small>📅 {getDate(app)}</small>
-                        <small>⚡ {app.matchScore || app.aiMatchScore || 92}% Match</small>
-                      </div>
-                    </section>
-
-                    <select
-                      value={getStatus(app)}
-                      onChange={(e) => updateStatus(app._id || app.id, e.target.value)}
-                    >
-                      {STATUS_OPTIONS.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-
-                    <button
-                      className="delete-btn"
-                      onClick={() => deleteApplication(app._id || app.id)}
-                    >
-                      🗑
-                    </button>
-                  </article>
-                );
-              })}
-          </div>
+          <button onClick={loadData}>{loading ? "Refreshing..." : "Refresh Data ↻"}</button>
         </section>
 
-        <aside className="right-stack">
-          <div className="quick-card">
-            <h2>Quick Actions</h2>
+        <section className="ua-stats">
+          <article>
+            <i>💼</i>
+            <h3>Total Applications</h3>
+            <h2>{applications.length}</h2>
+            <p>Live backend records</p>
+          </article>
 
-            <Action
-              icon="🚨"
-              title="Emergency Recruitment"
-              text={`${emergencyJobs.length} urgent jobs available`}
-              onClick={() => goTo("/emergency-recruitment")}
-            />
+          <article>
+            <i>✅</i>
+            <h3>Applied</h3>
+            <h2>{applications.length}</h2>
+            <p>Submitted roles</p>
+          </article>
 
-            <Action
-              icon="🔒"
-              title="Hidden Applications"
-              text={`${hiddenJobs.length} private jobs available`}
-              onClick={() => goTo("/hidden-opportunities")}
-            />
+          <article>
+            <i>👁</i>
+            <h3>Under Review</h3>
+            <h2>{underReview.length}</h2>
+            <p>Recruiter review</p>
+          </article>
 
-            <Action
-              icon="📄"
-              title="Resume Studio"
-              text="Improve ATS resume score"
-              onClick={() => goTo("/resume-studio")}
-            />
+          <article>
+            <i>🎙</i>
+            <h3>Interviews</h3>
+            <h2>{interviews.length}</h2>
+            <p>Interview stage</p>
+          </article>
 
-            <Action
-              icon="🎤"
-              title="AI Interview Prep"
-              text="Practice before recruiter call"
-              onClick={() => goTo("/ai-interview-prep")}
-            />
-          </div>
+          <article>
+            <i>📈</i>
+            <h3>Success Rate</h3>
+            <h2>{successRate === null ? "—" : `${successRate}%`}</h2>
+            <p>{successRate === null ? "Need application data" : "Progress score"}</p>
+          </article>
+        </section>
 
-          <div className="quick-card">
-            <h2>Application Insights</h2>
-            <Action icon="📌" title="Saved Jobs" text={`${saved} saved jobs`} />
-            <Action icon="❌" title="Rejected" text={`${rejected} rejected`} />
-            <Action icon="✅" title="Offered" text={`${offered} offers`} />
-          </div>
-        </aside>
+        <section className="ua-grid">
+          <section className="ua-panel ua-pipeline">
+            <div className="ua-panel-head">
+              <div>
+                <h2>Applications Pipeline</h2>
+                <p>Live status from your applied jobs.</p>
+              </div>
+
+              <div>
+                <button onClick={() => goTo("/jobs")}>+ Apply Jobs</button>
+                <button onClick={loadData}>Refresh</button>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="ua-empty">Loading applications...</div>
+            ) : filteredApps.length > 0 ? (
+              <div className="ua-table">
+                {filteredApps.map((app, index) => (
+                  <article key={app._id || app.id || index}>
+                    <div className="ua-company-logo">
+                      {(app.company || app.companyName || app.job?.company || "C")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+
+                    <div>
+                      <h3>{app.jobTitle || app.title || app.job?.title || "Job title not added"}</h3>
+                      <p>{app.company || app.companyName || app.job?.company || "Company not added"}</p>
+                    </div>
+
+                    <span>{app.status || "Applied"}</span>
+
+                    <small>
+                      {app.createdAt
+                        ? new Date(app.createdAt).toLocaleDateString()
+                        : "Date not added"}
+                    </small>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="ua-empty premium">
+                <div>📭</div>
+                <h2>No applications yet</h2>
+                <p>
+                  Once you apply to backend jobs, your applications will appear here automatically.
+                </p>
+                <button onClick={() => goTo("/jobs")}>Explore Jobs →</button>
+              </div>
+            )}
+          </section>
+
+          <aside className="ua-right">
+            <section className="ua-panel">
+              <h2>Quick Actions</h2>
+
+              <button onClick={() => goTo("/jobs")}>💼 Explore Jobs</button>
+              <button onClick={() => goTo("/resume-studio")}>📄 Improve Resume</button>
+              <button onClick={() => goTo("/ai-interview-prep")}>🎙 Practice Interview</button>
+              <button onClick={() => goTo("/job-alerts")}>🔔 Manage Job Alerts</button>
+            </section>
+
+            <section className="ua-panel">
+              <h2>Recommended Jobs</h2>
+
+              {recommendedJobs.length > 0 ? (
+                recommendedJobs.map((job) => (
+                  <article className="ua-job-mini" key={job._id || job.id}>
+                    <b>{job.title || job.jobTitle || job.role || "Job title not added"}</b>
+                    <span>{job.company || job.companyName || "Company not added"}</span>
+                  </article>
+                ))
+              ) : (
+                <p className="ua-muted">No recommended jobs from backend.</p>
+              )}
+            </section>
+          </aside>
+        </section>
       </section>
-
-      {showAdd && (
-        <div className="apps-modal">
-          <div className="apps-modal-card">
-            <button className="modal-close" onClick={() => setShowAdd(false)}>
-              ×
-            </button>
-
-            <h2>Add Real Application</h2>
-
-            <input
-              placeholder="Job Role"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-            />
-
-            <input
-              placeholder="Company"
-              value={form.company}
-              onChange={(e) => setForm({ ...form, company: e.target.value })}
-            />
-
-            <input
-              placeholder="Location"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-            />
-
-            <select
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value })}
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-
-            <button className="primary" onClick={addApplication}>
-              Save Application
-            </button>
-          </div>
-        </div>
-      )}
-    </section>
+    </main>
   );
 }
 
-function Stat({ title, value, icon }) {
-  return (
-    <article className="stat-card">
-      <div>
-        <p>{title}</p>
-        <h2>{value}</h2>
-        <span>↑ live data</span>
-      </div>
-      <i>{icon}</i>
-    </article>
-  );
-}
-
-function Action({ icon, title, text, onClick }) {
-  return (
-    <div className="quick-action" onClick={onClick}>
-      <span>{icon}</span>
-      <div>
-        <h3>{title}</h3>
-        <p>{text}</p>
-      </div>
-    </div>
-  );
-}
+export default ApplicationsPage;

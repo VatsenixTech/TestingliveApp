@@ -1909,4 +1909,1576 @@ transform:scale(1.04);
 .manager-small-textarea {
   background: #fff !important;
   color: #07163a !important;
+}/* =========================================================
+   SELF INTRO & PROJECT VIDEO ACTIONS
+========================================================= */
+
+.video-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e6ebf5;
+}
+
+.video-row:last-child {
+  border-bottom: none;
+}
+
+/* Play Button */
+
+.video-row > button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border: none;
+  border-radius: 14px;
+  background: #edf3ff;
+  color: #075cff;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.video-row > button:hover {
+  background: #dfeaff;
+  transform: translateY(-2px);
+}
+
+/* Video Information */
+
+.video-row > section {
+  flex: 1;
+  min-width: 0;
+}
+
+.video-row > section b {
+  display: block;
+  color: #071534;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.video-row > section p {
+  margin: 0;
+  color: #52617a;
+  font-size: 14px;
+}
+
+/* Review + Delete Container */
+
+.video-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+/* Review Button */
+
+.video-actions button {
+  width: auto;
+  height: 34px;
+
+  border: none;
+  border-radius: 10px;
+
+  padding: 0 11px;
+
+  background: #edf3ff;
+  color: #075cff;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  white-space: nowrap;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.video-actions button:hover {
+  background: #dfeaff;
+  transform: translateY(-1px);
+}
+
+/* Delete Button */
+
+.video-actions .delete-btn {
+  background: #fff0f2;
+  color: #dc2626;
+}
+
+.video-actions .delete-btn:hover {
+  background: #ffe1e5;
+}
+
+/* Responsive */
+
+@media (max-width: 700px) {
+  .video-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .video-actions {
+    width: 100%;
+    padding-left: 56px;
+  }
+}/* same button style for all profile card buttons */
+.cp-card .card-head button,
+.cp-right-actions button,
+.video-actions button,
+.file-row button,
+.verification button {
+  height: 36px;
+  border: none;
+  border-radius: 14px;
+  padding: 0 16px;
+  background: #edf3ff;
+  color: #075cff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cp-card .card-head button:hover,
+.cp-right-actions button:hover,
+.video-actions button:hover,
+.file-row button:hover,
+.verification button:hover {
+  background: #dfeaff;
+  transform: translateY(-1px);
+}
+
+/* delete also same style but slightly red */
+.cp-right-actions button:last-child,
+.video-actions .delete-btn,
+.file-row button:last-child {
+  background: #edf3ff;
+  color: #075cff;
+}
+
+/* action row layout */
+.cp-action-row {
+  display: grid;
+  grid-template-columns: 46px minmax(120px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #e5ebf5;
+}
+
+.cp-action-row:last-child {
+  border-bottom: none;
+}
+
+.cp-action-icon {
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 14px;
+  background: #edf3ff;
+  color: #075cff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.cp-action-info b {
+  display: block;
+  color: #071534;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.cp-action-info p {
+  margin: 5px 0 0;
+  color: #52617a;
+  font-size: 14px;
+}
+
+.cp-right-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}/* PREMIUM PROFILE MANAGER MODAL */
+
+.cp-manager-modal {
+  backdrop-filter: blur(14px);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.cp-manager-card {
+  width: min(1180px, 94vw);
+  min-height: 760px;
+  max-height: 88vh;
+  border-radius: 34px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 34%),
+    #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 35px 100px rgba(15, 23, 42, 0.28);
+}
+
+.manager-side {
+  background: linear-gradient(180deg, #f8fbff, #eef4ff);
+  border-right: 1px solid #e4ebf7;
+  padding: 32px 20px;
+}
+
+.manager-side h4 {
+  color: #64748b;
+  letter-spacing: 2px;
+  font-size: 12px;
+  margin-bottom: 22px;
+}
+
+.manager-side button {
+  height: 54px;
+  border-radius: 18px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #061237;
+  transition: 0.25s ease;
+}
+
+.manager-side button span {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #eef4ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.manager-side button.active {
+  background: linear-gradient(135deg, #2458ff, #b620e0);
+  color: #ffffff;
+  box-shadow: 0 16px 32px rgba(79, 70, 229, 0.28);
+  transform: translateX(6px);
+}
+
+.manager-side button.active span {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.manager-tip {
+  margin-top: 30px;
+  border-radius: 22px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #dfe8ff;
+  box-shadow: 0 14px 36px rgba(30, 64, 175, 0.08);
+}
+
+.manager-main {
+  padding: 38px 42px;
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.9), #ffffff);
+}
+
+.manager-head {
+  margin-bottom: 28px;
+}
+
+.manager-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #2458ff, #b620e0);
+  box-shadow: 0 18px 35px rgba(79, 70, 229, 0.28);
+  font-size: 30px;
+}
+
+.manager-head h2 {
+  font-size: 32px;
+  color: #071534;
+  margin: 0;
+}
+
+.manager-head p {
+  font-size: 16px;
+  color: #64748b;
+}
+
+.manager-list,
+.manager-add-box {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #dfe8ff;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
+}
+
+.manager-row,
+.manager-add-grid,
+.manager-employment-card {
+  border-radius: 20px;
+}
+
+.manager-row input,
+.manager-add-grid input,
+.manager-employment-grid input,
+.manager-small-textarea,
+.manager-textarea,
+.manager-row select,
+.manager-add-grid select {
+  height: 54px;
+  border-radius: 16px;
+  border: 1px solid #dbe7ff;
+  background: #f9fbff;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 0 16px;
+}
+
+.manager-small-textarea,
+.manager-textarea {
+  height: auto;
+  padding: 16px;
+}
+
+.manager-row input:focus,
+.manager-add-grid input:focus,
+.manager-employment-grid input:focus,
+.manager-textarea:focus,
+.manager-small-textarea:focus {
+  outline: none;
+  border-color: #2458ff;
+  box-shadow: 0 0 0 4px rgba(36, 88, 255, 0.12);
+  background: #ffffff;
+}
+
+.manager-add-box {
+  padding: 24px;
+  margin-top: 22px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.manager-add-box h3 {
+  color: #071534;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.manager-add-box button,
+.manager-bottom button:not(.ghost-btn) {
+  height: 50px;
+  border: none;
+  border-radius: 16px;
+  padding: 0 26px;
+  background: linear-gradient(135deg, #2458ff, #b620e0);
+  color: white;
+  font-size: 15px;
+  font-weight: 900;
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.25);
+}
+
+.manager-add-box button:hover,
+.manager-bottom button:not(.ghost-btn):hover {
+  transform: translateY(-2px);
+}
+
+.delete-btn {
+  border-radius: 16px !important;
+  background: #fff1f2 !important;
+  color: #e11d48 !important;
+  border: 1px solid #fecdd3 !important;
+}
+
+.manager-bottom {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid #e5ebf5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.manager-note {
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f3e8ff, #eef4ff);
+  color: #4c1d95;
+  padding: 18px 22px;
+  font-weight: 800;
+}
+
+.ghost-btn {
+  height: 50px;
+  border-radius: 16px;
+  background: #edf3ff;
+  color: #075cff;
+  font-weight: 900;
+}
+
+.cp-manager-card .close {
+  top: 28px;
+  right: 28px;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: #edf3ff;
+  color: #075cff;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .cp-manager-card {
+    grid-template-columns: 1fr;
+    max-height: 92vh;
+  }
+
+  .manager-side {
+    display: none;
+  }
+
+  .manager-main {
+    padding: 26px;
+  }
+
+  .manager-bottom {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+}/* =========================================================
+   PROFILE CARD ACTION ROWS
+   Resume + Self Intro + Project Video
+========================================================= */
+
+.cp-action-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 46px minmax(90px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+
+  padding: 16px 0;
+
+  border-bottom: 1px solid #e5ebf5;
+}
+
+.cp-action-row:last-child {
+  border-bottom: none;
+}
+
+
+/* =========================================================
+   LEFT ICON / PLAY BUTTON
+========================================================= */
+
+.cp-action-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 14px;
+
+  background: #edf3ff;
+  color: #075cff;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 17px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow: none;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.cp-action-icon:hover {
+  background: #dfe9ff;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   FILE / VIDEO INFORMATION
+========================================================= */
+
+.cp-action-info {
+  min-width: 0;
+}
+
+.cp-action-info b {
+  display: block;
+
+  margin: 0 0 4px;
+
+  color: #071534;
+
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.cp-action-info p {
+  margin: 0;
+
+  color: #52617a;
+
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   RIGHT ACTION BUTTON CONTAINER
+========================================================= */
+
+.cp-right-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   COMPACT PREMIUM PILL ACTION BUTTONS
+========================================================= */
+
+.cp-right-actions button {
+  width: auto;
+  min-width: unset;
+  max-width: none;
+
+  height: 36px;
+
+  margin: 0;
+  padding: 0 14px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #edf3ff;
+  color: #075cff;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+
+  cursor: pointer;
+  white-space: nowrap;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  box-shadow: none;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.cp-right-actions button:hover {
+  background: #dfe9ff;
+  color: #075cff;
+
+  transform: translateY(-1px);
+
+  box-shadow: none;
+}
+
+
+/* =========================================================
+   REVIEW BUTTON
+========================================================= */
+
+.cp-right-actions .cp-review-btn {
+  width: auto;
+  min-width: unset;
+
+  background: #edf3ff;
+  color: #075cff;
+
+  border: none;
+}
+
+.cp-right-actions .cp-review-btn:hover {
+  background: #dfe9ff;
+  color: #075cff;
+}
+
+
+/* =========================================================
+   DELETE BUTTON
+========================================================= */
+
+.cp-right-actions .cp-delete-btn {
+  width: auto;
+  min-width: unset;
+
+  background: #edf3ff;
+  color: #075cff;
+
+  border: none;
+}
+
+.cp-right-actions .cp-delete-btn:hover {
+  background: #ffecef;
+  color: #dc2626;
+}
+
+
+/* =========================================================
+   UPLOAD BUTTON WHEN FILE IS MISSING
+========================================================= */
+
+.cp-right-actions .cp-upload-btn {
+  width: auto;
+  min-width: unset;
+
+  background: #edf3ff;
+  color: #075cff;
+}
+
+.cp-right-actions .cp-upload-btn:hover {
+  background: #dfe9ff;
+}
+
+
+/* =========================================================
+   RESUME ACTION BUTTONS
+========================================================= */
+
+.cp-right-actions .cp-open-btn {
+  width: auto;
+  min-width: unset;
+
+  background: #edf3ff;
+  color: #075cff;
+}
+
+.cp-right-actions .cp-open-btn:hover {
+  background: #dfe9ff;
+}
+
+
+/* =========================================================
+   SELF INTRO & VIDEO CARD
+========================================================= */
+
+.cp-video-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cp-video-card .cp-action-row {
+  grid-template-columns: 46px minmax(90px, 1fr) auto;
+}
+
+
+/* =========================================================
+   IMPORTANT OVERRIDES
+   Prevent older button CSS from changing pill buttons
+========================================================= */
+
+.cp-card .cp-right-actions button,
+.cp-card .cp-right-actions .cp-review-btn,
+.cp-card .cp-right-actions .cp-delete-btn,
+.cp-card .cp-right-actions .cp-upload-btn,
+.cp-card .cp-right-actions .cp-open-btn {
+  width: auto !important;
+  min-width: unset !important;
+
+  height: 36px !important;
+
+  margin: 0 !important;
+  padding: 0 14px !important;
+
+  border: none !important;
+  border-radius: 12px !important;
+
+  background: #edf3ff !important;
+  color: #075cff !important;
+
+  font-size: 13px !important;
+  font-weight: 800 !important;
+
+  box-shadow: none !important;
+}
+
+
+/* DELETE HOVER MUST COME AFTER OVERRIDE */
+
+.cp-card .cp-right-actions .cp-delete-btn:hover {
+  background: #ffecef !important;
+  color: #dc2626 !important;
+}
+
+
+/* NORMAL BUTTON HOVER */
+
+.cp-card .cp-right-actions .cp-review-btn:hover,
+.cp-card .cp-right-actions .cp-upload-btn:hover,
+.cp-card .cp-right-actions .cp-open-btn:hover {
+  background: #dfe9ff !important;
+  color: #075cff !important;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1450px) {
+  .cp-action-row,
+  .cp-video-card .cp-action-row {
+    grid-template-columns: 44px minmax(75px, 1fr) auto;
+
+    gap: 8px;
+  }
+
+  .cp-action-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .cp-card .cp-right-actions button {
+    height: 34px !important;
+
+    padding: 0 10px !important;
+
+    font-size: 12px !important;
+  }
+
+  .cp-right-actions {
+    gap: 6px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+  .cp-action-row,
+  .cp-video-card .cp-action-row {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .cp-right-actions {
+    grid-column: 1 / -1;
+
+    width: 100%;
+
+    padding-left: 58px;
+
+    justify-content: flex-start;
+
+    flex-wrap: wrap;
+  }
+}/* =========================================================
+   CANDIDATE PROFILE - COMPACT PREMIUM CARD ACTIONS
+   Paste this at bottom of CandidateProfilePage.css
+========================================================= */
+
+.cp-action-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 46px minmax(90px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #e5ebf5;
+}
+
+.cp-action-row:last-child {
+  border-bottom: none;
+}
+
+.cp-action-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: #edf3ff;
+  color: #075cff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.cp-action-icon:hover {
+  background: #dfe9ff;
+  transform: translateY(-1px);
+}
+
+.cp-action-info {
+  min-width: 0;
+}
+
+.cp-action-info b {
+  display: block;
+  margin: 0 0 4px;
+  color: #071534;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.cp-action-info p {
+  margin: 0;
+  color: #52617a;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.cp-right-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.cp-right-actions button,
+.cp-card .cp-right-actions button,
+.cp-card .cp-right-actions .cp-review-btn,
+.cp-card .cp-right-actions .cp-delete-btn,
+.cp-card .cp-right-actions .cp-upload-btn,
+.cp-card .cp-right-actions .cp-open-btn {
+  width: auto !important;
+  min-width: unset !important;
+  max-width: none !important;
+  height: 36px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: none !important;
+  border-radius: 12px !important;
+  background: #edf3ff !important;
+  color: #075cff !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  box-shadow: none !important;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease !important;
+}
+
+.cp-right-actions button:hover,
+.cp-card .cp-right-actions .cp-review-btn:hover,
+.cp-card .cp-right-actions .cp-upload-btn:hover,
+.cp-card .cp-right-actions .cp-open-btn:hover {
+  background: #dfe9ff !important;
+  color: #075cff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: none !important;
+}
+
+.cp-card .cp-right-actions .cp-delete-btn:hover {
+  background: #ffecef !important;
+  color: #dc2626 !important;
+}
+
+.cp-video-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cp-video-card .cp-action-row {
+  grid-template-columns: 46px minmax(90px, 1fr) auto;
+}
+
+@media (max-width: 1450px) {
+  .cp-action-row,
+  .cp-video-card .cp-action-row {
+    grid-template-columns: 44px minmax(75px, 1fr) auto;
+    gap: 8px;
+  }
+
+  .cp-action-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .cp-card .cp-right-actions button {
+    height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+  }
+
+  .cp-right-actions {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 700px) {
+  .cp-action-row,
+  .cp-video-card .cp-action-row {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .cp-right-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding-left: 58px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================================================
+   PREMIUM PROFILE MANAGER MODAL
+   This CSS belongs only in CandidateProfilePage.css
+========================================================= */
+
+.cp-manager-modal {
+  backdrop-filter: blur(14px);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.cp-manager-card {
+  width: min(1180px, 94vw);
+  min-height: 760px;
+  max-height: 88vh;
+  border-radius: 34px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 34%),
+    #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 35px 100px rgba(15, 23, 42, 0.28);
+}
+
+.manager-side {
+  background: linear-gradient(180deg, #f8fbff, #eef4ff);
+  border-right: 1px solid #e4ebf7;
+  padding: 32px 20px;
+}
+
+.manager-side h4 {
+  color: #64748b;
+  letter-spacing: 2px;
+  font-size: 12px;
+  margin-bottom: 22px;
+}
+
+.manager-side button {
+  height: 54px;
+  border-radius: 18px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #061237;
+  transition: 0.25s ease;
+}
+
+.manager-side button span {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #eef4ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.manager-side button.active {
+  background: linear-gradient(135deg, #2458ff, #b620e0);
+  color: #ffffff;
+  box-shadow: 0 16px 32px rgba(79, 70, 229, 0.28);
+  transform: translateX(6px);
+}
+
+.manager-side button.active span {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.manager-tip {
+  margin-top: 30px;
+  border-radius: 22px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #dfe8ff;
+  box-shadow: 0 14px 36px rgba(30, 64, 175, 0.08);
+}
+
+.manager-main {
+  padding: 38px 42px;
+  background: linear-gradient(180deg, rgba(248, 251, 255, 0.9), #ffffff);
+}
+
+.manager-head {
+  margin-bottom: 28px;
+}
+
+.manager-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #2458ff, #b620e0);
+  box-shadow: 0 18px 35px rgba(79, 70, 229, 0.28);
+  font-size: 30px;
+}
+
+.manager-head h2 {
+  font-size: 32px;
+  color: #071534;
+  margin: 0;
+}
+
+.manager-head p {
+  font-size: 16px;
+  color: #64748b;
+}
+
+.manager-list,
+.manager-add-box {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #dfe8ff;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
+}
+
+.manager-row,
+.manager-add-grid,
+.manager-employment-card {
+  border-radius: 20px;
+}
+
+.manager-row input,
+.manager-add-grid input,
+.manager-employment-grid input,
+.manager-small-textarea,
+.manager-textarea,
+.manager-row select,
+.manager-add-grid select {
+  height: 54px;
+  border-radius: 16px;
+  border: 1px solid #dbe7ff;
+  background: #f9fbff;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 0 16px;
+}
+
+.manager-small-textarea,
+.manager-textarea {
+  height: auto;
+  padding: 16px;
+}
+
+.manager-row input:focus,
+.manager-add-grid input:focus,
+.manager-employment-grid input:focus,
+.manager-textarea:focus,
+.manager-small-textarea:focus {
+  outline: none;
+  border-color: #2458ff;
+  box-shadow: 0 0 0 4px rgba(36, 88, 255, 0.12);
+  background: #ffffff;
+}
+
+.manager-add-box {
+  padding: 24px;
+  margin-top: 22px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.manager-add-box h3 {
+  color: #071534;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.manager-add-box button,
+.manager-bottom button:not(.ghost-btn) {
+  height: 50px;
+  border: none;
+  border-radius: 16px;
+  padding: 0 26px;
+  background: linear-gradient(135deg, #2458ff, #b620e0);
+  color: white;
+  font-size: 15px;
+  font-weight: 900;
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.25);
+}
+
+.manager-add-box button:hover,
+.manager-bottom button:not(.ghost-btn):hover {
+  transform: translateY(-2px);
+}
+
+.delete-btn {
+  border-radius: 16px !important;
+  background: #fff1f2 !important;
+  color: #e11d48 !important;
+  border: 1px solid #fecdd3 !important;
+}
+
+.manager-bottom {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid #e5ebf5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.manager-note {
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f3e8ff, #eef4ff);
+  color: #4c1d95;
+  padding: 18px 22px;
+  font-weight: 800;
+}
+
+.ghost-btn {
+  height: 50px;
+  border-radius: 16px;
+  background: #edf3ff;
+  color: #075cff;
+  font-weight: 900;
+}
+
+.cp-manager-card .close {
+  top: 28px;
+  right: 28px;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: #edf3ff;
+  color: #075cff;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .cp-manager-card {
+    grid-template-columns: 1fr;
+    max-height: 92vh;
+  }
+
+  .manager-side {
+    display: none;
+  }
+
+  .manager-main {
+    padding: 26px;
+  }
+
+  .manager-bottom {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+}
+/* Premium SaaS Profile Edit Page */
+
+.profile-edit-overlay {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(37, 99, 235, 0.25), transparent 32%),
+    radial-gradient(circle at 90% 20%, rgba(147, 51, 234, 0.22), transparent 30%),
+    linear-gradient(135deg, #0f1f3d, #1e293b);
+  padding: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.profile-edit-modal {
+  width: min(1380px, 96vw);
+  height: calc(100vh - 90px);
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  overflow: hidden;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 40px 90px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px);
+}
+
+/* Left Menu */
+
+.profile-edit-sidebar {
+  padding: 34px 24px;
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.96), rgba(235, 243, 255, 0.92));
+  border-right: 1px solid #dbe7ff;
+  overflow-y: auto;
+}
+
+.profile-edit-sidebar h4,
+.edit-sections-title {
+  margin: 0 0 24px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.profile-edit-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-edit-menu button,
+.edit-section-btn {
+  width: 100%;
+  min-height: 58px;
+  border: 0;
+  cursor: pointer;
+  border-radius: 18px;
+  background: transparent;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: #0f1f3d;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: left;
+  transition: 0.25s ease;
+}
+
+.profile-edit-menu button span,
+.edit-section-btn span {
+  width: 42px;
+  height: 42px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  background: #eef4ff;
+  color: #2563eb;
+  box-shadow: inset 0 0 0 1px #dce7ff;
+}
+
+.profile-edit-menu button:hover,
+.edit-section-btn:hover {
+  background: #ffffff;
+  transform: translateX(4px);
+  box-shadow: 0 14px 34px rgba(37, 99, 235, 0.12);
+}
+
+.profile-edit-menu button.active,
+.edit-section-btn.active {
+  background: linear-gradient(135deg, #2563eb, #b423e8);
+  color: #ffffff;
+  box-shadow: 0 20px 44px rgba(79, 70, 229, 0.32);
+}
+
+.profile-edit-menu button.active span,
+.edit-section-btn.active span {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+/* Help Box */
+
+.profile-help-card {
+  margin-top: 34px;
+  padding: 22px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #dbe7ff;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+}
+
+.profile-help-card h4 {
+  margin: 0 0 12px;
+  color: #2563eb;
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: 15px;
+}
+
+.profile-help-card p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+/* Main Content */
+
+.profile-edit-content {
+  position: relative;
+  padding: 44px 54px;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 34%),
+    linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.profile-edit-close {
+  position: absolute;
+  top: 34px;
+  right: 34px;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: #eef4ff;
+  color: #2563eb;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.profile-edit-close:hover {
+  background: #2563eb;
+  color: #ffffff;
+  transform: rotate(90deg);
+}
+
+/* Header */
+
+.profile-edit-header {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 38px;
+}
+
+.profile-edit-icon {
+  width: 86px;
+  height: 86px;
+  border-radius: 26px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #2563eb, #b423e8);
+  color: white;
+  font-size: 34px;
+  box-shadow: 0 22px 50px rgba(79, 70, 229, 0.35);
+}
+
+.profile-edit-header h1 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.1;
+  color: #081733;
+  letter-spacing: -0.04em;
+}
+
+.profile-edit-header p {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 16px;
+}
+
+/* Form */
+
+.profile-edit-form {
+  max-width: 940px;
+  display: grid;
+  gap: 22px;
+}
+
+.form-group {
+  display: grid;
+  gap: 9px;
+}
+
+.form-group label {
+  color: #334155;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid #d7e4ff;
+  outline: 0;
+  border-radius: 17px;
+  background: #ffffff;
+  padding: 0 18px;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  transition: 0.2s ease;
+}
+
+.form-group textarea {
+  min-height: 130px;
+  padding: 16px 18px;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #2563eb;
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.12),
+    0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+/* Bottom Action Area */
+
+.profile-edit-bottom {
+  margin-top: 34px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-tip-card {
+  padding: 20px 24px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #f3e8ff, #eef4ff);
+  color: #581c87;
+  font-weight: 900;
+  line-height: 1.45;
+}
+
+.profile-edit-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.profile-edit-actions button {
+  min-width: 130px;
+  height: 58px;
+  border: 0;
+  border-radius: 17px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 900;
+  transition: 0.22s ease;
+}
+
+.cancel-btn {
+  background: #eef4ff;
+  color: #2563eb;
+  border: 1px solid #d7e4ff !important;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #2563eb, #b423e8);
+  color: #ffffff;
+  box-shadow: 0 22px 44px rgba(79, 70, 229, 0.28);
+}
+
+.profile-edit-actions button:hover {
+  transform: translateY(-2px);
+}
+
+/* Hide ugly inner scrollbar look */
+
+.profile-edit-content::-webkit-scrollbar,
+.profile-edit-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.profile-edit-content::-webkit-scrollbar-thumb,
+.profile-edit-sidebar::-webkit-scrollbar-thumb {
+  background: #c7d7f7;
+  border-radius: 20px;
+}
+
+.profile-edit-content::-webkit-scrollbar-track,
+.profile-edit-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Mobile */
+
+@media (max-width: 950px) {
+  .profile-edit-overlay {
+    padding: 18px;
+  }
+
+  .profile-edit-modal {
+    height: auto;
+    min-height: calc(100vh - 36px);
+    grid-template-columns: 1fr;
+  }
+
+  .profile-edit-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #dbe7ff;
+  }
+
+  .profile-edit-content {
+    padding: 32px 22px;
+  }
+
+  .profile-edit-header h1 {
+    font-size: 30px;
+  }
+
+  .profile-edit-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-edit-actions {
+    flex-direction: column;
+  }
 }
