@@ -1,27 +1,34 @@
-const admin = require("firebase-admin");
+// const admin = require("firebase-admin");
 
-try {
-  if (!admin.apps.length) {
-    const firebaseJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+// let firebaseAdminConfigured = false;
 
-    if (!firebaseJson) {
-      console.warn("Firebase Admin skipped: FIREBASE_SERVICE_ACCOUNT_JSON missing");
-    } else {
-      const serviceAccount = JSON.parse(firebaseJson);
+// try {
+//   const projectId = process.env.FIREBASE_PROJECT_ID;
+//   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+//   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
-      if (serviceAccount.private_key) {
-        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
-      }
+//   if (!projectId || !clientEmail || !privateKey) {
+//     console.warn("⚠️ Firebase Admin environment variables are missing");
+//   } else {
+//     if (!admin.apps.length) {
+//       admin.initializeApp({
+//         credential: admin.credential.cert({
+//           projectId,
+//           clientEmail,
+//           privateKey,
+//         }),
+//       });
+//     }
 
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
+//     firebaseAdminConfigured = true;
 
-      console.log("Firebase Admin initialized successfully");
-    }
-  }
-} catch (error) {
-  console.error("Firebase Admin Error:", error.message);
-}
+//     console.log("✅ Firebase Admin configured successfully");
+//   }
+// } catch (error) {
+//   console.error("❌ Firebase Admin initialization failed:", error.message);
+// }
 
-module.exports = admin;
+// module.exports = {
+//   admin,
+//   firebaseAdminConfigured,
+// };

@@ -39,198 +39,161 @@ import "swiper/css/navigation";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-
 function LandingPage() {
-  return (
-      <div className="np-home-page">
-      <nav className="np-home-nav">
-        <a href="/" className="np-home-brand">
-          <div className="np-logo-icon">NP</div>
+  const stayHome = (e) => {
+    e.preventDefault();
+    window.location.href = "/";
+  };
 
-          <div className="np-brand-text">
-            <h2>NOPROMPTJOBS.COM</h2>
-            <p>SMART HIRING. REAL CAREERS.</p>
-          </div>
+  return (
+    <div className="npj-premium-home">
+      <nav className="npj-home-nav">
+        <a href="/" className="npj-home-logo">
+          <img src="/logo.png" alt="NoPromptJobs" />
         </a>
-        <div className="np-home-links">
-          <a href="/jobs">Jobs</a>
-          <a href="/companies">Companies</a>
-          <a href="/services">Services</a>
+
+        <div className="npj-home-links">
+          <a href="/" onClick={stayHome}>Jobs</a>
+          <a href="/" onClick={stayHome}>Companies</a>
+          <a href="/" onClick={stayHome}>How It Works</a>
+
           <a href="/candidate-login">Candidate Login</a>
-          <a href="/recruiter-login" className="np-employer-btn">
+
+          <a href="/recruiter-login" className="employer-btn">
             For Employers
           </a>
         </div>
       </nav>
 
-      <section className="np-hero">
-        <div className="np-hero-left">
-          <span className="np-hero-badge">
-            🛡 Trusted Hiring Platform
-          </span>
+      <section className="npj-home-hero">
+        <div className="npj-hero-left">
+          <span className="launch-badge">🚀 New Platform Launching Soon</span>
 
           <h1>
-            Hire Genuinely.
+            The Future of <b>Hiring.</b>
             <br />
-            Build Careers.
+            The Future of <b>Careers.</b>
           </h1>
 
           <p>
-            NoProxiesJobs.com helps companies hire verified candidates with
-            identity proof, self-intro videos, project proof and smart match
-            signals.
+            NoPromptJobs.com is a verification-first hiring platform that helps
+            companies discover genuine talent and empowers candidates to showcase
+            real skills, projects and potential.
           </p>
 
-          <div className="np-hero-actions">
-            <button onClick={() => (window.location.href = "/candidate-email-verify")}>
-              Get Started Now →
+          <div className="npj-hero-actions">
+            <button
+              type="button"
+              onClick={() => (window.location.href = "/candidate-login")}
+            >
+              Join Early Access →
             </button>
 
-            <button
-              className="np-watch-btn"
-              onClick={() => alert("Demo video coming soon")}
-            >
-              ▶ Watch Demo
+            <button type="button" className="outline" onClick={() => window.location.href = "/"}>
+              ▶ Explore Platform
             </button>
           </div>
 
-          <div className="np-company-strip">
-            <span>Trusted by growing hiring teams</span>
-
+          <div className="startup-strip">
+            <p>Built for modern hiring teams and ambitious candidates</p>
             <div>
-              <b>TCS</b>
-              <b>Infosys</b>
-              <b>Wipro</b>
-              <b>Capgemini</b>
-              <b>HCL</b>
+              <span>🚀 Startups</span>
+              <span>👥 Growing Teams</span>
+              <span>🏢 Enterprises</span>
+              <span>👤 Candidates</span>
             </div>
           </div>
         </div>
 
-        <div className="np-hero-right">
-          <div className="np-trust-card">
-            <div className="np-card-head">
-              <h3>Candidate Trust Score</h3>
-              <span>Excellent</span>
-            </div>
+        <div className="npj-hero-right">
+          <div className="trust-preview-card">
+            <small>PRODUCT PREVIEW</small>
+            <h3>Sample Verified Profile</h3>
 
-            <div className="np-score-wrap">
-              <div className="np-score-circle">
+            <div className="trust-preview-body">
+              <div className="trust-circle">
                 <h2>96%</h2>
                 <p>Trust Score</p>
+                <span>Excellent</span>
               </div>
 
-              <div className="np-check-list">
+              <div className="trust-checks">
                 <p>✅ PAN Verified</p>
                 <p>✅ Aadhaar Last 4 Verified</p>
-                <p>✅ Self Intro Uploaded</p>
+                <p>✅ Self Intro Video</p>
                 <p>✅ Project Proof Added</p>
                 <p>✅ Resume Quality 91%</p>
               </div>
             </div>
 
-            <div className="np-confidence">
-              <span>Hiring Confidence</span>
-              <b>High ↗</b>
+            <div className="trust-bottom">
+              🛡 Verification-First. Trust Always.
             </div>
           </div>
 
-          <div className="np-side-card">
-            <h3>Recruiter Activity</h3>
-
-            <div>
-              <h2>182</h2>
-              <p>Profiles Reviewed</p>
-            </div>
-
-            <div>
-              <h2>43</h2>
-              <p>Shortlisted</p>
-            </div>
+          <div className="mini-card">
+            <h3>Verified Talent Discovery</h3>
+            <p>Identity signals</p>
+            <p>Project proof</p>
+            <p>Video profiles</p>
           </div>
 
-          <div className="np-side-card">
-            <h3>Top Skills in Demand</h3>
-
-            <p>React.js <span>86%</span></p>
-            <div className="np-mini-bar"><b style={{ width: "86%" }}></b></div>
-
-            <p>Node.js <span>78%</span></p>
-            <div className="np-mini-bar"><b style={{ width: "78%" }}></b></div>
-
-            <p>Python <span>74%</span></p>
-            <div className="np-mini-bar"><b style={{ width: "74%" }}></b></div>
+          <div className="mini-card">
+            <h3>Platform Insights Preview</h3>
+            <p>React.js <b>86%</b></p>
+            <p>Node.js <b>78%</b></p>
+            <p>Python <b>74%</b></p>
           </div>
         </div>
       </section>
 
-      <section className="np-feature-strip">
-        <div>
-          <span>🎥</span>
-          <h3>Video Introductions</h3>
-          <p>Watch candidate self-intro before shortlisting.</p>
-        </div>
-
-        <div>
-          <span>📁</span>
-          <h3>Project Proof System</h3>
-          <p>Validate real-world work through project videos.</p>
-        </div>
-
+      <section className="npj-value-row">
         <div>
           <span>🛡</span>
-          <h3>Identity Verification</h3>
-          <p>PAN and Aadhaar last 4 verification for trust.</p>
+          <h3>Verification-First</h3>
+          <p>Real identity. Real profiles. Real opportunities.</p>
         </div>
 
         <div>
-          <span>✨</span>
-          <h3>Match Score</h3>
-          <p>No-prompt powered matching for better hiring decisions.</p>
+          <span>🔒</span>
+          <h3>Privacy-Focused</h3>
+          <p>Your data stays safe, secure and private.</p>
+        </div>
+
+        <div>
+          <span>🧠</span>
+          <h3>AI-Powered Tools</h3>
+          <p>Smart matches, resume tips and interview prep.</p>
+        </div>
+
+        <div>
+          <span>🤝</span>
+          <h3>Human-Centered</h3>
+          <p>Technology connects people, not replaces them.</p>
+        </div>
+
+        <div>
+          <span>🚀</span>
+          <h3>Early Access</h3>
+          <p>We are improving the platform every day.</p>
         </div>
       </section>
 
-      <section className="np-role-section">
-        <div className="np-role-card">
-          <div className="np-role-icon candidate">👤</div>
-
-          <div>
-            <h2>I am a Candidate</h2>
-            <p>
-              Create your verified profile, showcase skills, upload videos and
-              get discovered by genuine recruiters.
-            </p>
-
-            <div className="np-role-actions">
-              <a href="/candidate-login">Candidate Login</a>
-              <a href="/candidate-email-verify">Create Candidate Account</a>
-            </div>
-          </div>
+      <section className="npj-launch-cta">
+        <div>
+          <h2>We’re Launching Soon!</h2>
+          <p>Be the first to experience a smarter way to hire and get hired.</p>
         </div>
 
-        <div className="np-role-card">
-          <div className="np-role-icon recruiter">💼</div>
-
-          <div>
-            <h2>I am a Recruiter</h2>
-            <p>
-              Post jobs, find verified talent, shortlist smartly and hire with
-              confidence.
-            </p>
-
-            <div className="np-role-actions recruiter-actions">
-              <a href="/recruiter-login">Recruiter Login</a>
-              <a href="/recruiter-register">Create Recruiter Account</a>
-            </div>
-          </div>
+        <div className="email-box">
+          <input placeholder="Enter your email address" />
+          <button
+            type="button"
+            onClick={() => (window.location.href = "/candidate-login")}
+          >
+            Join Early Access →
+          </button>
         </div>
-      </section>
-
-      <section className="np-bottom-trust">
-        <span>✅ 100% Verified Profiles</span>
-        <span>🔒 Secure & Private</span>
-        <span>⚡ Smart Hiring Tools</span>
-        <span>🎧 24/7 Human Support</span>
       </section>
     </div>
   );
@@ -307,13 +270,9 @@ function CandidateEmailVerify() {
       const result = await signInWithPopup(auth, googleProvider);
       const token = await result.user.getIdToken();
 
-      const response = await axios.post(
-        `${API_URL}/api/candidates/firebase-login`,
-        {
-          token,
-          provider: "google",
-        }
-      );
+     const handleGoogleLogin = () => {
+  window.location.href = `${API_URL}/api/auth/google`;
+};
 
       if (!response.data?.success) {
         alert(response.data?.message || "Google login failed");

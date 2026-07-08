@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import axios from "axios";
-
 import { FcGoogle } from "react-icons/fc";
 
 import {
@@ -17,9 +16,6 @@ import {
   FaEye,
   FaEyeSlash,
 } from "react-icons/fa";
-
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../firebase";
 
 import "./CandidateLogin.css";
 
@@ -85,52 +81,9 @@ export default function CandidateLogin() {
     }
   };
 
-  const googleLogin = async () => {
+  const googleLogin = () => {
     setErrorMsg("");
-
-    try {
-      setLoading(true);
-
-      const result = await signInWithPopup(auth, googleProvider);
-      const token = await result.user.getIdToken();
-
-      const response = await axios.post(
-        `${API_URL}/api/candidates/firebase-login`,
-        {
-          token,
-          provider: "google",
-        }
-      );
-
-      const candidate = response.data.candidate || response.data.user;
-
-      if (!candidate) {
-        throw new Error("Candidate information was not returned");
-      }
-
-      const candidateId = candidate._id || candidate.id || candidate.candidateId;
-
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(candidate));
-
-      if (response.data?.isNewCandidate || !response.data?.hasPassword) {
-        localStorage.setItem("candidateSetPasswordId", candidateId || "");
-        localStorage.setItem("candidateSetPasswordEmail", candidate.email || "");
-        window.location.href = "/candidate-set-password?mode=google";
-      } else {
-        window.location.href = candidateId
-          ? `/dashboard/${candidateId}`
-          : "/dashboard";
-      }
-    } catch (error) {
-      setErrorMsg(
-        error.response?.data?.message ||
-          error.message ||
-          "Google login failed"
-      );
-    } finally {
-      setLoading(false);
-    }
+    window.location.href = `${API_URL}/api/auth/google`;
   };
 
   const handleKeyDown = (event) => {

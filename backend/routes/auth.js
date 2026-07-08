@@ -1,16 +1,108 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 const User = require("../models/user");
 const Candidate = require("../models/Candidate");
 
 const router = express.Router();
-
 const otpStore = new Map();
 
 const generateOtp = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
+
+/* ================= GOOGLE LOGIN WITHOUT FIREBASE ================= */
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/api/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        const email = profile.emails?.[0]?.value?.toLowerCase();
+
+        if (!email) {
+          return done(new Error("Google email not found"), null);
+        }
+
+        let candidate = await Candidate.findOne({ email });
+
+        if (!candidate) {
+          candidate = await Candidate.create({
+            name: profile.displayName || "Candidate",
+            email,
+            googleId: profile.id,
+            profileImageUrl: profile.photos?.[0]?.value || "",
+            authProvider: "google",
+            emailVerified: true,
+            otpVerified: true,
+            profileCompleted: false,
+            skills: [],
+            employment: [],
+            education: [],
+            projects: [],
+            status: "Applied",
+            shortlisted: false,
+            applied: false,
+          });
+        } else {
+          candidate.googleId = candidate.googleId || profile.id;
+          candidate.emailVerified = true;
+          candidate.otpVerified = true;
+
+          if (!candidate.profileImageUrl) {
+            candidate.profileImageUrl = profile.photos?.[0]?.value || "";
+          }
+
+          await candidate.save();
+        }
+
+        return done(null, candidate);
+      } catch (error) {
+        return done(error, null);
+      }
+    }
+  )
+);
+
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: `${process.env.FRONTEND_URL}/candidate-login?error=google-login-failed`,
+  }),
+  (req, res) => {
+    const token = jwt.sign(
+      {
+        id: req.user._id,
+        role: "candidate",
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    res.redirect(
+      `${process.env.FRONTEND_URL}/google-login-success?token=${token}&candidateId=${req.user._id}`
+    );
+  }
+);
+
+/* ================= USER REGISTER ================= */
 
 router.post("/register", async (req, res) => {
   try {
@@ -58,6 +150,8 @@ router.post("/register", async (req, res) => {
   }
 });
 
+/* ================= USER LOGIN ================= */
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -72,10 +166,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({
@@ -112,7 +203,8 @@ router.post("/login", async (req, res) => {
   }
 });
 
-/* Candidate OTP registration - development mode */
+/* ================= CANDIDATE OTP SEND ================= */
+
 router.post("/candidate-send-otp", async (req, res) => {
   try {
     const { name, email, phone } = req.body;
@@ -134,10 +226,7 @@ router.post("/candidate-send-otp", async (req, res) => {
     const loginKey = cleanEmail || cleanPhone;
 
     const existingCandidate = await Candidate.findOne({
-      $or: [
-        { email: cleanEmail },
-        { phone: cleanPhone },
-      ],
+      $or: [{ email: cleanEmail }, { phone: cleanPhone }],
     });
 
     if (existingCandidate?.otpVerified) {
@@ -170,6 +259,8 @@ router.post("/candidate-send-otp", async (req, res) => {
   }
 });
 
+/* ================= CANDIDATE OTP VERIFY ================= */
+
 router.post("/candidate-verify-otp", async (req, res) => {
   try {
     const { email, phone, otp } = req.body;
@@ -201,10 +292,7 @@ router.post("/candidate-verify-otp", async (req, res) => {
     }
 
     let candidate = await Candidate.findOne({
-      $or: [
-        { email: savedOtp.email },
-        { phone: savedOtp.phone },
-      ],
+      $or: [{ email: savedOtp.email }, { phone: savedOtp.phone }],
     });
 
     if (!candidate) {
@@ -244,6 +332,8 @@ router.post("/candidate-verify-otp", async (req, res) => {
   }
 });
 
+/* ================= CANDIDATE LOGIN ================= */
+
 router.post("/candidate-login", async (req, res) => {
   try {
     const { login } = req.body;
@@ -257,10 +347,7 @@ router.post("/candidate-login", async (req, res) => {
     const cleanLogin = login.toLowerCase();
 
     const candidate = await Candidate.findOne({
-      $or: [
-        { email: cleanLogin },
-        { phone: login },
-      ],
+      $or: [{ email: cleanLogin }, { phone: login }],
     });
 
     if (!candidate) {
