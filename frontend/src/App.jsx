@@ -403,152 +403,148 @@ if (response.data?.isNewCandidate || !response.data?.hasPassword) {
     }
   };
 
-  return (
-    <main className="np-register-page">
-      <section className="np-register-left">
-        <div className="np-register-brand">
-          <img
-            src="/logo.png"
-            alt="NoPromptJobs"
-            className="np-premium-logo"
-          />
-        </div>
+return (
+  <main className="np-register-page">
+    <section className="np-register-left">
+      <div className="np-register-brand">
+        <img src="/logo.png" alt="NoPromptJobs" className="np-premium-logo" />
+      </div>
 
-        <div className="np-register-copy">
-          <span>🛡 Verified Hiring Network</span>
+      <div className="np-dream-badge">✨ Your Dream Job, Without Limits</div>
 
-          <h1>
-            Find the right <b>job opportunity</b>
-          </h1>
+      <div className="np-register-copy">
+        <h1>
+          Find the right <br />
+          opportunity <br />
+          <span>faster ⚡</span>
+        </h1>
 
-          <p>
-            Explore verified jobs from trusted companies and build a career
-            you're proud of.
-          </p>
-        </div>
+        <p>
+          Join a verified network of top companies and skilled professionals.
+          Your dream job is just one step away.
+        </p>
+      </div>
 
- <img
-  className="login-woman-fixed"
-  src="/images/login-woman.png"
-  alt="Candidate working"
-/>
-      </section>
+      <div className="np-feature-card-row">
+        <div><b>🤖</b><h4>AI Matching</h4><p>Smart job recommendations</p></div>
+        <div><b>🛡</b><h4>Verified Jobs</h4><p>Only trusted companies</p></div>
+        <div><b>📄</b><h4>ATS Resume</h4><p>Beat ATS with ease</p></div>
+        <div><b>📈</b><h4>Career Growth</h4><p>Track and improve</p></div>
+      </div>
+    </section>
 
-      <section className="np-register-right">
-        <div className="np-register-card">
-          <span className="np-register-badge">Candidate Onboarding</span>
+    <section className="np-register-right">
+      <div className="np-register-card">
+        <span className="np-register-badge">👤 Candidate Onboarding</span>
 
-          <h1>{otpSent ? "Verify your email" : "Create your account"}</h1>
+        <h1>{otpSent ? "Verify your email" : "Create your account"}</h1>
 
-          <p className="np-register-sub">
-            {otpSent
-              ? `We sent a 6-digit OTP to ${email}`
-              : "Start with Google or email verification to create your profile."}
-          </p>
+        <p className="np-register-sub">
+          {otpSent
+            ? `We sent a 6-digit OTP to ${email}`
+            : "Start with Google or email verification to create your profile."}
+        </p>
 
-          {!otpSent ? (
-            <>
-              <div className="np-login-options">
-                <button
-                  type="button"
-                  className="np-social-btn"
-                  onClick={googleLogin}
+        {!otpSent ? (
+          <>
+            <button
+              type="button"
+              className="np-social-btn"
+              onClick={googleLogin}
+              disabled={loading}
+            >
+              <FcGoogle className="np-real-icon" />
+              <b>{loading ? "Please wait..." : "Continue with Google"}</b>
+              <i>→</i>
+            </button>
+
+            <div className="np-register-divider">
+              <span></span>
+              <p>or continue with email</p>
+              <span></span>
+            </div>
+
+            <label className="np-register-field">
+              Email Address
+              <div>
+                <span>✉</span>
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
                   disabled={loading}
-                >
-                  <FcGoogle className="np-real-icon" />
-                  <b>{loading ? "Please wait..." : "Continue with Google"}</b>
-                  <i>→</i>
-                </button>
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
+            </label>
 
-              <div className="np-register-divider">
-                <span></span>
-                <p>or continue with email</p>
-                <span></span>
+            <label className="np-register-field">
+              Mobile Number (Optional)
+              <div>
+                <span>IN +91</span>
+                <input
+                  type="tel"
+                  placeholder="Enter mobile number"
+                  value={mobile}
+                  disabled={loading}
+                  onChange={(e) => setMobile(e.target.value)}
+                />
               </div>
+            </label>
 
-              <label className="np-register-field">
-                Email Address
-                <div>
-                  <span>✉</span>
-                  <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    disabled={loading}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              </label>
+            <button
+              type="button"
+              className="np-register-primary"
+              onClick={sendOtp}
+              disabled={loading}
+            >
+              {loading ? "Sending OTP..." : "Create Account →"}
+            </button>
 
-              <label className="np-register-field">
-                Mobile Number (Optional)
-                <div>
-                  <span>IN +91</span>
-                  <input
-                    type="tel"
-                    placeholder="Optional mobile number"
-                    value={mobile}
-                    disabled={loading}
-                    onChange={(e) => setMobile(e.target.value)}
-                  />
-                </div>
-              </label>
+            <p className="np-register-terms">
+              By creating an account, you accept our{" "}
+              <a href="/terms">Terms of Service</a> and{" "}
+              <a href="/privacy">Privacy Policy</a>.
+            </p>
+          </>
+        ) : (
+          <>
+            <label className="np-otp-title">Enter OTP</label>
 
-              <button
-                type="button"
-                className="np-register-primary"
-                onClick={sendOtp}
-                disabled={loading}
-              >
-                {loading ? "Sending OTP..." : "Create Account →"}
-              </button>
+            <div className="np-premium-otp">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <input
+                  key={index}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength="1"
+                  value={otp[index] || ""}
+                  disabled={loading}
+                  onChange={(e) =>
+                    handleOtpChange(index, e.target.value, e.target)
+                  }
+                />
+              ))}
+            </div>
 
-              <p className="np-register-terms">
-                By creating an account, you accept our{" "}
-                <a href="/terms">Terms</a> and{" "}
-                <a href="/privacy">Privacy Policy</a>.
-              </p>
-            </>
-          ) : (
-            <>
-              <label className="np-otp-title">Enter OTP</label>
+            <button
+              type="button"
+              className="np-register-primary"
+              onClick={verifyOtp}
+              disabled={loading}
+            >
+              {loading ? "Verifying..." : "Verify & continue →"}
+            </button>
+          </>
+        )}
 
-              <div className="np-premium-otp">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength="1"
-                    value={otp[index] || ""}
-                    disabled={loading}
-                    onChange={(e) =>
-                      handleOtpChange(index, e.target.value, e.target)
-                    }
-                  />
-                ))}
-              </div>
-
-              <button
-                type="button"
-                className="np-register-primary"
-                onClick={verifyOtp}
-                disabled={loading}
-              >
-                {loading ? "Verifying..." : "Verify & continue →"}
-              </button>
-            </>
-          )}
-
-          <p className="np-register-signin">
-            Already have an account? <a href="/candidate-login">Sign in</a>
-          </p>
-        </div>
-      </section>
-    </main>
-  );
-}
+        <p className="np-register-signin">
+          Already have an account? <a href="/candidate-login">Sign in</a>
+        </p>
+      </div>
+    </section>
+  </main>
+);}
 function CandidateSetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
