@@ -1,4 +1,5 @@
 import { calculateProfileStrength } from "./utils/profileStrength";
+import PremiumCareerDashboard from "./pages/PremiumCareerDashboard";
 import HrOfferLetter from "./pages/HrOfferLetter";
 import CandidateLogin from "./pages/CandidateLogin";
 import HrOfferLetterDetails from "./pages/HrOfferLetterDetails";
@@ -1914,22 +1915,146 @@ function JobsPage() {
 }function ServicesPage() {
   const scrollRef = useRef(null);
   const [search, setSearch] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   const goTo = (path) => {
     window.location.href = path;
   };
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-
   const candidateId = user?.candidateId || user?._id || user?.id || "";
 
-  const dashboardPath = candidateId
-    ? `/dashboard/${candidateId}`
-    : "/dashboard";
+  const dashboardPath = candidateId ? `/dashboard/${candidateId}` : "/dashboard";
+  const profilePath = candidateId ? `/profile/${candidateId}` : "/profile";
 
-  const profilePath = candidateId
-    ? `/profile/${candidateId}`
-    : "/profile";
+  const COUPONS = {
+    NPJ100: { code: "NPJ100", label: "₹100 OFF", discount: 100 },
+    PRO200: { code: "PRO200", label: "₹200 OFF", discount: 200 },
+    ULTIMATE500: { code: "ULTIMATE500", label: "₹500 OFF", discount: 500 },
+  };
+
+  const plans = {
+    basic: {
+      name: "Basic",
+      actualPrice: 0,
+      offerPrice: 0,
+      route: "/candidate-email-verify",
+    },
+    pro: {
+      name: "Pro",
+      actualPrice: 1399,
+      offerPrice: 899,
+    },
+    ultimate: {
+      name: "Ultimate",
+      actualPrice: 3499,
+      offerPrice: 1999,
+    },
+  };
+
+  const isPlanActive = (planName) => {
+    const savedPlan =
+      user?.plan ||
+      localStorage.getItem("plan") ||
+      localStorage.getItem("activePlan");
+
+    const status =
+      user?.subscriptionStatus ||
+      localStorage.getItem("subscriptionStatus");
+
+    return (
+      savedPlan?.toLowerCase() === planName.toLowerCase() &&
+      status === "active"
+    );
+  };
+
+  const isUltimateUser = () => isPlanActive("Ultimate");
+
+  const getFinalPrice = (planKey) => {
+    const plan = plans[planKey];
+    if (!plan || plan.offerPrice === 0) return 0;
+
+    const discount = appliedCoupon?.discount || 0;
+    return Math.max(plan.offerPrice - discount, 0);
+  };
+
+  const applyCoupon = () => {
+    const code = couponCode.trim().toUpperCase();
+
+    if (!code) {
+      alert("Please enter coupon code");
+      return;
+    }
+
+    if (!COUPONS[code]) {
+      setAppliedCoupon(null);
+      alert("Invalid coupon code");
+      return;
+    }
+
+    setAppliedCoupon(COUPONS[code]);
+    alert(`${COUPONS[code].label} coupon applied successfully`);
+  };
+
+  const removeCoupon = () => {
+    setCouponCode("");
+    setAppliedCoupon(null);
+  };
+
+  const startPayment = async (planKey) => {
+    const plan = plans[planKey];
+
+    if (!candidateId) {
+      alert("Please login before upgrading your plan");
+      goTo("/candidate-login");
+      return;
+    }
+
+    if (planKey === "ultimate" && isUltimateUser()) {
+      goTo("/ultimate-dashboard");
+      return;
+    }
+
+    try {
+      const finalPrice = getFinalPrice(planKey);
+
+      localStorage.setItem("selectedPlan", plan.name);
+      localStorage.setItem("selectedPlanKey", planKey);
+      localStorage.setItem("selectedPlanPrice", finalPrice);
+      localStorage.setItem("selectedPlanActualPrice", plan.actualPrice);
+      localStorage.setItem("selectedPlanOfferPrice", plan.offerPrice);
+
+      if (appliedCoupon) {
+        localStorage.setItem("appliedCoupon", appliedCoupon.code);
+        localStorage.setItem("couponDiscount", appliedCoupon.discount);
+      } else {
+        localStorage.removeItem("appliedCoupon");
+        localStorage.removeItem("couponDiscount");
+      }
+
+      const response = await axios.post(
+        `${API_URL}/api/payments/create-payment-link`,
+        {
+          amount: finalPrice,
+          planName: plan.name,
+          name: user?.name || user?.fullName || "NoPromptJobs User",
+          email: user?.email || "customer@example.com",
+          contact: user?.mobile || user?.phone || "9999999999",
+        }
+      );
+
+      if (!response.data?.success || !response.data?.paymentLink) {
+        alert(response.data?.message || "Unable to create payment link");
+        return;
+      }
+
+      window.location.href = response.data.paymentLink;
+    } catch (error) {
+      console.log("PAYMENT LINK ERROR:", error);
+      alert(error.response?.data?.message || "Payment link creation failed");
+    }
+  };
 
   const dashboardData = {
     name: user?.name || user?.fullName || "VENKATESHA A",
@@ -1954,41 +2079,13 @@ function JobsPage() {
   ];
 
   const features = [
-    {
-      title: "Skill Intelligence",
-      img: "/images/skill-intelligence.png",
-      route: "/skill-assessment",
-    },
-    {
-      title: "Auto Apply Engine",
-      img: "/images/auto-apply.png",
-      route: "/auto-apply",
-    },
-    {
-      title: "Instant Job Alerts",
-      img: "/images/job-alerts.png",
-      route: "/job-alerts",
-    },
-    {
-      title: "Hidden Opportunities",
-      img: "/images/hidden-opportunities.png",
-      route: "/jobs?type=hidden",
-    },
-    {
-      title: "AI Match Score",
-      img: "/images/match.png",
-      route: "/jobs?sort=match",
-    },
-    {
-      title: "Resume Studio",
-      img: "/images/resume-studio.png",
-      route: "/resume-studio",
-    },
-    {
-      title: "AI Interview Prep",
-      img: "/images/interview.png",
-      route: "/ai-interview-prep",
-    },
+    { title: "Skill Intelligence", img: "/images/skill-intelligence.png", route: "/skill-assessment" },
+    { title: "Auto Apply Engine", img: "/images/auto-apply.png", route: "/auto-apply" },
+    { title: "Instant Job Alerts", img: "/images/job-alerts.png", route: "/job-alerts" },
+    { title: "Hidden Opportunities", img: "/images/hidden-opportunities.png", route: "/jobs?type=hidden" },
+    { title: "AI Match Score", img: "/images/match.png", route: "/jobs?sort=match" },
+    { title: "Resume Studio", img: "/images/resume-studio.png", route: "/resume-studio" },
+    { title: "AI Interview Prep", img: "/images/interview.png", route: "/ai-interview-prep" },
   ];
 
   useEffect(() => {
@@ -2034,11 +2131,7 @@ function JobsPage() {
     if (e.key !== "Enter") return;
 
     const q = search.trim();
-
-    if (!q) {
-      goTo("/jobs");
-      return;
-    }
+    if (!q) return goTo("/jobs");
 
     const lower = q.toLowerCase();
 
@@ -2051,34 +2144,14 @@ function JobsPage() {
       lower.includes("microsoft") ||
       lower.includes("amazon")
     ) {
-      goTo(`/companies?search=${encodeURIComponent(q)}`);
-      return;
+      return goTo(`/companies?search=${encodeURIComponent(q)}`);
     }
 
-    if (lower.includes("resume")) {
-      goTo("/resume-studio");
-      return;
-    }
-
-    if (lower.includes("interview")) {
-      goTo("/ai-interview-prep");
-      return;
-    }
-
-    if (lower.includes("salary")) {
-      goTo("/salary-predictor");
-      return;
-    }
-
-    if (lower.includes("skill")) {
-      goTo("/skill-assessment");
-      return;
-    }
-
-    if (lower.includes("auto apply")) {
-      goTo("/auto-apply");
-      return;
-    }
+    if (lower.includes("resume")) return goTo("/resume-studio");
+    if (lower.includes("interview")) return goTo("/ai-interview-prep");
+    if (lower.includes("salary")) return goTo("/salary-predictor");
+    if (lower.includes("skill")) return goTo("/skill-assessment");
+    if (lower.includes("auto apply")) return goTo("/auto-apply");
 
     goTo(`/jobs?search=${encodeURIComponent(q)}`);
   };
@@ -2135,8 +2208,8 @@ function JobsPage() {
           </p>
 
           <div className="hero-btns">
-            <button onClick={() => goTo("/ultimate-dashboard")}>
-              👑 Ultimate Dashboard
+            <button onClick={() => startPayment("ultimate")}>
+              {isUltimateUser() ? "👑 Ultimate Dashboard" : "🚀 Upgrade to Ultimate"}
             </button>
 
             <button
@@ -2169,9 +2242,7 @@ function JobsPage() {
             <span onClick={() => goTo("/auto-apply")}>Auto Apply</span>
             <span onClick={() => goTo("/job-alerts")}>Alerts</span>
             <span onClick={() => goTo("/resume-studio")}>Resume</span>
-            <span onClick={() => goTo("/ai-interview-prep")}>
-              Interview Prep
-            </span>
+            <span onClick={() => goTo("/ai-interview-prep")}>Interview Prep</span>
           </aside>
 
           <main className="preview-main">
@@ -2250,10 +2321,7 @@ function JobsPage() {
       </section>
 
       <section id="features" className="feature-scroll-area">
-        <button
-          className="feature-arrow left"
-          onClick={() => scrollFeatures("left")}
-        >
+        <button className="feature-arrow left" onClick={() => scrollFeatures("left")}>
           ←
         </button>
 
@@ -2273,10 +2341,7 @@ function JobsPage() {
           ))}
         </div>
 
-        <button
-          className="feature-arrow right"
-          onClick={() => scrollFeatures("right")}
-        >
+        <button className="feature-arrow right" onClick={() => scrollFeatures("right")}>
           →
         </button>
       </section>
@@ -2305,6 +2370,33 @@ function JobsPage() {
         </div>
       </section>
 
+      <section className="coupon-box">
+        <div>
+          <h3>Have a coupon?</h3>
+          <p>Apply coupon code before upgrading your plan.</p>
+        </div>
+
+        <div className="coupon-actions">
+          <input
+            placeholder="Enter coupon code"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+          />
+
+          {!appliedCoupon ? (
+            <button onClick={applyCoupon}>Apply Coupon</button>
+          ) : (
+            <button onClick={removeCoupon}>Remove Coupon</button>
+          )}
+        </div>
+
+        {appliedCoupon && (
+          <strong className="coupon-success">
+            Coupon applied: {appliedCoupon.code} — {appliedCoupon.label}
+          </strong>
+        )}
+      </section>
+
       <section className="pricing-section">
         <div className="price-card">
           <h3>Basic</h3>
@@ -2319,9 +2411,15 @@ function JobsPage() {
         </div>
 
         <div className="price-card popular">
-          <small>Most Popular</small>
+          <small>Limited Offer</small>
           <h3>Pro</h3>
-          <h2>₹899/month</h2>
+
+          <div className="price-discount">
+            <del>₹{plans.pro.actualPrice}/month</del>
+            <h2>₹{getFinalPrice("pro")}/month</h2>
+            <b>Offer price ₹{plans.pro.offerPrice}/month</b>
+          </div>
+
           <p>For serious job seekers</p>
           <span>✓ Auto Apply</span>
           <span>✓ Job Alerts</span>
@@ -2329,28 +2427,42 @@ function JobsPage() {
           <span>✓ Trust Passport</span>
           <span>✓ Interview Practice</span>
           <span>✓ Salary Predictor</span>
-          <button onClick={() => goTo("/payment/pro")}>Start Pro →</button>
+
+          <button onClick={() => startPayment("pro")}>
+            🚀 Upgrade Pro →
+          </button>
         </div>
 
-        <div className="price-card">
+        <div className="price-card ultimate-card">
+          <small>Best Value</small>
           <h3>Ultimate</h3>
-          <h2>₹1999/month</h2>
+
+          <div className="price-discount">
+            <del>₹{plans.ultimate.actualPrice}/month</del>
+            <h2>₹{getFinalPrice("ultimate")}/month</h2>
+            <b>Offer price ₹{plans.ultimate.offerPrice}/month</b>
+          </div>
+
           <p>For career accelerators</p>
           <span>✓ Everything in Pro</span>
           <span>✓ Priority recruiter visibility</span>
           <span>✓ AI Career Coach</span>
           <span>✓ Advanced insights</span>
-          <button onClick={() => goTo("/ultimate-dashboard")}>
-            👑 Ultimate Dashboard
+          <span>✓ Ultimate Dashboard Access</span>
+
+          <button onClick={() => startPayment("ultimate")}>
+            {isUltimateUser() ? "👑 Open Ultimate Dashboard" : "👑 Upgrade Ultimate"}
           </button>
         </div>
 
         <div className="price-card dark">
           <h3>Ready to accelerate your career?</h3>
           <p>Use premium AI tools based on your real profile and live job data.</p>
-          <button onClick={() => goTo("/ultimate-dashboard")}>
-            👑 Ultimate Dashboard
+
+          <button onClick={() => startPayment("ultimate")}>
+            {isUltimateUser() ? "👑 Ultimate Dashboard" : "🚀 Upgrade Plan"}
           </button>
+
           <span>✅ Real-time career insights</span>
           <span>✅ Live job intelligence</span>
           <span>✅ Premium career tools</span>
@@ -2378,58 +2490,14 @@ function JobsPage() {
           <button onClick={() => goTo("/services")}>Services</button>
         </div>
 
-        
-          <div>
-  <h4>Tools</h4>
+        <div>
+          <h4>Tools</h4>
+          <button onClick={() => goTo("/resume-studio")}>AI Resume Studio</button>
+          <button onClick={() => goTo("/ai-interview-prep")}>Interview Prep</button>
+          <button onClick={() => goTo("/skill-assessment")}>Skill Assessment</button>
+          <button onClick={() => goTo("/salary-predictor")}>Salary Predictor</button>
+        </div>
 
-  <button
-    onClick={() => {
-      window.location.href = "/services";
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth",
-      });
-    }}
-  >
-    AI Resume Studio
-  </button>
-
-  <button
-    onClick={() => {
-      window.location.href = "/services";
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth",
-      });
-    }}
-  >
-    Interview Prep
-  </button>
-
-  <button
-    onClick={() => {
-      window.location.href = "/services";
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth",
-      });
-    }}
-  >
-    Skill Assessment
-  </button>
-
-  <button
-    onClick={() => {
-      window.location.href = "/services";
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth",
-      });
-    }}
-  >
-    Salary Predictor
-  </button>
-</div>
         <div>
           <h4>Company</h4>
           <button onClick={() => goTo("/about")}>About Us</button>
@@ -2441,25 +2509,70 @@ function JobsPage() {
         <div>
           <h4>Connect With Us</h4>
           <div className="footer-socials">
-            <button onClick={() => window.open("https://facebook.com", "_blank")}>
-              f
-            </button>
-            <button onClick={() => window.open("https://linkedin.com", "_blank")}>
-              in
-            </button>
-            <button onClick={() => window.open("https://twitter.com", "_blank")}>
-              x
-            </button>
-            <button onClick={() => window.open("https://instagram.com", "_blank")}>
-              ig
-            </button>
-            <button onClick={() => window.open("https://youtube.com", "_blank")}>
-              ▶
-            </button>
+            <button onClick={() => window.open("https://facebook.com", "_blank")}>f</button>
+            <button onClick={() => window.open("https://linkedin.com", "_blank")}>in</button>
+            <button onClick={() => window.open("https://twitter.com", "_blank")}>x</button>
+            <button onClick={() => window.open("https://instagram.com", "_blank")}>ig</button>
+            <button onClick={() => window.open("https://youtube.com", "_blank")}>▶</button>
           </div>
         </div>
       </footer>
     </div>
+  );
+}
+function PaymentSuccessPage() {
+  const [message, setMessage] = useState("Activating your plan...");
+
+  useEffect(() => {
+    const activatePlan = () => {
+      try {
+        const selectedPlan =
+          localStorage.getItem("selectedPlan") || "Ultimate";
+
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+        const updatedUser = {
+          ...user,
+          plan: selectedPlan,
+          subscriptionStatus: "active",
+        };
+
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        localStorage.setItem("plan", selectedPlan);
+        localStorage.setItem("activePlan", selectedPlan);
+        localStorage.setItem("subscriptionStatus", "active");
+
+        setMessage(`${selectedPlan} plan activated successfully.`);
+
+        setTimeout(() => {
+          if (selectedPlan.toLowerCase() === "ultimate") {
+            window.location.replace("/ultimate-dashboard");
+          } else {
+            window.location.replace("/services");
+          }
+        }, 1500);
+      } catch (error) {
+        console.error("PLAN ACTIVATION ERROR:", error);
+
+        setMessage("Unable to activate your plan.");
+      }
+    };
+
+    activatePlan();
+  }, []);
+
+  return (
+    <main className="payment-success-page">
+      <div className="payment-success-card">
+        <div className="payment-success-icon">✓</div>
+
+        <h1>Payment Successful</h1>
+
+        <p>{message}</p>
+
+        <span>Please wait. Redirecting to your dashboard...</span>
+      </div>
+    </main>
   );
 }
 function NotificationsPage() {
@@ -3764,11 +3877,24 @@ function App() {
     </>
   );
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const savedPlan =
+    user?.plan ||
+    localStorage.getItem("plan") ||
+    localStorage.getItem("activePlan");
+
+  const subscriptionStatus =
+    user?.subscriptionStatus ||
+    localStorage.getItem("subscriptionStatus");
+
+  const isUltimate =
+    savedPlan?.toLowerCase() === "ultimate" &&
+    subscriptionStatus === "active";
+
   if (path === "/terms") return withChat(<PremiumTermsPage />);
   if (path === "/privacy") return withChat(<PrivacyPolicy />);
   if (path === "/contact") return withChat(<PremiumContactPage />);
-
-  // ✅ Footer routes
   if (path === "/privacy-policy") return withChat(<PrivacyPolicy />);
   if (path === "/terms-and-conditions") return withChat(<PremiumTermsPage />);
   if (path === "/help-center") return withChat(<HelpCenterPage />);
@@ -3787,6 +3913,8 @@ function App() {
   if (path === "/forgot-password") return <CandidateForgotPassword />;
   if (path === "/candidate-register") return <CandidateRegister />;
   if (path === "/candidate") return <CandidateUpload />;
+
+  if (path === "/payment-success") return <PaymentSuccessPage />;
 
   if (path === "/mobile-dashboard") return <MobileCandidateDashboard />;
 
@@ -3811,7 +3939,14 @@ function App() {
   if (path === "/job-alerts") return <JobAlertsPage />;
   if (path === "/interview-alerts") return <InterviewAlertsPage />;
 
+  if (path === "/ultimate-dashboard") {
+    if (!isUltimate) return withChat(<ServicesPage />);
+    return withChat(<PremiumCareerDashboard />);
+  }
+
   if (path === "/resume-studio") {
+    if (!isUltimate) return withChat(<ServicesPage />);
+
     return (
       <UltimateDashboard>
         <ResumeStudio />
@@ -3857,8 +3992,6 @@ function App() {
   if (path === "/recruiter-screening") return <RecruiterScreeningPage />;
   if (path === "/recruiter-team") return <RecruiterTeamPage />;
   if (path === "/recruiter-billing") return <RecruiterBillingPage />;
-
-  if (path === "/ultimate-dashboard") return <UltimateDashboard />;
 
   if (path === "/hr-offer-letter") return <HrOfferLetter />;
   if (path === "/hr-offer-letter-details") return <HrOfferLetterDetails />;
@@ -8384,526 +8517,6 @@ function RecruiterApplicationsPage() {
     </>
   );
 }
-function UltimateDashboard({ children = null }) {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  const candidateId = user?.candidateId || user?._id || user?.id || "";
-  const name = user?.name || user?.fullName || "Candidate";
-
-  const [aiQuestion, setAiQuestion] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const [data, setData] = useState({
-    resumeScore: 0,
-    jobMatchScore: 0,
-    trustScore: 0,
-    applications: [],
-    autoApply: [],
-    jobs: [],
-    hiddenJobs: [],
-    savedJobs: [],
-    notifications: [],
-    interviews: [],
-  });
-
-  const goTo = (path) => {
-    window.location.href = path;
-  };
-
-  const authHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
-  const getArray = (res, keys = []) => {
-    if (res.status !== "fulfilled") return [];
-    const body = res.value?.data;
-
-    for (const key of keys) {
-      if (Array.isArray(body?.[key])) return body[key];
-    }
-
-    if (Array.isArray(body?.data)) return body.data;
-    if (Array.isArray(body)) return body;
-
-    return [];
-  };
-
-  const getObject = (res, keys = []) => {
-    if (res.status !== "fulfilled") return {};
-    const body = res.value?.data;
-
-    for (const key of keys) {
-      if (body?.[key] && typeof body[key] === "object") return body[key];
-    }
-
-    if (body?.data && typeof body.data === "object") return body.data;
-    if (body && typeof body === "object") return body;
-
-    return {};
-  };
-
-  const loadUltimateRealData = async () => {
-    if (!candidateId) {
-      goTo("/candidate-login");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const headers = authHeaders();
-
-      const [
-        candidateRes,
-        applicationsRes,
-        jobsRes,
-        hiddenJobsRes,
-        savedJobsRes,
-        notificationsRes,
-        autoApplyRes,
-        interviewsRes,
-      ] = await Promise.allSettled([
-        axios.get(`${API_URL}/api/candidates/${candidateId}`, { headers }),
-        axios.get(`${API_URL}/api/applications/candidate/${candidateId}`, { headers }),
-        axios.get(`${API_URL}/api/jobs`, { headers }),
-        axios.get(`${API_URL}/api/jobs/hidden`, { headers }),
-        axios.get(`${API_URL}/api/jobs/saved/${candidateId}`, { headers }),
-        axios.get(`${API_URL}/api/notifications/candidate/${candidateId}`, { headers }),
-        axios.get(`${API_URL}/api/auto-apply/candidate/${candidateId}`, { headers }),
-        axios.get(`${API_URL}/api/interviews/candidate/${candidateId}`, { headers }),
-      ]);
-
-      const candidate = getObject(candidateRes, ["candidate", "user"]);
-
-      const applications = getArray(applicationsRes, ["applications", "items", "results"]);
-      const jobs = getArray(jobsRes, ["jobs", "items", "results"]);
-      const hiddenJobs = getArray(hiddenJobsRes, ["jobs", "hiddenJobs", "items", "results"]);
-      const savedJobs = getArray(savedJobsRes, ["jobs", "savedJobs", "items", "results"]);
-      const notifications = getArray(notificationsRes, ["notifications", "items", "results"]);
-      const autoApply = getArray(autoApplyRes, ["applications", "autoApply", "autoApplications", "items", "results"]);
-      const directInterviews = getArray(interviewsRes, ["interviews", "items", "results"]);
-
-      const interviewApplications = applications.filter((app) =>
-        String(app.status || app.applicationStatus || "")
-          .toLowerCase()
-          .includes("interview")
-      );
-
-      setData({
-        resumeScore: Number(candidate.resumeScore || candidate.atsScore || 0),
-        jobMatchScore: Number(candidate.jobMatchScore || candidate.aiMatchScore || 0),
-        trustScore: Number(candidate.trustScore || candidate.profileStrength || 0),
-        applications,
-        autoApply,
-        jobs,
-        hiddenJobs,
-        savedJobs,
-        notifications,
-        interviews: directInterviews.length ? directInterviews : interviewApplications,
-      });
-    } catch (error) {
-      console.log("ULTIMATE REAL DATA ERROR:", error.response?.data || error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadUltimateRealData();
-  }, [candidateId]);
-
-  const jobAlerts = data.notifications.filter((n) =>
-    String(n.type || n.category || n.notificationType || "")
-      .toLowerCase()
-      .includes("job")
-  );
-
-  const stats = [
-    ["💼", "Resume Score", `${data.resumeScore}%`, "ATS Optimized"],
-    ["👤", "Job Match Score", `${data.jobMatchScore}%`, "High Fit Roles"],
-    ["🛡", "Trust Score", `${data.trustScore}%`, "Verified Profile"],
-    ["💼", "Applications", data.applications.length, "Active Applications"],
-    ["🚀", "Auto Apply", data.autoApply.length, "Applications Sent"],
-  ];
-
-  const tools = [
-    ["⚡", "Auto Apply Engine", "Smart Apply to Jobs", "/auto-apply"],
-    ["📄", "Resume Studio", "Build ATS Resume", "/resume-studio"],
-    ["🎯", "Match Score", "Check Job Fit", "/jobs"],
-    ["🧠", "Skill Gap Analyzer", "Find Missing Skills", "/skill-analyzer"],
-    ["🎤", "Interview Prep Hub", "Practice Interviews", "/ai-interview-prep"],
-    ["💰", "Salary Predictor", "Predict Salary Range", "/salary-predictor"],
-    ["🛡", "Trust Passport", "Verify Your Profile", "/trust-passport"],
-    ["🔔", "Instant Job Alerts", "Real-time Alerts", "/job-alerts"],
-    ["💎", "Hidden Opportunities", "Exclusive Jobs", "/hidden-opportunities"],
-  ];
-
-return (
-  <main className="ultimate-pro-page">
-    <aside className="ultimate-pro-sidebar">
-      <div className="ultimate-brand ultimate-brand-big">
-        <img
-          src="/logo.png"
-          alt="NoPromptJobs"
-          className="ultimate-brand-logo-big"
-        />
-      </div>
-
-      <nav className="ultimate-menu ultimate-menu-top-gap">
-        <button
-          className={!children ? "active" : ""}
-          onClick={() => goTo("/ultimate-dashboard")}
-        >
-          🏠 Dashboard
-        </button>
-
-        <button onClick={() => goTo("/applications")}>
-          ▣ Applications <b>{data.applications.length}</b>
-        </button>
-
-        <button onClick={() => goTo("/services")}>
-          🤖 AI Workspace
-        </button>
-
-        <button
-          className={children ? "active" : ""}
-          onClick={() => goTo("/resume-studio")}
-        >
-          📄 Resume Studio
-        </button>
-
-        <button onClick={() => window.open("/ai-interview-prep", "_blank")}>
-  🎤 AI Interview Prep
-</button>
-
-        <button onClick={() => goTo("/skill-analyzer")}>
-          📊 Skill Analyzer
-        </button>
-
-        <button onClick={() => goTo("/salary-predictor")}>
-          💰 Salary Predictor
-        </button>
-
-        <button onClick={() => goTo("/job-alerts")}>
-          🔔 Job Alerts <b>{jobAlerts.length}</b>
-        </button>
-
-        <button onClick={() => goTo("/saved-jobs")}>
-          ❤️ Saved Jobs <b>{data.savedJobs.length}</b>
-        </button>
-
-        <button onClick={() => goTo("/hidden-opportunities")}>
-          💎 Hidden Opportunities <b>{data.hiddenJobs.length}</b>
-        </button>
-
-        <button onClick={() => goTo("/career-roadmap")}>
-          🧭 Career Roadmap
-        </button>
-
-        <button
-          onClick={() =>
-            goTo(candidateId ? `/profile/${candidateId}` : "/candidate-login")
-          }
-        >
-          👤 Profile
-        </button>
-
-        <button onClick={() => goTo("/settings")}>
-          ⚙ Settings
-        </button>
-      </nav>
-    </aside>
-
-    <section className="ultimate-pro-main">
-      <header className="ultimate-pro-topbar">
-        <button className="menu-btn">☰</button>
-
-        <div className="ultimate-search">
-          <span>⌕</span>
-          <input placeholder="Search jobs, companies, skills..." />
-          <b>⌘ K</b>
-        </div>
-
-        <button className="ai-btn" onClick={() => goTo("/services")}>
-          ✨ AI Assistant
-        </button>
-
-        <button className="icon-btn" onClick={() => goTo("/notifications")}>
-          🔔 <b>{jobAlerts.length}</b>
-        </button>
-
-        <button className="icon-btn" onClick={() => goTo("/interview-alerts")}>
-          💬 <b>{data.interviews.length}</b>
-        </button>
-
-        <div
-          className="ultimate-user"
-          onClick={() =>
-            goTo(candidateId ? `/profile/${candidateId}` : "/candidate-login")
-          }
-        >
-          <img src={user?.profileImageUrl || "/profile.png"} alt="Candidate" />
-
-          <div>
-            <h4>{name}</h4>
-            <p>Verified Candidate 💙</p>
-          </div>
-
-          <span>⌄</span>
-        </div>
-      </header>
-
-      {children ? (
-        <section className="ultimate-dashboard-child-content">
-          {children}
-        </section>
-      ) : (
-        <>
-          <section className="ultimate-stats-row">
-            {stats.map((item) => (
-              <article className="ultimate-stat-card" key={item[1]}>
-                <div className="stat-icon">{item[0]}</div>
-
-                <div>
-                  <p>{item[1]}</p>
-                  <h2>{loading ? "..." : item[2]}</h2>
-                  <small>{item[3]}</small>
-                </div>
-
-                <i></i>
-              </article>
-            ))}
-          </section>
-
-          <section className="ultimate-dashboard-grid">
-            <section
-              className="ultimate-workspace-card ultimate-workspace-clickable"
-              onDoubleClick={() => goTo("/services")}
-            >
-              <div className="section-head">
-                <div>
-                  <h2>Workspace</h2>
-                  <p>Powerful tools to supercharge your career</p>
-                </div>
-
-                <button onClick={() => goTo("/services")}>
-                  View All Tools →
-                </button>
-              </div>
-
-              <div className="ultimate-tool-grid">
-                {tools.map((tool) => (
-                  <button
-                    key={tool[1]}
-                    className="ultimate-tool-card"
-                    onClick={() => goTo(tool[3])}
-                  >
-                    <span>{tool[0]}</span>
-
-                    <div>
-                      <h3>{tool[1]}</h3>
-                      <p>{tool[2]}</p>
-                    </div>
-
-                    <em>›</em>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <section className="ultimate-right-column">
-              <div className="ultimate-career-card">
-                <h2>Career Assistant</h2>
-                <p>Ask anything about your career</p>
-
-                <div className="assistant-input">
-                  <input
-                    value={aiQuestion}
-                    onChange={(e) => setAiQuestion(e.target.value)}
-                    placeholder="Example: How can I become a Data Engineer in 6 months?"
-                  />
-
-                  <button onClick={() => goTo("/services")}>➤</button>
-                </div>
-
-                <div className="assistant-tags">
-                  <button onClick={() => goTo("/resume-studio")}>
-                    Improve my resume
-                  </button>
-
-                  <button onClick={() => goTo("/jobs")}>
-                    Find high paying jobs
-                  </button>
-
-                  <button onClick={() => goTo("/ai-interview-prep")}>
-                    Interview tips
-                  </button>
-
-                  <button onClick={() => goTo("/services")}>
-                    Skill roadmap
-                  </button>
-                </div>
-              </div>
-
-              <div className="ultimate-insight-row">
-                <div className="application-overview-card">
-                  <div className="section-head compact">
-                    <h2>Application Overview</h2>
-
-                    <button onClick={() => goTo("/applications")}>
-                      View Analytics →
-                    </button>
-                  </div>
-
-                  <div className="donut-layout">
-                    <div className="donut-chart">
-                      <div>
-                        <h3>{data.applications.length}</h3>
-                        <p>Total</p>
-                      </div>
-                    </div>
-
-                    <div className="donut-list">
-                      <p>
-                        <span className="blue"></span> Applications{" "}
-                        <b>{data.applications.length}</b>
-                      </p>
-
-                      <p>
-                        <span className="green"></span> Interviews{" "}
-                        <b>{data.interviews.length}</b>
-                      </p>
-
-                      <p>
-                        <span className="purple"></span> Job Alerts{" "}
-                        <b>{jobAlerts.length}</b>
-                      </p>
-
-                      <p>
-                        <span className="orange"></span> Hidden Jobs{" "}
-                        <b>{data.hiddenJobs.length}</b>
-                      </p>
-
-                      <p>
-                        <span className="pink"></span> Saved Jobs{" "}
-                        <b>{data.savedJobs.length}</b>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="upcoming-card">
-                  <div className="section-head compact">
-                    <h2>Upcoming</h2>
-
-                    <button onClick={() => goTo("/interview-alerts")}>
-                      View All →
-                    </button>
-                  </div>
-
-                  {data.interviews.slice(0, 3).length === 0 ? (
-                    <div className="ultimate-empty-box">
-                      No upcoming interviews
-                    </div>
-                  ) : (
-                    data.interviews.slice(0, 3).map((item, index) => (
-                      <div className="upcoming-row" key={item._id || index}>
-                        <span>📅</span>
-
-                        <div>
-                          <h4>
-                            {item.title ||
-                              item.round ||
-                              item.interviewType ||
-                              "Interview"}
-                          </h4>
-
-                          <p>
-                            {item.company ||
-                              item.companyName ||
-                              item.job?.company ||
-                              "Company"}
-                          </p>
-                        </div>
-
-                        <b>
-                          {item.date
-                            ? new Date(item.date).toLocaleDateString()
-                            : "-"}
-                        </b>
-
-                        <small>{item.time || "-"}</small>
-                      </div>
-                    ))
-                  )}
-
-                  <button
-                    className="calendar-btn"
-                    onClick={() => goTo("/interview-alerts")}
-                  >
-                    + Add to Calendar
-                  </button>
-                </div>
-              </div>
-            </section>
-          </section>
-
-          <section className="ultimate-roadmap-card">
-            <div className="section-head">
-              <div>
-                <h2>Your Roadmap</h2>
-                <p>Personalized steps to achieve your dream career</p>
-              </div>
-
-              <button onClick={() => goTo("/career-roadmap")}>
-                View Full Roadmap →
-              </button>
-            </div>
-
-            <div className="roadmap-line">
-              {[
-                [
-                  "✅",
-                  "Step 1",
-                  "Improve Resume Score",
-                  data.resumeScore >= 80 ? "Completed" : "Pending",
-                ],
-                [
-                  "🛡",
-                  "Step 2",
-                  "Complete Trust Passport",
-                  data.trustScore >= 80 ? "Completed" : "In Progress",
-                ],
-                [
-                  "💼",
-                  "Step 3",
-                  "Apply to Match Jobs",
-                  data.applications.length > 0 ? "In Progress" : "Pending",
-                ],
-                [
-                  "👥",
-                  "Step 4",
-                  "Practice Interviews",
-                  data.interviews.length > 0 ? "In Progress" : "Upcoming",
-                ],
-                ["⭐", "Step 5", "Ace Interviews", "Upcoming"],
-              ].map((step) => (
-                <article key={step[1]}>
-                  <span>{step[0]}</span>
-                  <small>{step[1]}</small>
-                  <h3>{step[2]}</h3>
-                  <p>{step[3]}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-        </>
-      )}
-
-      <UltimatePremiumFooter />
-    </section>
-  </main>
-);}
 function UltimatePremiumFooter() {
   const goTo = (path) => {
     window.location.href = path;
