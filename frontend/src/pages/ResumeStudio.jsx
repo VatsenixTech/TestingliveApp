@@ -1,284 +1,597 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FaArrowRight,
+  FaCheck,
+  FaCheckCircle,
+  FaCloudUploadAlt,
+  FaDownload,
+  FaFileAlt,
+  FaHistory,
+  FaRobot,
+  FaShieldAlt,
+  FaSpinner,
+  FaTrashAlt,
+} from "react-icons/fa";
+import {
+  HiOutlineDocumentText,
+  HiOutlineSparkles,
+} from "react-icons/hi";
+import {
+  MdAnalytics,
+  MdOutlineSecurity,
+} from "react-icons/md";
+
 import "./ResumeStudio.css";
 
-const API_BASE = "http://localhost:5000/api/resume-studio";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-function ResumeStudio() {
+const EMPTY_RESULT = {
+  atsScore: 0,
+  optimizedText: "",
+  optimizedFileUrl: "",
+  fileName: "",
+  summary: {
+    strengths: [],
+    improvements: [],
+    keywordsAdded: [],
+  },
+};
+
+const getStoredToken = () =>
+  localStorage.getItem("token") ||
+  localStorage.getItem("authToken") ||
+  localStorage.getItem("accessToken") ||
+  sessionStorage.getItem("token") ||
+  "";
+
+const normalizeRecentResume = (resume = {}, index = 0) => ({
+  id: resume._id || resume.id || `resume-${index}`,
+  fileName: resume.fileName || resume.originalName || "Resume",
+  atsScore: Number(resume.atsScore || resume.score || 0),
+  createdAt: resume.createdAt || resume.updatedAt || null,
+  downloadUrl:
+    resume.optimizedFileUrl ||
+    resume.downloadUrl ||
+    resume.fileUrl ||
+    "",
+});
+
+const formatDate = (value) => {
+  if (!value) return "Recently";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Recently";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+};
+
+export default function ResumeStudio() {
+  const fileInputRef = useRef(null);
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [resumeText, setResumeText] = useState("");
   const [consent, setConsent] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [atsScore, setAtsScore] = useState(0);
-  const [breakdown, setBreakdown] = useState(null);
-  const [optimizedText, setOptimizedText] = useState("");
-  const [resumeId, setResumeId] = useState(null);
+  const [analysis, setAnalysis] = useState(EMPTY_RESULT);
   const [recentResumes, setRecentResumes] = useState([]);
-  const [improvements, setImprovements] = useState([]);
-  const [warnings, setWarnings] = useState([]);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const [loadingRecent, setLoadingRecent] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const candidateId = user?._id || user?.candidateId || user?.id;
-  const candidateName = user?.name || user?.fullName || "Candidate";
-  const email = user?.email || "";
+  const token = useMemo(() => getStoredToken(), []);
+
+  const hasResumeInput =
+    Boolean(selectedFile) || Boolean(resumeText.trim());
+
+  const score = Math.max(
+    0,
+    Math.min(100, Number(analysis.atsScore || 0))
+  );
+
+  const loadRecentResumes = useCallback(async () => {
+    try {
+      setLoadingRecent(true);
+
+      if (!token) {
+        setRecentResumes([]);
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/resume-studio/recent`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Unable to load recent resumes."
+        );
+      }
+
+      const items =
+        result.data?.resumes ||
+        result.resumes ||
+        result.data ||
+        [];
+
+      setRecentResumes(
+        Array.isArray(items)
+          ? items.map(normalizeRecentResume)
+          : []
+      );
+    } catch (requestError) {
+      console.error("Recent resumes error:", requestError);
+      setRecentResumes([]);
+    } finally {
+      setLoadingRecent(false);
+    }
+  }, [token]);
 
   useEffect(() => {
-    if (candidateId) {
-      fetchRecentResumes();
-    }
-  }, [candidateId]);
+    loadRecentResumes();
+  }, [loadRecentResumes]);
 
-  async function fetchRecentResumes() {
+  const handleFile = (file) => {
+    setError("");
+    setSuccessMessage("");
+
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "text/plain",
+    ];
+
+    const allowedExtensions = /\.(pdf|doc|docx|txt)$/i;
+
+    if (
+      !allowedTypes.includes(file.type) &&
+      !allowedExtensions.test(file.name)
+    ) {
+      setError("Please upload a PDF, DOC, DOCX, or TXT file.");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("The resume file must be smaller than 10 MB.");
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const handleAnalyze = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/recent/${candidateId}`);
-      setRecentResumes(res.data.resumes || []);
-    } catch (error) {
-      console.error("RECENT RESUME ERROR:", error);
-    }
-  }
+      setError("");
+      setSuccessMessage("");
 
-  async function handleAnalyze() {
-    if (!candidateId) {
-      alert("Candidate login required");
-      return;
-    }
+      if (!consent) {
+        throw new Error(
+          "Please accept the resume analysis consent."
+        );
+      }
 
-    if (!selectedFile && !resumeText.trim()) {
-      alert("Please upload resume or paste resume content");
-      return;
-    }
+      if (!hasResumeInput) {
+        throw new Error(
+          "Upload a resume or paste resume content first."
+        );
+      }
 
-    if (!consent) {
-      alert("Please accept consent before using AI Resume Optimizer");
-      return;
-    }
+      if (!token) {
+        throw new Error(
+          "Your login session is missing. Please log in again."
+        );
+      }
 
-    try {
-      setLoading(true);
+      setAnalyzing(true);
 
       const formData = new FormData();
-      formData.append("candidateId", candidateId);
-      formData.append("candidateName", candidateName);
-      formData.append("email", email);
-      formData.append("resumeText", resumeText);
-      formData.append("consent", String(consent));
 
       if (selectedFile) {
         formData.append("resume", selectedFile);
       }
 
-      const res = await axios.post(`${API_BASE}/analyze-optimize`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      if (resumeText.trim()) {
+        formData.append("resumeText", resumeText.trim());
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/resume-studio/analyze`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Unable to optimize your resume."
+        );
+      }
+
+      const data = result.data || result;
+
+      setAnalysis({
+        atsScore: Number(data.atsScore || data.score || 0),
+        optimizedText:
+          data.optimizedText ||
+          data.optimizedResume ||
+          data.content ||
+          "",
+        optimizedFileUrl:
+          data.optimizedFileUrl ||
+          data.downloadUrl ||
+          "",
+        fileName:
+          data.fileName ||
+          data.originalName ||
+          selectedFile?.name ||
+          "Optimized Resume",
+        summary: {
+          strengths:
+            data.summary?.strengths ||
+            data.strengths ||
+            [],
+          improvements:
+            data.summary?.improvements ||
+            data.improvements ||
+            [],
+          keywordsAdded:
+            data.summary?.keywordsAdded ||
+            data.keywordsAdded ||
+            [],
+        },
       });
 
-      setAtsScore(res.data.atsScore || 0);
-      setBreakdown(res.data.breakdown || null);
-      setOptimizedText(res.data.optimizedText || "");
-      setResumeId(res.data.resumeId || null);
-      setImprovements(res.data.improvements || []);
-      setWarnings(res.data.warnings || []);
+      setSuccessMessage(
+        result.message || "Resume optimized successfully."
+      );
 
-      fetchRecentResumes();
-    } catch (error) {
-      console.error("RESUME ANALYZE ERROR:", error);
-      alert(error.response?.data?.message || "Resume optimization failed");
+      await loadRecentResumes();
+    } catch (requestError) {
+      setError(
+        requestError.message || "Unable to optimize your resume."
+      );
     } finally {
-      setLoading(false);
+      setAnalyzing(false);
     }
-  }
+  };
 
-  function downloadResume(id) {
-    const finalResumeId = id || resumeId;
+  const clearResume = () => {
+    setSelectedFile(null);
+    setResumeText("");
+    setAnalysis(EMPTY_RESULT);
+    setError("");
+    setSuccessMessage("");
 
-    if (!finalResumeId) {
-      alert("No optimized resume available to download");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDownload = () => {
+    if (analysis.optimizedFileUrl) {
+      window.open(analysis.optimizedFileUrl, "_blank", "noopener,noreferrer");
       return;
     }
 
-    window.open(`${API_BASE}/download/${finalResumeId}`, "_blank");
-  }
-
-  async function deleteResume(id) {
-    if (!id) return;
-
-    const confirmDelete = window.confirm("Do you want to delete this resume?");
-    if (!confirmDelete) return;
-
-    try {
-      await axios.delete(`${API_BASE}/${id}`);
-
-      if (resumeId === id) {
-        clearResumeStudio();
-      }
-
-      fetchRecentResumes();
-    } catch (error) {
-      console.error("DELETE RESUME ERROR:", error);
-      alert(error.response?.data?.message || "Failed to delete resume");
+    if (!analysis.optimizedText) {
+      setError("No optimized resume is available to download.");
+      return;
     }
-  }
 
-  function clearResumeStudio() {
-    setSelectedFile(null);
-    setResumeText("");
-    setConsent(false);
-    setAtsScore(0);
-    setBreakdown(null);
-    setOptimizedText("");
-    setResumeId(null);
-    setImprovements([]);
-    setWarnings([]);
-  }
+    const blob = new Blob([analysis.optimizedText], {
+      type: "text/plain;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = "optimized-resume.txt";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="rs-page">
-      <main className="rs-main">
-        <section className="rs-hero">
+    <main className="resume-studio-page">
+      <section className="resume-studio-heading">
+        <div>
+          <h1>Resume Studio</h1>
+          <p>AI-powered ATS optimization and professional resume analysis.</p>
+        </div>
+
+        <button
+          type="button"
+          className="resume-upload-top-button"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <FaCloudUploadAlt />
+          Upload New Resume
+        </button>
+      </section>
+
+      <section className="resume-hero-card">
+        <div className="resume-hero-copy">
+          <span className="resume-eyebrow">
+            <HiOutlineSparkles />
+            AI ATS Resume Optimizer
+          </span>
+
+          <h2>Build a recruiter-ready resume without changing your real experience.</h2>
+
+          <p>
+            Upload your resume and receive ATS-focused improvements while
+            preserving your original qualifications, skills, and employment
+            history.
+          </p>
+
+          <div className="resume-feature-pills">
+            <span><FaRobot /> AI Powered</span>
+            <span><FaCheckCircle /> ATS Optimized</span>
+            <span><MdAnalytics /> Job Match Ready</span>
+            <span><FaShieldAlt /> Secure Processing</span>
+          </div>
+        </div>
+
+        <div className="resume-score-panel">
+          <div
+            className="resume-score-ring"
+            style={{
+              "--resume-score": `${score * 3.6}deg`,
+            }}
+          >
+            <div>
+              <strong>{Math.round(score)}</strong>
+              <span>/100</span>
+            </div>
+          </div>
+
+          <p>ATS Score</p>
+          <strong>
+            {score > 0 ? "ANALYSIS COMPLETE" : "READY TO ANALYZE"}
+          </strong>
+        </div>
+
+        <div className="resume-trust-panel">
+          <div className="resume-trust-icon">
+            <MdOutlineSecurity />
+          </div>
+
           <div>
-            <h1>AI ATS Resume Optimizer</h1>
-            <p>
-              Upload your resume and get an ATS-friendly, professionally
-              optimized version while preserving your original information.
-            </p>
+            <h3>Trust &amp; Safety</h3>
+            <ul>
+              <li><FaCheck /> We only enhance existing information.</li>
+              <li><FaCheck /> No fake data or made-up experience.</li>
+              <li><FaCheck /> Candidate review is required.</li>
+              <li><FaCheck /> Resume data stays linked to your profile.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
-            <div className="rs-tags">
-              <span>🧠 AI Powered</span>
-              <span>✅ ATS Optimized</span>
-              <span>🎯 Job Match Ready</span>
-              <span>🛡 Secure Processing</span>
+      <label className="resume-consent-card">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(event) => setConsent(event.target.checked)}
+        />
+
+        <span className="resume-consent-icon">
+          <FaShieldAlt />
+        </span>
+
+        <span>
+          By uploading your resume, you authorize NoPromptJobs to analyze,
+          reformat, and optimize it using AI. Your original qualifications
+          and experience will be preserved.
+        </span>
+      </label>
+
+      {error && <div className="resume-message resume-error">{error}</div>}
+      {successMessage && (
+        <div className="resume-message resume-success">{successMessage}</div>
+      )}
+
+      <section className="resume-workflow-grid">
+        <article className="resume-workflow-card resume-upload-card">
+          <div className="resume-card-title">
+            <span>1</span>
+            <div>
+              <h3>Upload Resume</h3>
+              <p>Add your current resume or paste its content.</p>
             </div>
           </div>
 
-          <div className="rs-score-card">
-            <div className="rs-score">
-              {atsScore || 0}
-              <small>/100</small>
-            </div>
-            <p>ATS Score</p>
-            <strong>{atsScore >= 90 ? "Outstanding" : "Ready to Analyze"}</strong>
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            hidden
+            accept=".pdf,.doc,.docx,.txt"
+            onChange={(event) => handleFile(event.target.files?.[0])}
+          />
 
-          <div className="rs-trust">
-            <h3>Trust & Safety</h3>
-            <p>✅ We only enhance existing information.</p>
-            <p>✅ No fake data or made-up experience.</p>
-            <p>✅ Candidate review is required.</p>
-            <p>✅ Resume data stays linked to your profile.</p>
-          </div>
-        </section>
+          <button
+            type="button"
+            className="resume-dropzone"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              handleFile(event.dataTransfer.files?.[0]);
+            }}
+          >
+            <FaCloudUploadAlt />
+            <strong>
+              {selectedFile ? selectedFile.name : "Upload Resume"}
+            </strong>
+            <span>PDF, DOCX, DOC, or TXT up to 10 MB</span>
+            <small>Choose File</small>
+          </button>
 
-        <section className="rs-consent">
-          <label>
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-            />
-            <span>
-              By uploading your resume, you authorize NoPromptJobs to analyze,
-              reformat, and optimize it using AI. The optimized resume will
-              preserve your original qualifications and experience. You are
-              responsible for reviewing the final document before using it.
-            </span>
-          </label>
-        </section>
+          <div className="resume-or-divider"><span>OR</span></div>
 
-        <section className="rs-grid">
-          <div className="rs-card">
-            <h2>1. Upload Resume</h2>
+          <textarea
+            value={resumeText}
+            onChange={(event) => setResumeText(event.target.value)}
+            placeholder="Paste your resume content here..."
+          />
 
-            <label className="rs-upload">
-              <input
-                type="file"
-                accept=".pdf,.docx,.txt"
-                onChange={(e) => setSelectedFile(e.target.files[0])}
-              />
-              <div>
-                <div className="upload-icon">☁️</div>
-                <h3>Upload Resume</h3>
-                <p>PDF, DOCX or TXT supported</p>
-                <button type="button">Choose File</button>
-              </div>
-            </label>
-
-            {selectedFile && (
-              <div className="rs-file">📄 {selectedFile.name}</div>
-            )}
-
-            <textarea
-              value={resumeText}
-              onChange={(e) => setResumeText(e.target.value)}
-              placeholder="Or paste your resume content here..."
-            />
-
-            <button className="rs-primary" onClick={handleAnalyze} disabled={loading}>
-              {loading ? "Analyzing Resume..." : "Improve Resume with AI →"}
-            </button>
-
-            <button className="rs-secondary" onClick={clearResumeStudio}>
-              Clear
-            </button>
-          </div>
-
-          <div className="rs-card">
-            <h2>2. AI Analysis</h2>
-
-            <div className="rs-process">
-              <p>✅ Extract Resume Information</p>
-              <p>✅ ATS Compatibility Check</p>
-              <p>✅ Keyword Review</p>
-              <p>✅ Formatting Review</p>
-              <p>✅ Content Improvement</p>
-            </div>
-
-            {breakdown && (
-              <div className="rs-breakdown">
-                <h3>Score Breakdown</h3>
-
-                {Object.entries(breakdown).map(([key, value]) => (
-                  <div key={key} className="rs-row">
-                    <span>{key.replace(/([A-Z])/g, " $1")}</span>
-                    <strong>{value}/100</strong>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="rs-card optimized">
-            <h2>3. Optimized Resume</h2>
-
-            {!optimizedText ? (
-              <div className="rs-empty">
-                <span>✨</span>
-                <h3>No optimized resume yet</h3>
-                <p>Upload or paste resume content and click Improve Resume.</p>
-              </div>
+          <button
+            type="button"
+            className="resume-primary-action"
+            onClick={handleAnalyze}
+            disabled={analyzing}
+          >
+            {analyzing ? (
+              <>
+                <FaSpinner className="resume-spin" />
+                Analyzing Resume
+              </>
             ) : (
               <>
-                <pre>{optimizedText}</pre>
-
-                <button className="rs-primary" onClick={() => downloadResume()}>
-                  Download ATS Resume
-                </button>
+                Improve Resume with AI
+                <FaArrowRight />
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            className="resume-secondary-action"
+            onClick={clearResume}
+            disabled={analyzing}
+          >
+            <FaTrashAlt />
+            Clear
+          </button>
+        </article>
+
+        <article className="resume-workflow-card">
+          <div className="resume-card-title">
+            <span>2</span>
+            <div>
+              <h3>AI Analysis</h3>
+              <p>Professional checks performed on your resume.</p>
+            </div>
           </div>
 
-          <div className="rs-card">
-            <h2>What AI Can Do ✅</h2>
-            <ul className="green">
+          <div className="resume-analysis-list">
+            {[
+              "Extract Resume Information",
+              "ATS Compatibility Check",
+              "Keyword Review",
+              "Formatting Review",
+              "Content Improvement",
+            ].map((item) => (
+              <div key={item}>
+                <HiOutlineDocumentText />
+                <span>{item}</span>
+                {analyzing ? (
+                  <FaSpinner className="resume-spin" />
+                ) : (
+                  <FaCheckCircle />
+                )}
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="resume-workflow-card resume-output-card">
+          <div className="resume-card-title">
+            <span>3</span>
+            <div>
+              <h3>Optimized Resume</h3>
+              <p>Review and download the improved version.</p>
+            </div>
+          </div>
+
+          {analysis.optimizedText || analysis.optimizedFileUrl ? (
+            <div className="resume-output-ready">
+              <div className="resume-document-icon">
+                <FaFileAlt />
+              </div>
+
+              <h4>{analysis.fileName || "Optimized Resume"}</h4>
+              <p>Your ATS-ready resume is available for review.</p>
+
+              {analysis.optimizedText && (
+                <div className="resume-preview">
+                  {analysis.optimizedText.slice(0, 900)}
+                </div>
+              )}
+
+              <button
+                type="button"
+                className="resume-primary-action"
+                onClick={handleDownload}
+              >
+                <FaDownload />
+                Download Resume
+              </button>
+            </div>
+          ) : (
+            <div className="resume-output-empty">
+              <div className="resume-document-icon">
+                <FaFileAlt />
+              </div>
+              <h4>No optimized resume yet</h4>
+              <p>
+                Upload or paste resume content and click Improve Resume.
+              </p>
+              <button
+                type="button"
+                className="resume-primary-action"
+                onClick={handleAnalyze}
+                disabled={analyzing || !hasResumeInput}
+              >
+                Improve Resume
+              </button>
+            </div>
+          )}
+        </article>
+
+        <article className="resume-workflow-card resume-rules-card">
+          <section>
+            <h3>What AI Can Do <FaCheckCircle /></h3>
+            <ul className="resume-can-list">
               <li>Improve formatting and structure</li>
               <li>Rewrite bullet points professionally</li>
               <li>Correct grammar and spelling</li>
               <li>Optimize ATS keywords</li>
-              <li>Remove ATS-unfriendly tables/icons</li>
+              <li>Remove ATS-unfriendly tables and icons</li>
               <li>Highlight skills already mentioned</li>
             </ul>
+          </section>
 
-            <h2>What AI Will Not Do ❌</h2>
-            <ul className="red">
+          <section>
+            <h3>What AI Will Not Do <span>×</span></h3>
+            <ul className="resume-cannot-list">
               <li>Add fake companies</li>
               <li>Add fake experience</li>
               <li>Add false certifications</li>
@@ -286,74 +599,102 @@ function ResumeStudio() {
               <li>Claim skills never mentioned</li>
               <li>Fabricate projects or achievements</li>
             </ul>
+          </section>
+        </article>
+      </section>
+
+      <section className="resume-bottom-grid">
+        <article className="resume-bottom-card">
+          <div className="resume-bottom-icon">
+            <MdAnalytics />
           </div>
-        </section>
 
-        <section className="rs-bottom">
-          <div className="rs-card">
-            <h2>Resume Improvement Summary</h2>
+          <div>
+            <h3>Resume Improvement Summary</h3>
 
-            {improvements.length === 0 && warnings.length === 0 ? (
-              <p>No analysis yet.</p>
+            {analysis.summary.improvements.length > 0 ? (
+              <ul>
+                {analysis.summary.improvements
+                  .slice(0, 4)
+                  .map((item, index) => (
+                    <li key={`${item}-${index}`}>{item}</li>
+                  ))}
+              </ul>
             ) : (
-              <>
-                {improvements.map((item, index) => (
-                  <p key={`improvement-${index}`}>✅ {item}</p>
-                ))}
-
-                {warnings.map((item, index) => (
-                  <p key={`warning-${index}`}>⚠️ {item}</p>
-                ))}
-              </>
+              <p>
+                Upload your resume to receive detailed improvement
+                suggestions.
+              </p>
             )}
           </div>
+        </article>
 
-          <div className="rs-card notice">
-            <h2>AI Resume Optimization Notice</h2>
-            <p>
-              This tool improves formatting, language, and ATS compatibility
-              while preserving the information provided by you.
-            </p>
-            <p>
-              It does not verify, invent, or guarantee qualifications. Please
-              review the generated resume carefully before submitting it to
-              employers.
-            </p>
+        <article className="resume-bottom-card resume-notice-card">
+          <div className="resume-bottom-icon">
+            <FaShieldAlt />
           </div>
 
-          <div className="rs-card">
-            <h2>Your Recent Resumes</h2>
+          <div>
+            <h3>AI Resume Optimization Notice</h3>
+            <p>
+              This tool improves formatting, language, and ATS compatibility.
+              It does not invent, verify, or guarantee qualifications.
+              Review the generated resume before using it.
+            </p>
+          </div>
+        </article>
 
-            {recentResumes.length === 0 ? (
-              <p>No resumes uploaded yet.</p>
-            ) : (
-              recentResumes.map((resume) => (
-                <div className="rs-recent" key={resume._id}>
-                  <div>
-                    <strong>{resume.originalFileName}</strong>
+        <article className="resume-bottom-card">
+          <div className="resume-bottom-icon">
+            <FaHistory />
+          </div>
+
+          <div className="resume-recent-header">
+            <div>
+              <h3>Your Recent Resumes</h3>
+              <p>
+                {loadingRecent
+                  ? "Loading resumes..."
+                  : recentResumes.length === 0
+                    ? "No resumes uploaded yet."
+                    : `${recentResumes.length} resume${
+                        recentResumes.length === 1 ? "" : "s"
+                      } available.`}
+              </p>
+            </div>
+          </div>
+
+          {!loadingRecent && recentResumes.length > 0 && (
+            <div className="resume-recent-list">
+              {recentResumes.slice(0, 3).map((resume) => (
+                <button
+                  type="button"
+                  key={resume.id}
+                  onClick={() => {
+                    if (resume.downloadUrl) {
+                      window.open(
+                        resume.downloadUrl,
+                        "_blank",
+                        "noopener,noreferrer"
+                      );
+                    }
+                  }}
+                >
+                  <HiOutlineDocumentText />
+                  <span>
+                    <strong>{resume.fileName}</strong>
                     <small>
-                      {new Date(resume.createdAt).toLocaleString()}
+                      ATS {Math.round(resume.atsScore)}/100 ·{" "}
+                      {formatDate(resume.createdAt)}
                     </small>
-                  </div>
-
-                  <span>{resume.atsScore}/100</span>
-
-                  <div className="rs-actions">
-                    <button onClick={() => downloadResume(resume._id)}>
-                      Download
-                    </button>
-                    <button onClick={() => deleteResume(resume._id)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-      </main>
-    </div>
+                  </span>
+                  <FaArrowRight />
+                </button>
+              ))}
+            </div>
+          )}
+        </article>
+      </section>
+    </main>
   );
 }
-
-export default ResumeStudio;

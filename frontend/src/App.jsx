@@ -1,5 +1,11 @@
 import { calculateProfileStrength } from "./utils/profileStrength";
 
+import HowItWorksPage from "./pages/HowItWorksPage";
+import BlogPage from "./pages/BlogPage";
+import CareersPage from "./pages/CareersPage";
+import AIWorkspacePage from "./pages/AIWorkspacePage";
+import AutoApplyPage from "./pages/AutoApplyPage";
+import TrustPassportPage from "./pages/TrustPassportPage";
 import InterviewAlerts from "./pages/InterviewAlerts";
 import PremiumCareerDashboard from "./pages/PremiumCareerDashboard";
 import HrOfferLetter from "./pages/HrOfferLetter";
@@ -2935,163 +2941,6 @@ function NotificationsPage() {
   );
 }
 
-function TrustPassportPage() {
-  const user = JSON.parse(localStorage.getItem("user")) || {};
-  const candidateId = user?.candidateId || user?._id || user?.id;
-
-  const [candidate, setCandidate] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [trustResult, setTrustResult] = useState(null);
-
-  useEffect(() => {
-    const loadCandidate = async () => {
-      if (!candidateId) return;
-
-      try {
-        const res = await axios.get(`${API_URL}/api/candidates/${candidateId}`);
-        setCandidate(res.data.candidate || res.data.data || res.data);
-      } catch (err) {
-        console.log(err.response?.data || err.message);
-      }
-    };
-
-    loadCandidate();
-  }, [candidateId]);
-
-  const calculateLocalScore = () => {
-    let score = 30;
-
-    if (candidate?.resumeUrl) score += 15;
-    if (candidate?.profileImageUrl) score += 10;
-    if (candidate?.selfIntroVideoUrl) score += 15;
-    if (candidate?.projectVideoUrl) score += 15;
-    if (candidate?.skills?.length) score += 10;
-    if (candidate?.profileSummary) score += 5;
-
-    return Math.min(score, 100);
-  };
-
-  const analyzeTrustPassport = async () => {
-    if (!candidate) {
-      alert("Candidate profile not found");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const res = await axios.post(`${API_URL}/api/ai/trust-passport`, {
-        candidate,
-        localScore: calculateLocalScore(),
-      });
-
-      setTrustResult(res.data);
-    } catch (err) {
-      console.log(err.response?.data || err.message);
-      alert("AI Trust Passport analysis failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const score = trustResult?.trustScore || calculateLocalScore();
-
-  return (
-    <main className="trust-passport-page">
-      <aside className="trust-passport-sidebar">
-        <img src="/logo.png" alt="NoPromptJobs" />
-
-        <h2>Trust Passport</h2>
-        <p>AI verified candidate credibility</p>
-
-        <button onClick={() => (window.location.href = "/ultimate-dashboard")}>
-          ← Back to Ultimate
-        </button>
-      </aside>
-
-      <section className="trust-passport-main">
-        <section className="trust-passport-hero">
-          <span>🛡 AI TRUST PASSPORT</span>
-
-          <h1>Candidate credibility score based on real profile signals</h1>
-
-          <p>
-            AI checks resume, profile, skills, project proof, self-intro video
-            and verification signals to calculate recruiter confidence.
-          </p>
-        </section>
-
-        <section className="trust-score-grid">
-          <div className="trust-score-card">
-            <h2>Trust Score</h2>
-
-            <div className="trust-score-circle">{score}%</div>
-
-            <p>
-              {score >= 85
-                ? "Excellent recruiter confidence"
-                : score >= 70
-                ? "Good profile credibility"
-                : "Profile needs improvement"}
-            </p>
-
-            <button onClick={analyzeTrustPassport} disabled={loading}>
-              {loading ? "AI is analyzing..." : "Analyze Trust Passport →"}
-            </button>
-          </div>
-
-          <div className="trust-check-card">
-            <h2>Verification Signals</h2>
-
-            <div className="trust-check-row">
-              <span>Resume</span>
-              <b>{candidate?.resumeUrl ? "✅ Added" : "❌ Missing"}</b>
-            </div>
-
-            <div className="trust-check-row">
-              <span>Profile Image</span>
-              <b>{candidate?.profileImageUrl ? "✅ Added" : "❌ Missing"}</b>
-            </div>
-
-            <div className="trust-check-row">
-              <span>Self Intro Video</span>
-              <b>{candidate?.selfIntroVideoUrl ? "✅ Added" : "❌ Missing"}</b>
-            </div>
-
-            <div className="trust-check-row">
-              <span>Project Proof Video</span>
-              <b>{candidate?.projectVideoUrl ? "✅ Added" : "❌ Missing"}</b>
-            </div>
-
-            <div className="trust-check-row">
-              <span>Skills</span>
-              <b>{candidate?.skills?.length ? "✅ Added" : "❌ Missing"}</b>
-            </div>
-
-            <div className="trust-check-row">
-              <span>Profile Summary</span>
-              <b>{candidate?.profileSummary ? "✅ Added" : "❌ Missing"}</b>
-            </div>
-          </div>
-        </section>
-
-        <section className="trust-ai-output">
-          <h2>AI Recruiter Confidence Report</h2>
-
-          {trustResult?.analysis ? (
-            <pre>{trustResult.analysis}</pre>
-          ) : (
-            <div className="trust-empty-box">
-              AI trust analysis will appear here.
-            </div>
-          )}
-        </section>
-
-        <PremiumFooter />
-      </section>
-    </main>
-  );
-}
 function StaticInfoPage({ page }) {
   return (
     <>
@@ -3911,8 +3760,8 @@ function App() {
     String(subscriptionStatus || "").toLowerCase() === "active";
 
   /*
-   * Use only for pages that need the Ultimate
-   * sidebar + Ultimate header.
+   * Use this wrapper for Ultimate pages that need
+   * the shared sidebar and header.
    */
   const renderUltimatePage = (page) => {
     if (!isUltimate) {
@@ -3927,8 +3776,8 @@ function App() {
   };
 
   /*
-   * Use for standalone Ultimate pages that already
-   * contain their own layout/header/sidebar.
+   * Use this wrapper for pages that already contain
+   * their own full sidebar and header layout.
    */
   const renderStandaloneUltimatePage = (page) => {
     if (!isUltimate) {
@@ -3976,8 +3825,6 @@ function App() {
 
   /* =====================================================
      PUBLIC COMPANY PAGES
-
-     THESE ROUTES FIX YOUR FOOTER PROBLEM.
   ===================================================== */
 
   if (path === "/about") {
@@ -4001,7 +3848,7 @@ function App() {
   }
 
   /* =====================================================
-     LANDING + AUTHENTICATION
+     LANDING AND AUTHENTICATION
   ===================================================== */
 
   if (path === "/") {
@@ -4057,6 +3904,19 @@ function App() {
   }
 
   /* =====================================================
+     TRUST PASSPORT ACTIVITY
+
+     This route must remain before:
+     path.startsWith("/profile/")
+  ===================================================== */
+
+  if (path === "/trust-passport/activity") {
+    return renderUltimatePage(
+      <TrustPassportActivityPage />
+    );
+  }
+
+  /* =====================================================
      CANDIDATE PROFILE
   ===================================================== */
 
@@ -4074,7 +3934,7 @@ function App() {
   }
 
   /* =====================================================
-     PUBLIC JOB + COMPANY PAGES
+     PUBLIC JOB AND COMPANY PAGES
   ===================================================== */
 
   if (path === "/companies") {
@@ -4096,8 +3956,7 @@ function App() {
   /* =====================================================
      STANDALONE ULTIMATE PAGES
 
-     These pages already have their own complete layout.
-     Do NOT wrap them in PremiumCareerDashboard.
+     These pages already contain their own complete layout.
   ===================================================== */
 
   if (path === "/notifications") {
@@ -4113,7 +3972,7 @@ function App() {
   }
 
   /*
-   * Enable after MessagesPage exists and is imported.
+   * Enable this after MessagesPage exists and is imported.
 
   if (path === "/messages") {
     return renderStandaloneUltimatePage(
@@ -4140,8 +3999,8 @@ function App() {
   /* =====================================================
      ULTIMATE INTERNAL PAGES
 
-     Sidebar + header come from PremiumCareerDashboard.
-     The child components must contain CONTENT ONLY.
+     Sidebar and header come from PremiumCareerDashboard.
+     Child components should contain page content only.
   ===================================================== */
 
   if (path === "/applications") {
@@ -4241,7 +4100,7 @@ function App() {
   }
 
   /* =====================================================
-     RECRUITER AUTHENTICATION + DASHBOARD
+     RECRUITER AUTHENTICATION AND DASHBOARD
   ===================================================== */
 
   if (path === "/recruiter-login") {
@@ -4343,6 +4202,7 @@ function App() {
   if (path === "/hr-offer-letter-details") {
     return <HrOfferLetterDetails />;
   }
+
 
   /* =====================================================
      FALLBACK

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./AutoApplyPage.css";
 
 const API_BASE_URL =
@@ -52,6 +53,7 @@ function getStatus(application) {
 }
 
 function AutoApplyPage() {
+  const navigate = useNavigate();
   const user = getStoredUser();
 
   const candidateId =
@@ -84,6 +86,13 @@ function AutoApplyPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [savingEngine, setSavingEngine] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [minimumMatchScore, setMinimumMatchScore] = useState(70);
+  const [remoteOnly, setRemoteOnly] = useState(false);
+  const [easyApplyOnly, setEasyApplyOnly] = useState(true);
+  const [runningAutoApply, setRunningAutoApply] = useState(false);
 
   const authHeaders = useMemo(() => {
     const headers = {
@@ -100,23 +109,27 @@ function AutoApplyPage() {
   const loadApplications = async () => {
     if (!candidateId) {
       setApplications([]);
-      return;
+      throw new Error(
+        "Candidate ID is missing. Please log in again."
+      );
     }
 
     const response = await fetch(
       `${API_BASE_URL}/api/applications/candidate/${candidateId}`,
       {
+        method: "GET",
         headers: authHeaders,
       }
     );
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
       throw new Error(
-        `Applications API returned ${response.status}`
+        data?.message ||
+          `Applications request failed with status ${response.status}`
       );
     }
-
-    const data = await response.json();
 
     setApplications(normalizeApplications(data));
   };
@@ -124,23 +137,27 @@ function AutoApplyPage() {
   const loadMatchedJobs = async () => {
     if (!candidateId) {
       setMatchedJobs([]);
-      return;
+      throw new Error(
+        "Candidate ID is missing. Please log in again."
+      );
     }
 
     const response = await fetch(
       `${API_BASE_URL}/api/jobs/recommended/${candidateId}`,
       {
+        method: "GET",
         headers: authHeaders,
       }
     );
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
       throw new Error(
-        `Recommended Jobs API returned ${response.status}`
+        data?.message ||
+          `Recommended jobs request failed with status ${response.status}`
       );
     }
-
-    const data = await response.json();
 
     setMatchedJobs(normalizeJobs(data));
   };
@@ -148,39 +165,55 @@ function AutoApplyPage() {
   const loadEngineStatus = async () => {
     if (!candidateId) {
       setEngineEnabled(false);
-      return;
+      throw new Error(
+        "Candidate ID is missing. Please log in again."
+      );
     }
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/auto-apply/status/${candidateId}`,
-        {
-          headers: authHeaders,
-        }
-      );
-
-      if (!response.ok) return;
-
-      const data = await response.json();
-
-      setEngineEnabled(
-        Boolean(
-          data?.enabled ??
-            data?.isEnabled ??
-            data?.active ??
-            false
-        )
-      );
-
-      const backendLimit =
-        data?.dailyLimit ??
-        data?.settings?.dailyLimit;
-
-      if (backendLimit !== undefined) {
-        setDailyLimit(Number(backendLimit));
+    const response = await fetch(
+      `${API_BASE_URL}/api/auto-apply/status/${candidateId}`,
+      {
+        method: "GET",
+        headers: authHeaders,
       }
-    } catch (requestError) {
-      console.error("Engine status error:", requestError);
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        data?.message ||
+          `Auto Apply status request failed with status ${response.status}`
+      );
+    }
+
+    setEngineEnabled(
+      Boolean(
+        data?.enabled ??
+          data?.isEnabled ??
+          data?.active ??
+          false
+      )
+    );
+
+    setConsent(Boolean(data?.consent ?? false));
+    setRemoteOnly(Boolean(data?.remoteOnly ?? false));
+    setEasyApplyOnly(Boolean(data?.easyApplyOnly ?? true));
+
+    if (data?.minimumMatchScore !== undefined) {
+      setMinimumMatchScore(Number(data.minimumMatchScore));
+    }
+
+    const backendLimit =
+      data?.dailyLimit ??
+      data?.settings?.dailyLimit;
+
+    if (backendLimit !== undefined) {
+      setDailyLimit(Number(backendLimit));
+      localStorage.setItem(
+        "autoApplyDailyLimit",
+        String(backendLimit)
+      );
     }
   };
 
@@ -200,20 +233,42 @@ function AutoApplyPage() {
         loadEngineStatus(),
       ]);
 
-      const failedRequests = results.filter(
-        (result) => result.status === "rejected"
+      const requestNames = [
+        "Applications",
+        "Recommended Jobs",
+        "Auto Apply Status",
+      ];
+
+      const failedMessages = results
+        .map((result, index) => {
+          if (result.status !== "rejected") {
+            return null;
+          }
+
+          console.error(
+            `${requestNames[index]} error:`,
+            result.reason
+          );
+
+          return `${requestNames[index]}: ${
+            result.reason?.message || "Request failed"
+          }`;
+        })
+        .filter(Boolean);
+
+      if (failedMessages.length > 0) {
+        setError(failedMessages.join(" | "));
+      }
+    } catch (requestError) {
+      console.error(
+        "Dashboard loading error:",
+        requestError
       );
 
-      if (failedRequests.length > 0) {
-        console.error(
-          "Auto Apply dashboard request errors:",
-          failedRequests
-        );
-
-        setError(
-          "Some dashboard information could not be loaded. Check your backend routes and try Refresh."
-        );
-      }
+      setError(
+        requestError?.message ||
+          "Unable to load Auto Apply dashboard."
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -305,18 +360,24 @@ function AutoApplyPage() {
 
   const toggleEngine = async () => {
     if (!candidateId) {
-      setError(
-        "Candidate ID is missing. Please log in again."
-      );
-
+      setError("Candidate ID is missing. Please log in again.");
       return;
     }
 
     const nextValue = !engineEnabled;
 
+    if (nextValue && !consent) {
+      setError(
+        "Please accept candidate consent in Engine Settings before enabling Auto Apply."
+      );
+      setSettingsOpen(true);
+      return;
+    }
+
     try {
       setSavingEngine(true);
       setError("");
+      setSuccessMessage("");
 
       const response = await fetch(
         `${API_BASE_URL}/api/auto-apply/status`,
@@ -327,45 +388,66 @@ function AutoApplyPage() {
             candidateId,
             enabled: nextValue,
             dailyLimit,
+            consent,
           }),
         }
       );
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
         throw new Error(
-          `Auto Apply API returned ${response.status}`
+          data?.message ||
+            `Auto Apply API returned ${response.status}`
         );
       }
 
-      setEngineEnabled(nextValue);
+      setEngineEnabled(
+        Boolean(data?.enabled ?? data?.isEnabled ?? nextValue)
+      );
+
+      if (data?.dailyLimit !== undefined) {
+        setDailyLimit(Number(data.dailyLimit));
+      }
+
+      setSuccessMessage(
+        nextValue
+          ? "Auto Apply Engine has been activated."
+          : "Auto Apply Engine has been paused."
+      );
     } catch (requestError) {
       console.error(requestError);
 
       setError(
-        "Unable to update Auto Apply Engine. Check the backend API."
+        requestError.message ||
+          "Unable to update Auto Apply Engine."
       );
     } finally {
       setSavingEngine(false);
     }
   };
 
-  const saveDailyLimit = async (newLimit) => {
+  const saveSettings = async () => {
     const safeLimit = Math.max(
       1,
-      Math.min(Number(newLimit) || 1, 100)
+      Math.min(Number(dailyLimit) || 1, 100)
     );
 
-    setDailyLimit(safeLimit);
-
-    localStorage.setItem(
-      "autoApplyDailyLimit",
-      String(safeLimit)
+    const safeMatchScore = Math.max(
+      0,
+      Math.min(Number(minimumMatchScore) || 0, 100)
     );
 
-    if (!candidateId) return;
+    if (!candidateId) {
+      setError("Candidate ID is missing. Please log in again.");
+      return false;
+    }
 
     try {
-      await fetch(
+      setError("");
+      setSuccessMessage("");
+
+      const response = await fetch(
         `${API_BASE_URL}/api/auto-apply/settings`,
         {
           method: "PUT",
@@ -373,20 +455,126 @@ function AutoApplyPage() {
           body: JSON.stringify({
             candidateId,
             dailyLimit: safeLimit,
+            minimumMatchScore: safeMatchScore,
+            remoteOnly,
+            easyApplyOnly,
+            consent,
           }),
         }
       );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            `Auto Apply settings API returned ${response.status}`
+        );
+      }
+
+      setDailyLimit(Number(data?.dailyLimit ?? safeLimit));
+      setMinimumMatchScore(
+        Number(data?.minimumMatchScore ?? safeMatchScore)
+      );
+      setRemoteOnly(Boolean(data?.remoteOnly ?? remoteOnly));
+      setEasyApplyOnly(
+        Boolean(data?.easyApplyOnly ?? easyApplyOnly)
+      );
+      setConsent(Boolean(data?.consent ?? consent));
+
+      localStorage.setItem(
+        "autoApplyDailyLimit",
+        String(data?.dailyLimit ?? safeLimit)
+      );
+
+      setSuccessMessage(
+        "Auto Apply settings have been saved."
+      );
+
+      return true;
     } catch (requestError) {
       console.error(
-        "Daily limit update error:",
+        "Auto Apply settings update error:",
         requestError
       );
+
+      setError(
+        requestError.message ||
+          "Unable to save Auto Apply settings."
+      );
+
+      return false;
+    }
+  };
+
+  const runAutoApply = async () => {
+    if (!candidateId) {
+      setError("Candidate ID is missing. Please log in again.");
+      return;
+    }
+
+    if (!engineEnabled) {
+      setError(
+        "Enable the Auto Apply Engine before running it."
+      );
+      return;
+    }
+
+    if (!consent) {
+      setError(
+        "Candidate consent is required before Auto Apply can run."
+      );
+      setSettingsOpen(true);
+      return;
+    }
+
+    try {
+      setRunningAutoApply(true);
+      setError("");
+      setSuccessMessage("");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/jobs/auto-apply/${candidateId}`,
+        {
+          method: "POST",
+          headers: authHeaders,
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            `Auto Apply request failed with status ${response.status}`
+        );
+      }
+
+      setSuccessMessage(
+        data?.appliedCount > 0
+          ? `${data.appliedCount} applications were submitted successfully.`
+          : data?.message ||
+              "No new eligible jobs were available."
+      );
+
+      await loadDashboardData(true);
+    } catch (requestError) {
+      console.error(
+        "Run Auto Apply error:",
+        requestError
+      );
+
+      setError(
+        requestError?.message ||
+          "Unable to run Auto Apply."
+      );
+    } finally {
+      setRunningAutoApply(false);
     }
   };
 
   const goTo = (path) => {
-    window.history.pushState({}, "", path);
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    navigate(path);
   };
 
   const recentApplications = useMemo(() => {
@@ -427,6 +615,19 @@ function AutoApplyPage() {
 
   return (
     <section className="aae-page">
+
+      {successMessage && (
+        <div className="aae-success">
+          <span>✓</span>
+          <p>{successMessage}</p>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage("")}
+          >
+            Close
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="aae-error">
@@ -476,9 +677,27 @@ function AutoApplyPage() {
             <button
               type="button"
               className="aae-secondary-button"
-              onClick={() => goTo("/settings")}
+              onClick={() => setSettingsOpen(true)}
             >
               Engine Settings
+            </button>
+
+            <button
+              type="button"
+              className="aae-primary-button"
+              onClick={runAutoApply}
+              disabled={
+                runningAutoApply ||
+                refreshing ||
+                savingEngine ||
+                !engineEnabled
+              }
+            >
+              {runningAutoApply
+                ? "Running Auto Apply..."
+                : engineEnabled
+                ? "Run Auto Apply"
+                : "Enable Engine First"}
             </button>
 
           </div>
@@ -1023,16 +1242,6 @@ function AutoApplyPage() {
                   Number(event.target.value)
                 )
               }
-              onMouseUp={(event) =>
-                saveDailyLimit(
-                  Number(event.currentTarget.value)
-                )
-              }
-              onTouchEnd={(event) =>
-                saveDailyLimit(
-                  Number(event.currentTarget.value)
-                )
-              }
             />
 
             <div className="aae-limit-footer">
@@ -1074,7 +1283,7 @@ function AutoApplyPage() {
           <button
             type="button"
             className="aae-secondary-button"
-            onClick={() => goTo("/settings")}
+            onClick={() => setSettingsOpen(true)}
           >
             Review Settings
           </button>
@@ -1082,6 +1291,199 @@ function AutoApplyPage() {
         </article>
 
       </section>
+
+      {settingsOpen && (
+        <div
+          className="aae-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setSettingsOpen(false);
+            }
+          }}
+        >
+          <section
+            className="aae-settings-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auto-apply-settings-title"
+          >
+            <div className="aae-modal-header">
+              <div>
+                <p className="aae-eyebrow">AUTO APPLY SETTINGS</p>
+                <h2 id="auto-apply-settings-title">
+                  Control your automation
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className="aae-modal-close"
+                onClick={() => setSettingsOpen(false)}
+                aria-label="Close settings"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="aae-modal-setting-row">
+              <div>
+                <strong>Auto Apply Engine</strong>
+                <p>
+                  Enable or pause automatic applications for your
+                  candidate profile.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className={`aae-switch ${
+                  engineEnabled ? "enabled" : ""
+                }`}
+                onClick={toggleEngine}
+                disabled={savingEngine}
+              >
+                <span />
+                {savingEngine
+                  ? "SAVING"
+                  : engineEnabled
+                  ? "ON"
+                  : "OFF"}
+              </button>
+            </div>
+
+            <div className="aae-modal-limit">
+              <div className="aae-modal-limit-heading">
+                <div>
+                  <strong>Daily application limit</strong>
+                  <p>
+                    Select how many real applications may be submitted
+                    each day.
+                  </p>
+                </div>
+                <strong>{dailyLimit}</strong>
+              </div>
+
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value={dailyLimit}
+                onChange={(event) =>
+                  setDailyLimit(Number(event.target.value))
+                }
+              />
+
+              <div className="aae-limit-footer">
+                <span>1</span>
+                <span>100</span>
+              </div>
+            </div>
+
+            <div className="aae-modal-limit">
+              <div className="aae-modal-limit-heading">
+                <div>
+                  <strong>Minimum match score</strong>
+                  <p>
+                    Only jobs meeting this score will be considered.
+                  </p>
+                </div>
+                <strong>{minimumMatchScore}%</strong>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={minimumMatchScore}
+                onChange={(event) =>
+                  setMinimumMatchScore(
+                    Number(event.target.value)
+                  )
+                }
+              />
+
+              <div className="aae-limit-footer">
+                <span>0%</span>
+                <span>100%</span>
+              </div>
+            </div>
+
+            <div className="aae-modal-setting-row">
+              <div>
+                <strong>Remote jobs only</strong>
+                <p>
+                  Match only jobs marked as remote.
+                </p>
+              </div>
+
+              <input
+                type="checkbox"
+                checked={remoteOnly}
+                onChange={(event) =>
+                  setRemoteOnly(event.target.checked)
+                }
+              />
+            </div>
+
+            <div className="aae-modal-setting-row">
+              <div>
+                <strong>Easy Apply jobs only</strong>
+                <p>
+                  Use only jobs that support direct applications.
+                </p>
+              </div>
+
+              <input
+                type="checkbox"
+                checked={easyApplyOnly}
+                onChange={(event) =>
+                  setEasyApplyOnly(event.target.checked)
+                }
+              />
+            </div>
+
+            <label className="aae-consent-row">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(event) =>
+                  setConsent(event.target.checked)
+                }
+              />
+
+              <span>
+                I authorize NoPromptJobs to submit job applications
+                on my behalf using my saved candidate profile.
+              </span>
+            </label>
+
+            <div className="aae-modal-actions">
+              <button
+                type="button"
+                className="aae-secondary-button"
+                onClick={() => setSettingsOpen(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="aae-primary-button"
+                onClick={async () => {
+                  const saved = await saveSettings();
+
+                  if (saved) {
+                    setSettingsOpen(false);
+                  }
+                }}
+              >
+                Save Settings
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
     </section>
   );

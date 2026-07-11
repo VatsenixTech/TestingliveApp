@@ -33,7 +33,7 @@ const candidateProfileRoutes = require("./routes/candidateProfileRoutes");
 const profileViewRoutes = require("./routes/profileViewRoutes");
 const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
 const contactRoutes = require("./routes/contactRoutes");
-
+const trustPassportRoutes = require("./routes/trustPassportRoutes");
 /* CORS */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -79,7 +79,7 @@ app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 app.use(passport.initialize());
 app.use("/uploads", express.static("uploads"));
-
+app.use("/api/trust-passport", trustPassportRoutes);
 /* ROUTE CHECKER */
 const registerRoute = (path, route, routeName) => {
   if (typeof route !== "function") {
@@ -150,7 +150,8 @@ app.get("/api/mail-test", async (req, res) => {
         rejectUnauthorized: false,
       },
     });
-
+const resumeStudioRoutes =
+  require("./routes/resumeStudioRoutes");
     await transporter.verify();
 
     await transporter.sendMail({
@@ -183,6 +184,9 @@ app.get("/api/mail-test", async (req, res) => {
     });
   }
 });
+const interviewPrepRoutes = require(
+  "./routes/interviewPrepRoutes"
+);
 
 /* API ROUTES */
 registerRoute("/api/help", helpRoutes, "helpRoutes");
@@ -206,14 +210,22 @@ registerRoute("/api/candidate-profile", candidateProfileRoutes, "candidateProfil
 registerRoute("/api/profile-views", profileViewRoutes, "profileViewRoutes");
 registerRoute("/api/candidates/forgot-password", forgotPasswordRoutes, "forgotPasswordRoutes");
 
+
 /* 404 */
 app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Route not found: ${req.method} ${req.originalUrl}`,
   });
-});
+});app.use(
+  "/api/interview-prep",
+  interviewPrepRoutes
+);
 
+app.use(
+  "/api/resume-studio",
+  resumeStudioRoutes
+);
 /* ERROR HANDLER */
 app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err);
