@@ -255,7 +255,7 @@ function UltimateDashboard({ children = null }) {
       <aside className="ultimate-saas-sidebar">
         <img src="/logo.png" alt="NoPromptJobs" className="ultimate-saas-logo" />
 
-        <button className="active" onClick={() => goTo("/ultimate-dashboard")}>🏠 Dashboard</button>
+        <button onClick={() => goTo("/notifications")}>🔔 Notifications <b>{unreadNotifications.length}</b></button>
         <button onClick={() => goTo("/applications")}>▣ Applications <b>{data.applications.length}</b></button>
         <button onClick={() => goTo("/auto-apply")}>🚀 Auto Apply <b>{data.autoApply.length}</b></button>
         <button onClick={() => goTo("/job-alerts")}>🔔 Job Alerts <b>{unreadNotifications.length}</b></button>

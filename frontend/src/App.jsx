@@ -1,4 +1,6 @@
 import { calculateProfileStrength } from "./utils/profileStrength";
+
+import InterviewAlerts from "./pages/InterviewAlerts";
 import PremiumCareerDashboard from "./pages/PremiumCareerDashboard";
 import HrOfferLetter from "./pages/HrOfferLetter";
 import CandidateLogin from "./pages/CandidateLogin";
@@ -3867,7 +3869,10 @@ function App() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) document.body.className = savedTheme;
+
+    if (savedTheme) {
+      document.body.className = savedTheme;
+    }
   }, []);
 
   const withChat = (page) => (
@@ -3877,7 +3882,20 @@ function App() {
     </>
   );
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  let user = {};
+
+  try {
+    user = JSON.parse(
+      localStorage.getItem("user") || "{}"
+    );
+  } catch (error) {
+    console.error(
+      "Unable to read saved user:",
+      error
+    );
+
+    user = {};
+  }
 
   const savedPlan =
     user?.plan ||
@@ -3889,34 +3907,158 @@ function App() {
     localStorage.getItem("subscriptionStatus");
 
   const isUltimate =
-    savedPlan?.toLowerCase() === "ultimate" &&
-    subscriptionStatus === "active";
+    String(savedPlan || "").toLowerCase() === "ultimate" &&
+    String(subscriptionStatus || "").toLowerCase() === "active";
 
-  if (path === "/terms") return withChat(<PremiumTermsPage />);
-  if (path === "/privacy") return withChat(<PrivacyPolicy />);
-  if (path === "/contact") return withChat(<PremiumContactPage />);
-  if (path === "/privacy-policy") return withChat(<PrivacyPolicy />);
-  if (path === "/terms-and-conditions") return withChat(<PremiumTermsPage />);
-  if (path === "/help-center") return withChat(<HelpCenterPage />);
+  /*
+   * Use only for pages that need the Ultimate
+   * sidebar + Ultimate header.
+   */
+  const renderUltimatePage = (page) => {
+    if (!isUltimate) {
+      return withChat(<ServicesPage />);
+    }
+
+    return withChat(
+      <PremiumCareerDashboard>
+        {page}
+      </PremiumCareerDashboard>
+    );
+  };
+
+  /*
+   * Use for standalone Ultimate pages that already
+   * contain their own layout/header/sidebar.
+   */
+  const renderStandaloneUltimatePage = (page) => {
+    if (!isUltimate) {
+      return withChat(<ServicesPage />);
+    }
+
+    return withChat(page);
+  };
+
+  /* =====================================================
+     LEGAL PAGES
+  ===================================================== */
+
+  if (path === "/terms") {
+    return withChat(<PremiumTermsPage />);
+  }
+
+  if (path === "/privacy") {
+    return withChat(<PrivacyPolicy />);
+  }
+
+  if (path === "/privacy-policy") {
+    return withChat(<PrivacyPolicy />);
+  }
+
+  if (path === "/terms-and-conditions") {
+    return withChat(<PremiumTermsPage />);
+  }
+
+  /* =====================================================
+     HELP CENTER
+  ===================================================== */
+
+  if (path === "/help-center") {
+    return withChat(<HelpCenterPage />);
+  }
 
   const legalPage = getLegalPageData(path);
-  if (legalPage) return withChat(<LegalCenterPage page={legalPage} />);
 
-  if (path === "/") return <LandingPage />;
-  if (path === "/login") return <LandingPage />;
-  if (path === "/register") return <LandingPage />;
+  if (legalPage) {
+    return withChat(
+      <LegalCenterPage page={legalPage} />
+    );
+  }
 
-  if (path === "/candidate-login") return <CandidateLogin />;
-  if (path === "/candidate-email-verify") return <CandidateEmailVerify />;
-  if (path === "/candidate-set-password") return <CandidateSetPassword />;
-  if (path === "/candidate-forgot-password") return <CandidateForgotPassword />;
-  if (path === "/forgot-password") return <CandidateForgotPassword />;
-  if (path === "/candidate-register") return <CandidateRegister />;
-  if (path === "/candidate") return <CandidateUpload />;
+  /* =====================================================
+     PUBLIC COMPANY PAGES
 
-  if (path === "/payment-success") return <PaymentSuccessPage />;
+     THESE ROUTES FIX YOUR FOOTER PROBLEM.
+  ===================================================== */
 
-  if (path === "/mobile-dashboard") return <MobileCandidateDashboard />;
+  if (path === "/about") {
+    return withChat(<AboutPage />);
+  }
+
+  if (path === "/how-it-works") {
+    return withChat(<HowItWorksPage />);
+  }
+
+  if (path === "/blog") {
+    return withChat(<BlogPage />);
+  }
+
+  if (path === "/careers") {
+    return withChat(<CareersPage />);
+  }
+
+  if (path === "/contact") {
+    return withChat(<PremiumContactPage />);
+  }
+
+  /* =====================================================
+     LANDING + AUTHENTICATION
+  ===================================================== */
+
+  if (path === "/") {
+    return <LandingPage />;
+  }
+
+  if (path === "/login") {
+    return <LandingPage />;
+  }
+
+  if (path === "/register") {
+    return <LandingPage />;
+  }
+
+  if (path === "/candidate-login") {
+    return <CandidateLogin />;
+  }
+
+  if (path === "/candidate-email-verify") {
+    return <CandidateEmailVerify />;
+  }
+
+  if (path === "/candidate-set-password") {
+    return <CandidateSetPassword />;
+  }
+
+  if (path === "/candidate-forgot-password") {
+    return <CandidateForgotPassword />;
+  }
+
+  if (path === "/forgot-password") {
+    return <CandidateForgotPassword />;
+  }
+
+  if (path === "/candidate-register") {
+    return <CandidateRegister />;
+  }
+
+  if (path === "/candidate") {
+    return <CandidateUpload />;
+  }
+
+  if (path === "/payment-success") {
+    return <PaymentSuccessPage />;
+  }
+
+  /* =====================================================
+     MOBILE
+  ===================================================== */
+
+  if (path === "/mobile-dashboard") {
+    return <MobileCandidateDashboard />;
+  }
+
+  /* =====================================================
+     CANDIDATE PROFILE
+  ===================================================== */
 
   if (
     path === "/profile" ||
@@ -3927,78 +4069,287 @@ function App() {
     return <CandidateProfilePage />;
   }
 
-  if (path.startsWith("/dashboard/")) return withChat(<CandidateDashboard />);
-
-  if (path === "/companies") return <CompaniesPage />;
-  if (path === "/jobs") return withChat(<JobsPage />);
-  if (path.startsWith("/jobs/")) return <JobDetailsPage />;
-
-  if (path === "/services") return <ServicesPage />;
-  if (path === "/applications") return <ApplicationsPage />;
-  if (path === "/notifications") return <NotificationsPage />;
-  if (path === "/job-alerts") return <JobAlertsPage />;
-  if (path === "/interview-alerts") return <InterviewAlertsPage />;
-
-  if (path === "/ultimate-dashboard") {
-    if (!isUltimate) return withChat(<ServicesPage />);
-    return withChat(<PremiumCareerDashboard />);
+  if (path.startsWith("/dashboard/")) {
+    return withChat(<CandidateDashboard />);
   }
 
-  if (path === "/resume-studio") {
-    if (!isUltimate) return withChat(<ServicesPage />);
+  /* =====================================================
+     PUBLIC JOB + COMPANY PAGES
+  ===================================================== */
 
-    return (
-      <UltimateDashboard>
-        <ResumeStudio />
-      </UltimateDashboard>
+  if (path === "/companies") {
+    return <CompaniesPage />;
+  }
+
+  if (path === "/jobs") {
+    return withChat(<JobsPage />);
+  }
+
+  if (path.startsWith("/jobs/")) {
+    return <JobDetailsPage />;
+  }
+
+  if (path === "/services") {
+    return <ServicesPage />;
+  }
+
+  /* =====================================================
+     STANDALONE ULTIMATE PAGES
+
+     These pages already have their own complete layout.
+     Do NOT wrap them in PremiumCareerDashboard.
+  ===================================================== */
+
+  if (path === "/notifications") {
+    return renderStandaloneUltimatePage(
+      <NotificationsPage />
     );
   }
 
-  if (path === "/skill-analyzer") return <SkillAnalyzerPage />;
-  if (path === "/trust-passport") return <TrustPassportPage />;
-  if (path === "/hidden-opportunities") return <HiddenOpportunitiesPage />;
-  if (path === "/ai-interview-prep") return <AIInterviewPrepPage />;
-  if (path === "/salary-predictor") return <SalaryPredictorPage />;
-  if (path === "/career-roadmap") return <CareerRoadmapPage />;
+  if (path === "/interview-alerts") {
+    return renderStandaloneUltimatePage(
+      <InterviewAlerts />
+    );
+  }
 
-  if (path === "/settings") return withChat(<CandidateSettings />);
-  if (path === "/candidate-settings") return withChat(<CandidateSettings />);
-  if (path === "/saved-jobs") return <SavedJobsPage />;
+  /*
+   * Enable after MessagesPage exists and is imported.
 
-  if (path === "/recruiter-login") return <RecruiterLogin />;
-  if (path === "/recruiter-register") return <RecruiterRegister />;
-  if (path === "/recruiter-dashboard") return <RecruiterDashboard />;
-  if (path === "/recruiter-post-job") return <RecruiterPostJobPage />;
-  if (path === "/hr-portal") return <HrPortalDashboard />;
-  if (path === "/recruiter-search") return <RecruiterTalentSearch />;
-  if (path === "/recruiter-shortlisted") return <RecruiterShortlistedPage />;
-  if (path === "/recruiter-applications") return <RecruiterApplicationsPage />;
-  if (path === "/recruiter-reports") return <RecruiterReportsPage />;
-  if (path === "/recruiter-profile") return <RecruiterProfilePage />;
-  if (path === "/company-profile") return <CompanyProfilePage />;
-  if (path === "/recruiter-settings") return <RecruiterSettingsPage />;
-  if (path === "/recruiter-notifications") return <RecruiterNotificationsPage />;
+  if (path === "/messages") {
+    return renderStandaloneUltimatePage(
+      <MessagesPage />
+    );
+  }
 
-  if (path.startsWith("/recruiter-candidate-profile/")) {
+  */
+
+  /* =====================================================
+     ULTIMATE DASHBOARD HOME
+  ===================================================== */
+
+  if (path === "/ultimate-dashboard") {
+    if (!isUltimate) {
+      return withChat(<ServicesPage />);
+    }
+
+    return withChat(
+      <PremiumCareerDashboard />
+    );
+  }
+
+  /* =====================================================
+     ULTIMATE INTERNAL PAGES
+
+     Sidebar + header come from PremiumCareerDashboard.
+     The child components must contain CONTENT ONLY.
+  ===================================================== */
+
+  if (path === "/applications") {
+    return renderUltimatePage(
+      <ApplicationsPage />
+    );
+  }
+
+  if (path === "/resume-studio") {
+    return renderUltimatePage(
+      <ResumeStudio />
+    );
+  }
+
+  if (path === "/skill-analyzer") {
+    return renderUltimatePage(
+      <SkillAnalyzerPage />
+    );
+  }
+
+  if (path === "/trust-passport") {
+    return renderUltimatePage(
+      <TrustPassportPage />
+    );
+  }
+
+  if (path === "/hidden-opportunities") {
+    return renderUltimatePage(
+      <HiddenOpportunitiesPage />
+    );
+  }
+
+  if (path === "/ai-interview-prep") {
+    return renderUltimatePage(
+      <AIInterviewPrepPage />
+    );
+  }
+
+  if (path === "/ai-interview") {
+    return renderUltimatePage(
+      <AIInterviewPrepPage />
+    );
+  }
+
+  if (path === "/salary-predictor") {
+    return renderUltimatePage(
+      <SalaryPredictorPage />
+    );
+  }
+
+  if (path === "/career-roadmap") {
+    return renderUltimatePage(
+      <CareerRoadmapPage />
+    );
+  }
+
+  if (path === "/job-alerts") {
+    return renderUltimatePage(
+      <JobAlertsPage />
+    );
+  }
+
+  if (path === "/saved-jobs") {
+    return renderUltimatePage(
+      <SavedJobsPage />
+    );
+  }
+
+  if (path === "/settings") {
+    return renderUltimatePage(
+      <CandidateSettings />
+    );
+  }
+
+  if (path === "/candidate-settings") {
+    return renderUltimatePage(
+      <CandidateSettings />
+    );
+  }
+
+  if (path === "/auto-apply") {
+    return renderUltimatePage(
+      <AutoApplyPage />
+    );
+  }
+
+  if (path === "/ai-workspace") {
+    return renderUltimatePage(
+      <AIWorkspacePage />
+    );
+  }
+
+  if (path.startsWith("/application-details/")) {
+    return renderUltimatePage(
+      <ApplicationDetailsPage />
+    );
+  }
+
+  /* =====================================================
+     RECRUITER AUTHENTICATION + DASHBOARD
+  ===================================================== */
+
+  if (path === "/recruiter-login") {
+    return <RecruiterLogin />;
+  }
+
+  if (path === "/recruiter-register") {
+    return <RecruiterRegister />;
+  }
+
+  if (path === "/recruiter-dashboard") {
+    return <RecruiterDashboard />;
+  }
+
+  if (path === "/recruiter-post-job") {
+    return <RecruiterPostJobPage />;
+  }
+
+  if (path === "/hr-portal") {
+    return <HrPortalDashboard />;
+  }
+
+  if (path === "/recruiter-search") {
+    return <RecruiterTalentSearch />;
+  }
+
+  if (path === "/recruiter-shortlisted") {
+    return <RecruiterShortlistedPage />;
+  }
+
+  if (path === "/recruiter-applications") {
+    return <RecruiterApplicationsPage />;
+  }
+
+  if (path === "/recruiter-reports") {
+    return <RecruiterReportsPage />;
+  }
+
+  if (path === "/recruiter-profile") {
+    return <RecruiterProfilePage />;
+  }
+
+  if (path === "/company-profile") {
+    return <CompanyProfilePage />;
+  }
+
+  if (path === "/recruiter-settings") {
+    return <RecruiterSettingsPage />;
+  }
+
+  if (path === "/recruiter-notifications") {
+    return <RecruiterNotificationsPage />;
+  }
+
+  if (
+    path.startsWith(
+      "/recruiter-candidate-profile/"
+    )
+  ) {
     return <RecruiterCandidateProfile />;
   }
 
-  if (path.startsWith("/recruiter-job-details/")) {
+  if (
+    path.startsWith(
+      "/recruiter-job-details/"
+    )
+  ) {
     return <RecruiterJobDetailsPage />;
   }
 
-  if (path === "/recruiter-ai-assistant") return <RecruiterAIAssistantPage />;
-  if (path === "/recruiter-interviews") return <RecruiterInterviewStagesPage />;
-  if (path === "/recruiter-screening") return <RecruiterScreeningPage />;
-  if (path === "/recruiter-team") return <RecruiterTeamPage />;
-  if (path === "/recruiter-billing") return <RecruiterBillingPage />;
+  if (path === "/recruiter-ai-assistant") {
+    return <RecruiterAIAssistantPage />;
+  }
 
-  if (path === "/hr-offer-letter") return <HrOfferLetter />;
-  if (path === "/hr-offer-letter-details") return <HrOfferLetterDetails />;
+  if (path === "/recruiter-interviews") {
+    return <RecruiterInterviewStagesPage />;
+  }
+
+  if (path === "/recruiter-screening") {
+    return <RecruiterScreeningPage />;
+  }
+
+  if (path === "/recruiter-team") {
+    return <RecruiterTeamPage />;
+  }
+
+  if (path === "/recruiter-billing") {
+    return <RecruiterBillingPage />;
+  }
+
+  /* =====================================================
+     HR PAGES
+  ===================================================== */
+
+  if (path === "/hr-offer-letter") {
+    return <HrOfferLetter />;
+  }
+
+  if (path === "/hr-offer-letter-details") {
+    return <HrOfferLetterDetails />;
+  }
+
+  /* =====================================================
+     FALLBACK
+  ===================================================== */
 
   return <LandingPage />;
 }
-
 function Navbar({
   searchText = "",
   setSearchText = () => {},
@@ -6818,244 +7169,7 @@ function RecruiterAdvancedSidebar() {
     </aside>
   );
 }
-function InterviewAlertsPage() {
-  const [interviewAlerts, setInterviewAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const candidateId = user?._id || user?.id || user?.candidateId;
-
-  const authHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  };
-
-  const goTo = (path) => {
-    window.location.href = path;
-  };
-
-  useEffect(() => {
-    const loadInterviewAlerts = async () => {
-      if (!candidateId) {
-        setLoading(false);
-        return;
-      }
-
-      const urls = [
-        `${API_URL}/api/candidates/${candidateId}/interviews`,
-        `${API_URL}/api/interviews/candidate/${candidateId}`,
-        `${API_URL}/api/applications/candidate/${candidateId}`,
-      ];
-
-      for (const url of urls) {
-        try {
-          const res = await axios.get(url, { headers: authHeaders() });
-
-          const data =
-            res.data?.interviews ||
-            res.data?.data ||
-            res.data?.applications ||
-            res.data ||
-            [];
-
-          const list = Array.isArray(data) ? data : [];
-
-          const onlyInterviews = list.filter((item) => {
-            const status = String(item.status || "").toLowerCase();
-            const type = String(item.type || item.round || "").toLowerCase();
-
-            return (
-              status.includes("interview") ||
-              status.includes("scheduled") ||
-              type.includes("interview") ||
-              item.interviewDate ||
-              item.scheduledAt ||
-              item.date
-            );
-          });
-
-          setInterviewAlerts(onlyInterviews.length ? onlyInterviews : list);
-          break;
-        } catch (error) {
-          console.log("INTERVIEW API FAILED:", url, error.response?.data || error.message);
-        }
-      }
-
-      setLoading(false);
-    };
-
-    loadInterviewAlerts();
-  }, [candidateId]);
-
-  const getDate = (item) => {
-    const raw = item.date || item.interviewDate || item.scheduledAt || item.createdAt;
-    if (!raw) return "Date not added";
-
-    const date = new Date(raw);
-    if (Number.isNaN(date.getTime())) return raw;
-
-    return date.toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  const getTime = (item) => {
-    if (item.time || item.interviewTime) return item.time || item.interviewTime;
-
-    const raw = item.scheduledAt || item.date || item.interviewDate;
-    if (!raw) return "Time not added";
-
-    const date = new Date(raw);
-    if (Number.isNaN(date.getTime())) return "Time not added";
-
-    return date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const upcoming = interviewAlerts.filter((item) => {
-    const status = String(item.status || "").toLowerCase();
-    return !status.includes("reject") && !status.includes("cancel");
-  });
-
-  return (
-    <>
-      <Navbar />
-
-      <main className="premium-interview-page">
-        <section className="premium-interview-hero">
-          <div>
-            <span>🎙 Interview Center</span>
-            <h1>Interview Alerts</h1>
-            <p>Track recruiter calls, technical rounds, HR rounds and scheduled interviews.</p>
-          </div>
-
-          <div className="interview-hero-count">
-            <b>{upcoming.length}</b>
-            <small>Upcoming</small>
-          </div>
-        </section>
-
-        <section className="interview-dashboard-grid">
-          <article className="interview-stat-card">
-            <span>📅</span>
-            <b>{interviewAlerts.length}</b>
-            <p>Total Interviews</p>
-          </article>
-
-          <article className="interview-stat-card">
-            <span>✅</span>
-            <b>{upcoming.length}</b>
-            <p>Scheduled</p>
-          </article>
-
-          <article className="interview-stat-card">
-            <span>🎯</span>
-            <b>
-              {
-                interviewAlerts.filter((x) =>
-                  String(x.round || x.type || "").toLowerCase().includes("technical")
-                ).length
-              }
-            </b>
-            <p>Technical Rounds</p>
-          </article>
-
-          <article className="interview-stat-card">
-            <span>👥</span>
-            <b>
-              {
-                interviewAlerts.filter((x) =>
-                  String(x.round || x.type || "").toLowerCase().includes("hr")
-                ).length
-              }
-            </b>
-            <p>HR Rounds</p>
-          </article>
-        </section>
-
-        <section className="premium-interview-layout">
-          <section className="premium-interview-list">
-            <div className="interview-section-head">
-              <div>
-                <h2>Scheduled Interviews</h2>
-                <p>Real interview records from your backend.</p>
-              </div>
-
-              <button onClick={() => goTo("/jobs")}>Explore Jobs →</button>
-            </div>
-
-            {loading ? (
-              <div className="interview-empty-card">Loading interview alerts...</div>
-            ) : interviewAlerts.length > 0 ? (
-              interviewAlerts.map((item, index) => (
-                <article className="premium-interview-row" key={item._id || item.id || index}>
-                  <div className="interview-date-box">
-                    <b>{getDate(item).split(" ")[0]}</b>
-                    <span>{getDate(item).split(" ").slice(1).join(" ")}</span>
-                  </div>
-
-                  <div className="interview-main-info">
-                    <h3>
-                      {item.round ||
-                        item.title ||
-                        item.interviewType ||
-                        item.jobTitle ||
-                        item.job?.title ||
-                        "Interview Scheduled"}
-                    </h3>
-
-                    <p>
-                      {item.company ||
-                        item.companyName ||
-                        item.job?.company ||
-                        "Company not added"}
-                    </p>
-
-                    <div>
-                      <span>🕒 {getTime(item)}</span>
-                      <span>📍 {item.location || item.mode || "Online / Not added"}</span>
-                    </div>
-                  </div>
-
-                  <span className="interview-status-pill">
-                    {item.status || "Scheduled"}
-                  </span>
-                </article>
-              ))
-            ) : (
-              <div className="interview-empty-card">
-                <h2>No interview scheduled yet</h2>
-                <p>When recruiters schedule an interview, it will appear here automatically.</p>
-                <button onClick={() => goTo("/jobs")}>Explore Jobs</button>
-              </div>
-            )}
-          </section>
-
-          <aside className="interview-side-panel">
-            <h2>Interview Prep</h2>
-            <p>Prepare before your next recruiter call.</p>
-
-            <button onClick={() => goTo("/ai-interview-prep")}>
-              🎙 Start AI Mock Interview
-            </button>
-
-            <button onClick={() => goTo("/resume-studio")}>
-              📄 Improve Resume
-            </button>
-
-            <button onClick={() => goTo("/question-bank")}>
-              📚 Question Bank
-            </button>
-          </aside>
-        </section>
-      </main>
-    </>
-  );
-}function ProFeaturesPage() {
+function ProFeaturesPage() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const pendingPlan = localStorage.getItem("pendingPlan");
 

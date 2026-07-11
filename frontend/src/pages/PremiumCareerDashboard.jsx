@@ -409,10 +409,14 @@ export default function PremiumCareerDashboard({ children = null }) {
             <kbd>⌘ K</kbd>
           </label>
 
-          <button className="ud-ai-button" onClick={() => goTo("/services")}>
-            <FaWandMagicSparkles /> AI Assistant
-          </button>
-
+        <button
+  type="button"
+  className="ud-ai-button"
+  onClick={() => goTo("/help-center?openChat=true")}
+>
+  <FaWandMagicSparkles />
+  AI Assistant
+</button>
           <button className="ud-top-icon" onClick={() => goTo("/notifications")} aria-label="Notifications">
             <FaBell /><b>{jobAlerts.length}</b>
           </button>
