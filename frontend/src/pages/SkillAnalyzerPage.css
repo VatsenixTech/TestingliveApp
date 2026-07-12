@@ -2120,5 +2120,6 @@
 @media (max-width: 480px) {
   .sa-hero-metrics {
     grid-template-columns: 1fr !important;
+ 
   }
 }

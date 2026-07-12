@@ -3,7 +3,6 @@ import {
   FaArrowRight,
   FaBrain,
   FaChartLine,
-  FaCheckCircle,
   FaClock,
   FaFileAlt,
   FaHistory,
@@ -22,6 +21,9 @@ import "./AIInterviewPrepPage.css";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+const INTERVIEW_DURATION_MINUTES = 30;
+const INTERNAL_MAX_QUESTIONS = 20;
 
 const EMPTY_STATS = {
   completedSessions: 0,
@@ -60,6 +62,14 @@ const getToken = () =>
   sessionStorage.getItem("token") ||
   "";
 
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "{}");
+  } catch {
+    return {};
+  }
+};
+
 const clamp = (value, min = 0, max = 100) => {
   const number = Number(value);
   if (!Number.isFinite(number)) return min;
@@ -70,7 +80,6 @@ export default function AIInterviewPrepPage() {
   const [role, setRole] = useState("Data Engineer");
   const [experienceLevel, setExperienceLevel] = useState("2-5 Years");
   const [interviewType, setInterviewType] = useState("Technical");
-  const [questionCount, setQuestionCount] = useState(10);
 
   const [stats, setStats] = useState(EMPTY_STATS);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -132,52 +141,322 @@ export default function AIInterviewPrepPage() {
   }, [loadStats]);
 
   const startInterview = async () => {
+    if (starting) {
+      return;
+    }
+
+    setError("");
+
+    /*
+     * Perform only synchronous validation before opening the window.
+     * The new window must be created directly from the button click,
+     * before any fetch/await, otherwise Chrome may block it.
+     */
+    if (!role.trim()) {
+      setError("Please select an interview role.");
+      return;
+    }
+
+    if (!experienceLevel) {
+      setError("Please select your experience level.");
+      return;
+    }
+
+    if (!token) {
+      setError(
+        "Your login session is missing. Please log in again."
+      );
+      return;
+    }
+
+    const savedUser = getStoredUser();
+
+    const candidateId =
+      savedUser?.candidateId ||
+      savedUser?._id ||
+      savedUser?.id;
+
+    if (!candidateId) {
+      setError(
+        "Candidate ID was not found. Please log out and log in again."
+      );
+      return;
+    }
+
+    /*
+     * IMPORTANT:
+     * Open the interview window immediately before the API request.
+     */
+    const interviewWindow = window.open(
+      "",
+      "_blank"
+    );
+
+    if (!interviewWindow) {
+      setError(
+        "The interview window was blocked by your browser. Please allow pop-ups for localhost:5173 and try again."
+      );
+      return;
+    }
+
+    const popupOpenedAt = Date.now();
+    const minimumLoadingTime = 1400;
+
     try {
-      setError("");
+      interviewWindow.focus();
+    } catch {
+      // Some browsers do not allow programmatic focus.
+    }
 
-      if (!role.trim()) {
-        throw new Error("Please select an interview role.");
-      }
+    /*
+     * Display a premium loading screen in the new interview window
+     * while the backend creates the session.
+     */
+    interviewWindow.document.open();
+    interviewWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
+          <title>Preparing AI Interview</title>
 
-      if (!experienceLevel) {
-        throw new Error("Please select your experience level.");
-      }
+          <style>
+            * {
+              box-sizing: border-box;
+            }
 
-      if (!token) {
-        throw new Error(
-          "Your login session is missing. Please log in again."
-        );
-      }
+            html,
+            body {
+              margin: 0;
+              min-height: 100%;
+            }
 
+            body {
+              min-height: 100vh;
+              padding: 24px;
+
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              color: #ffffff;
+
+              font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+              background:
+                radial-gradient(
+                  circle at 16% 12%,
+                  rgba(105, 218, 255, 0.25),
+                  transparent 31%
+                ),
+                radial-gradient(
+                  circle at 85% 10%,
+                  rgba(181, 91, 255, 0.28),
+                  transparent 34%
+                ),
+                linear-gradient(
+                  135deg,
+                  #071642,
+                  #1d43be 55%,
+                  #7236e9
+                );
+            }
+
+            .preparing-card {
+              width: min(440px, 100%);
+              padding: 48px 34px;
+
+              text-align: center;
+
+              background:
+                rgba(255, 255, 255, 0.13);
+
+              border:
+                1px solid
+                rgba(255, 255, 255, 0.25);
+
+              border-radius: 28px;
+
+              box-shadow:
+                0 32px 90px
+                rgba(0, 0, 0, 0.3);
+
+              backdrop-filter: blur(24px);
+            }
+
+            .robot {
+              width: 88px;
+              height: 88px;
+              margin: 0 auto 22px;
+
+              display: grid;
+              place-items: center;
+
+              color: #72f3f7;
+              background:
+                rgba(7, 22, 66, 0.84);
+
+              border:
+                7px solid
+                rgba(255, 255, 255, 0.14);
+
+              border-radius: 26px;
+
+              font-size: 42px;
+
+              box-shadow:
+                0 18px 40px
+                rgba(0, 0, 0, 0.2);
+            }
+
+            .loader {
+              width: 50px;
+              height: 50px;
+              margin: 0 auto 22px;
+
+              border:
+                5px solid
+                rgba(255, 255, 255, 0.24);
+
+              border-top-color: #ffffff;
+              border-radius: 50%;
+
+              animation:
+                interviewLoader
+                780ms
+                linear
+                infinite;
+            }
+
+            h1 {
+              margin: 0 0 12px;
+
+              font-size: 27px;
+              line-height: 1.2;
+            }
+
+            p {
+              margin: 0;
+
+              color:
+                rgba(255, 255, 255, 0.8);
+
+              font-size: 14px;
+              line-height: 1.7;
+            }
+
+            .details {
+              margin-top: 22px;
+              padding: 13px 15px;
+
+              color:
+                rgba(255, 255, 255, 0.88);
+
+              background:
+                rgba(255, 255, 255, 0.09);
+
+              border:
+                1px solid
+                rgba(255, 255, 255, 0.13);
+
+              border-radius: 14px;
+
+              font-size: 12px;
+              font-weight: 700;
+            }
+
+            @keyframes interviewLoader {
+              to {
+                transform: rotate(360deg);
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          <main class="preparing-card">
+            <div class="robot">🤖</div>
+            <div class="loader"></div>
+
+            <h1>Preparing Your Interview</h1>
+
+            <p>
+              Takshvi is creating your personalized 30-minute
+              ${interviewType} interview for the ${role} role.
+            </p>
+
+            <div class="details">
+              Please keep this window open.
+            </div>
+          </main>
+        </body>
+      </html>
+    `);
+    interviewWindow.document.close();
+
+    try {
       setStarting(true);
 
       const response = await fetch(
         `${API_BASE_URL}/api/interview-prep/sessions`,
         {
           method: "POST",
+
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
+            candidateId,
             role,
             experienceLevel,
             interviewType,
-            questionCount,
+            durationMinutes:
+              INTERVIEW_DURATION_MINUTES,
+
+            /*
+             * Kept internally because the existing MongoDB
+             * schema requires questionCount.
+             */
+            questionCount:
+              INTERNAL_MAX_QUESTIONS,
           }),
         }
       );
 
-      const result = await response.json().catch(() => ({}));
+      const result = await response
+        .json()
+        .catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(
-          result.message || "Unable to start interview session."
+          result.message ||
+            "Unable to start interview session."
         );
       }
 
-      const data = result.data || result;
-      const sessionId = data.sessionId || data._id || data.id;
+      const session =
+        result.session ||
+        result.data?.session ||
+        result.data ||
+        result;
+
+      const sessionId =
+        session?.sessionId ||
+        session?._id ||
+        session?.id;
 
       if (!sessionId) {
         throw new Error(
@@ -185,13 +464,195 @@ export default function AIInterviewPrepPage() {
         );
       }
 
-      window.location.href = `/ai-interview?sessionId=${encodeURIComponent(
-        sessionId
-      )}`;
-    } catch (requestError) {
-      setError(
-        requestError.message || "Unable to start interview session."
+      const activeSession = {
+        ...session,
+        sessionId,
+        role,
+        experienceLevel,
+        interviewType,
+        durationMinutes:
+          INTERVIEW_DURATION_MINUTES,
+      };
+
+      /*
+       * Save to both stores:
+       * - sessionStorage supports the current preparation tab.
+       * - localStorage is available to the newly opened interview tab.
+       */
+      sessionStorage.setItem(
+        "activeInterviewSession",
+        JSON.stringify(activeSession)
       );
+
+      localStorage.setItem(
+        "activeInterviewSession",
+        JSON.stringify(activeSession)
+      );
+
+      localStorage.setItem(
+        "activeInterviewSessionId",
+        String(sessionId)
+      );
+
+      const interviewUrl =
+        `${window.location.origin}` +
+        `/ai-interview-session/` +
+        `${encodeURIComponent(sessionId)}`;
+
+      /*
+       * Keep the preparation screen visible briefly so the user can
+       * clearly see that the new interview window has opened.
+       */
+      const elapsedLoadingTime =
+        Date.now() - popupOpenedAt;
+
+      const remainingLoadingTime =
+        Math.max(
+          0,
+          minimumLoadingTime - elapsedLoadingTime
+        );
+
+      if (remainingLoadingTime > 0) {
+        await new Promise((resolve) => {
+          window.setTimeout(
+            resolve,
+            remainingLoadingTime
+          );
+        });
+      }
+
+      if (
+        !interviewWindow ||
+        interviewWindow.closed
+      ) {
+        throw new Error(
+          "The interview window was closed before the session finished preparing."
+        );
+      }
+
+      /*
+       * Replace the loading screen with the real interview page.
+       */
+      interviewWindow.location.replace(
+        interviewUrl
+      );
+
+      try {
+        interviewWindow.focus();
+      } catch {
+        // Some browsers do not allow programmatic focus.
+      }
+    } catch (requestError) {
+      console.error(
+        "Start interview error:",
+        requestError
+      );
+
+      setError(
+        requestError.message ||
+          "Unable to start interview session."
+      );
+
+      if (
+        interviewWindow &&
+        !interviewWindow.closed
+      ) {
+        interviewWindow.document.open();
+        interviewWindow.document.write(`
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1.0"
+              />
+              <title>Interview Error</title>
+
+              <style>
+                body {
+                  min-height: 100vh;
+                  margin: 0;
+                  padding: 24px;
+
+                  display: grid;
+                  place-content: center;
+
+                  color: #17214a;
+                  background: #f4f7ff;
+
+                  font-family:
+                    Inter,
+                    Arial,
+                    sans-serif;
+
+                  text-align: center;
+                }
+
+                .error-card {
+                  width: min(460px, 100%);
+                  padding: 34px;
+
+                  background: #ffffff;
+                  border:
+                    1px solid
+                    rgba(206, 48, 78, 0.2);
+
+                  border-radius: 22px;
+
+                  box-shadow:
+                    0 24px 60px
+                    rgba(48, 65, 130, 0.14);
+                }
+
+                h1 {
+                  margin: 0 0 12px;
+                  color: #a91f3c;
+                }
+
+                p {
+                  color: #6e7797;
+                  line-height: 1.65;
+                }
+
+                button {
+                  min-height: 44px;
+                  margin-top: 12px;
+                  padding: 0 18px;
+
+                  color: #ffffff;
+                  background: #5e4cf0;
+
+                  border: 0;
+                  border-radius: 12px;
+
+                  font-weight: 800;
+                  cursor: pointer;
+                }
+              </style>
+            </head>
+
+            <body>
+              <div class="error-card">
+                <h1>Unable to Start Interview</h1>
+
+                <p>
+                  ${String(
+                    requestError.message ||
+                      "Unable to create the interview session."
+                  ).replace(/[<>&"]/g, "")}
+                </p>
+
+                <button onclick="window.close()">
+                  Close Window
+                </button>
+              </div>
+            </body>
+          </html>
+        `);
+
+        interviewWindow.document.close();
+      }
     } finally {
       setStarting(false);
     }
@@ -209,25 +670,25 @@ export default function AIInterviewPrepPage() {
           <h1>Practice. Prepare. Perform.</h1>
 
           <p>
-            Takshvi is your AI interviewer. Get role-based questions,
-            real-time feedback, communication analysis, and detailed
-            performance reports.
+            Join a continuous 30-minute AI interview with Takshvi.
+            Answer naturally, receive follow-up questions, and get a
+            detailed report after the session.
           </p>
 
           <div className="interview-feature-list">
             <div>
               <span><FaBrain /></span>
               <div>
-                <strong>Role-based Questions</strong>
-                <p>Questions tailored to your target role.</p>
+                <strong>Adaptive Role-Based Interview</strong>
+                <p>Questions change based on your role and answers.</p>
               </div>
             </div>
 
             <div>
               <span><HiOutlineChatAlt2 /></span>
               <div>
-                <strong>Real-time Feedback</strong>
-                <p>Instant AI feedback on every answer.</p>
+                <strong>Natural Follow-up Questions</strong>
+                <p>Takshvi continues the conversation like a recruiter.</p>
               </div>
             </div>
 
@@ -235,15 +696,15 @@ export default function AIInterviewPrepPage() {
               <span><FaMicrophone /></span>
               <div>
                 <strong>Voice &amp; Text Support</strong>
-                <p>Speak naturally or type your responses.</p>
+                <p>Speak naturally or type when voice is unavailable.</p>
               </div>
             </div>
 
             <div>
               <span><FaFileAlt /></span>
               <div>
-                <strong>Detailed Reports</strong>
-                <p>Track confidence, English, and technical growth.</p>
+                <strong>Detailed Performance Report</strong>
+                <p>Review technical, communication, and confidence scores.</p>
               </div>
             </div>
           </div>
@@ -264,9 +725,7 @@ export default function AIInterviewPrepPage() {
 
             <button
               type="button"
-              onClick={() =>
-                (window.location.href = "/interview-history")
-              }
+              onClick={() => window.location.assign("/interview-history")}
             >
               View History
               <FaArrowRight />
@@ -324,12 +783,19 @@ export default function AIInterviewPrepPage() {
         <article className="interview-setup-card">
           <div className="interview-section-heading">
             <div>
-              <span>Start a New Interview Practice</span>
-              <p>Configure a personalized session with Takshvi.</p>
+              <span>Start a 30-Minute AI Interview</span>
+              <p>
+                Takshvi will continuously ask role-based and follow-up
+                questions throughout the session.
+              </p>
             </div>
           </div>
 
-          {error && <div className="interview-error">{error}</div>}
+          {error && (
+            <div className="interview-error" role="alert">
+              {error}
+            </div>
+          )}
 
           <div className="interview-form-grid">
             <label>
@@ -371,13 +837,13 @@ export default function AIInterviewPrepPage() {
                 {
                   value: "Technical",
                   label: "Technical",
-                  text: "Coding and concepts",
+                  text: "Role concepts and scenarios",
                   icon: <FaBrain />,
                 },
                 {
                   value: "HR",
                   label: "HR",
-                  text: "Behavioral and HR",
+                  text: "Behavioral and workplace",
                   icon: <FaUsers />,
                 },
                 {
@@ -405,22 +871,14 @@ export default function AIInterviewPrepPage() {
             </div>
           </div>
 
-          <div className="interview-field-block">
-            <span className="interview-field-label">
-              Number of Questions
-            </span>
-
-            <div className="interview-question-count">
-              {[5, 10, 15, 20].map((count) => (
-                <button
-                  type="button"
-                  key={count}
-                  className={questionCount === count ? "active" : ""}
-                  onClick={() => setQuestionCount(count)}
-                >
-                  {count}
-                </button>
-              ))}
+          <div className="interview-duration-banner">
+            <FaClock />
+            <div>
+              <strong>30-minute continuous interview</strong>
+              <span>
+                Includes introductions, adaptive questions, follow-ups,
+                and final performance analysis.
+              </span>
             </div>
           </div>
 
@@ -430,7 +888,9 @@ export default function AIInterviewPrepPage() {
             disabled={starting}
             onClick={startInterview}
           >
-            {starting ? "Starting Session..." : "Start Practice Session"}
+            {starting
+              ? "Preparing Your Interview..."
+              : "Enter AI Interview Room"}
             <FaArrowRight />
           </button>
         </article>
@@ -451,7 +911,7 @@ export default function AIInterviewPrepPage() {
                   <strong>AI-Powered Interviewing</strong>
                   <p>
                     Takshvi understands your responses and gives
-                    meaningful feedback.
+                    meaningful follow-up questions.
                   </p>
                 </div>
               </div>
@@ -461,7 +921,8 @@ export default function AIInterviewPrepPage() {
                 <div>
                   <strong>Build Real Confidence</strong>
                   <p>
-                    Simulate real interview situations and reduce anxiety.
+                    Simulate a complete recruiter conversation for
+                    thirty minutes.
                   </p>
                 </div>
               </div>
@@ -479,9 +940,9 @@ export default function AIInterviewPrepPage() {
               <div>
                 <span><FaClock /></span>
                 <div>
-                  <strong>Available Anytime</strong>
+                  <strong>Real Interview Duration</strong>
                   <p>
-                    Practice whenever you want, as often as you need.
+                    Stay in one continuous interview until the timer ends.
                   </p>
                 </div>
               </div>
@@ -504,9 +965,7 @@ export default function AIInterviewPrepPage() {
       <section className="interview-quick-actions">
         <button
           type="button"
-          onClick={() =>
-            (window.location.href = "/interview-history")
-          }
+          onClick={() => window.location.assign("/interview-history")}
         >
           <FaHistory />
           <span>
@@ -518,9 +977,7 @@ export default function AIInterviewPrepPage() {
 
         <button
           type="button"
-          onClick={() =>
-            (window.location.href = "/question-bank")
-          }
+          onClick={() => window.location.assign("/question-bank")}
         >
           <FaFileAlt />
           <span>
@@ -532,9 +989,7 @@ export default function AIInterviewPrepPage() {
 
         <button
           type="button"
-          onClick={() =>
-            (window.location.href = "/interview-reports")
-          }
+          onClick={() => window.location.assign("/interview-reports")}
         >
           <FaChartLine />
           <span>

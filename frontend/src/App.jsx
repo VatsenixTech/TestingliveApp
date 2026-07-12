@@ -1,5 +1,6 @@
 import { calculateProfileStrength } from "./utils/profileStrength";
-
+import AIInterviewSessionPage from "./pages/AIInterviewSessionPage";
+import InterviewReportPage from "./pages/InterviewReportPage";
 import HowItWorksPage from "./pages/HowItWorksPage";
 import BlogPage from "./pages/BlogPage";
 import CareersPage from "./pages/CareersPage";
@@ -3787,6 +3788,19 @@ function App() {
     return withChat(page);
   };
 
+  /*
+   * Use this wrapper for the live interview and report pages.
+   * These pages open in a separate tab/window and should not
+   * include the dashboard sidebar, header, footer, or chat widget.
+   */
+  const renderFocusedUltimatePage = (page) => {
+    if (!isUltimate) {
+      return <ServicesPage />;
+    }
+
+    return page;
+  };
+
   /* =====================================================
      LEGAL PAGES
   ===================================================== */
@@ -4032,6 +4046,67 @@ function App() {
       <HiddenOpportunitiesPage />
     );
   }
+  /* =====================================================
+     AI INTERVIEW LIVE SESSION
+
+     The preparation page opens this route in a new browser
+     tab/window. Keep this before /ai-interview-prep.
+  ===================================================== */
+
+  if (path.startsWith("/ai-interview-session/")) {
+    const pathParts = path
+      .split("/")
+      .filter(Boolean);
+
+    const sessionId = decodeURIComponent(
+      pathParts[1] || ""
+    );
+
+    if (!sessionId) {
+      return renderUltimatePage(
+        <AIInterviewPrepPage />
+      );
+    }
+
+    return renderFocusedUltimatePage(
+      <AIInterviewSessionPage
+        sessionId={sessionId}
+      />
+    );
+  }
+
+  /* =====================================================
+     AI INTERVIEW REPORT
+
+     After the interview is completed, the same interview
+     tab/window is replaced with this report page.
+  ===================================================== */
+
+  if (path.startsWith("/interview-report/")) {
+    const pathParts = path
+      .split("/")
+      .filter(Boolean);
+
+    const sessionId = decodeURIComponent(
+      pathParts[1] || ""
+    );
+
+    if (!sessionId) {
+      return renderUltimatePage(
+        <AIInterviewPrepPage />
+      );
+    }
+
+    return renderFocusedUltimatePage(
+      <InterviewReportPage
+        sessionId={sessionId}
+      />
+    );
+  }
+
+  /* =====================================================
+     AI INTERVIEW PREPARATION
+  ===================================================== */
 
   if (path === "/ai-interview-prep") {
     return renderUltimatePage(
@@ -4039,10 +4114,16 @@ function App() {
     );
   }
 
+  /*
+   * Compatibility route for older links.
+   * Redirect the old URL to the preparation page.
+   */
   if (path === "/ai-interview") {
-    return renderUltimatePage(
-      <AIInterviewPrepPage />
+    window.location.replace(
+      "/ai-interview-prep"
     );
+
+    return null;
   }
 
   if (path === "/salary-predictor") {
@@ -4208,8 +4289,7 @@ function App() {
      FALLBACK
   ===================================================== */
 
-  return <LandingPage />;
-}
+  return <LandingPage />;}
 function Navbar({
   searchText = "",
   setSearchText = () => {},
