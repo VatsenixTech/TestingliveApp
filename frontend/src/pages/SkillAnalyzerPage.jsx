@@ -5,8 +5,6 @@ import {
   useState,
 } from "react";
 
-import { useNavigate } from "react-router-dom";
-
 import {
   FaArrowRight,
   FaBriefcase,
@@ -20,6 +18,7 @@ import {
   FaRedo,
   FaSearch,
   FaStar,
+  FaTrophy,
 } from "react-icons/fa";
 
 import {
@@ -27,31 +26,21 @@ import {
   HiOutlineTrendingUp,
 } from "react-icons/hi";
 
-
 import "./SkillAnalyzerPage.css";
 
-
-/* =========================================================
-   CONFIGURATION
-========================================================= */
-
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-
-
-/* =========================================================
-   AUTH HELPERS
-========================================================= */
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5000";
 
 function getToken() {
   return (
     localStorage.getItem("token") ||
     localStorage.getItem("authToken") ||
     localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("token") ||
     ""
   );
 }
-
 
 function getStoredUser() {
   try {
@@ -65,81 +54,87 @@ function getStoredUser() {
   }
 }
 
-
-/* =========================================================
-   API HELPER
-========================================================= */
+function getCandidateId(user = {}) {
+  return (
+    user.candidateId ||
+    user._id ||
+    user.id ||
+    null
+  );
+}
 
 async function apiRequest(path, options = {}) {
   const token = getToken();
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-
-    headers: {
-      ...(options.body instanceof FormData
-        ? {}
-        : {
-            "Content-Type": "application/json",
-          }),
-
-      ...(token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {}),
-
-      ...(options.headers || {}),
-    },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}${path}`,
+    {
+      ...options,
+      headers: {
+        ...(options.body instanceof FormData
+          ? {}
+          : {
+              "Content-Type":
+                "application/json",
+            }),
+        ...(token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : {}),
+        ...(options.headers || {}),
+      },
+    }
+  );
 
   const contentType =
     response.headers.get("content-type") || "";
 
-  const data = contentType.includes("application/json")
+  const data = contentType.includes(
+    "application/json"
+  )
     ? await response.json()
     : {
         message: await response.text(),
       };
 
   if (!response.ok) {
-    const requestError = new Error(
+    const error = new Error(
       data.message ||
         data.error ||
         `Request failed with status ${response.status}`
     );
 
-    requestError.status = response.status;
-    throw requestError;
+    error.status = response.status;
+    throw error;
   }
 
   return data;
 }
 
-
-/* =========================================================
-   NORMALIZATION HELPERS
-========================================================= */
-
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-
 function safeNumber(value) {
   const number = Number(value);
-
   return Number.isFinite(number) ? number : 0;
 }
 
-
-function clamp(value, minimum = 0, maximum = 100) {
+function clamp(
+  value,
+  minimum = 0,
+  maximum = 100
+) {
   return Math.min(
     maximum,
-    Math.max(minimum, safeNumber(value))
+    Math.max(
+      minimum,
+      safeNumber(value)
+    )
   );
 }
-
 
 function formatDate(value) {
   if (!value) {
@@ -152,30 +147,19 @@ function formatDate(value) {
     return "—";
   }
 
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  ).format(date);
 }
 
-
-function getCandidateName(user, profile) {
-  return (
-    profile?.name ||
-    profile?.fullName ||
-    user?.name ||
-    user?.fullName ||
-    "Candidate"
-  );
-}
-
-
-/* =========================================================
-   NORMALIZE BACKEND RESPONSE
-========================================================= */
-
-function normalizeAnalyzerData(payload = {}) {
+function normalizeAnalyzerData(
+  payload = {}
+) {
   const data =
     payload.data ||
     payload.analysis ||
@@ -183,6 +167,11 @@ function normalizeAnalyzerData(payload = {}) {
     payload;
 
   return {
+    id:
+      data._id ||
+      data.id ||
+      null,
+
     overallScore: clamp(
       data.overallScore ??
         data.score ??
@@ -202,7 +191,9 @@ function normalizeAnalyzerData(payload = {}) {
 
     skillsAnalyzed: safeNumber(
       data.skillsAnalyzed ??
-        safeArray(data.currentSkills).length
+        safeArray(
+          data.currentSkills
+        ).length
     ),
 
     strongSkills: safeArray(
@@ -243,27 +234,33 @@ function normalizeAnalyzerData(payload = {}) {
     lastAnalyzedAt:
       data.lastAnalyzedAt ||
       data.updatedAt ||
+      data.createdAt ||
       null,
   };
 }
 
-
-/* =========================================================
-   SCORE RING
-========================================================= */
-
-function ScoreRing({ value }) {
+function ScoreRing({
+  value,
+  compact = false,
+}) {
   const score = clamp(value);
 
   return (
     <div
-      className="sa-score-ring"
+      className={
+        compact
+          ? "sa-score-ring compact"
+          : "sa-score-ring"
+      }
       style={{
-        "--score": `${score * 3.6}deg`,
+        "--score":
+          `${score * 3.6}deg`,
       }}
     >
       <div className="sa-score-ring-inner">
-        <strong>{Math.round(score)}%</strong>
+        <strong>
+          {Math.round(score)}%
+        </strong>
 
         <span>
           {score >= 80
@@ -279,28 +276,19 @@ function ScoreRing({ value }) {
   );
 }
 
-
-/* =========================================================
-   PROGRESS BAR
-========================================================= */
-
 function ProgressBar({ value }) {
   return (
     <div className="sa-progress-track">
       <span
         className="sa-progress-fill"
         style={{
-          width: `${clamp(value)}%`,
+          width:
+            `${clamp(value)}%`,
         }}
       />
     </div>
   );
 }
-
-
-/* =========================================================
-   EMPTY STATE
-========================================================= */
 
 function EmptyState({
   icon,
@@ -314,176 +302,256 @@ function EmptyState({
       </div>
 
       <strong>{title}</strong>
-
       <p>{description}</p>
     </div>
   );
 }
 
+function MetricCard({
+  icon,
+  label,
+  value,
+  helper,
+  tone = "blue",
+}) {
+  return (
+    <article
+      className={`sa-kpi-card ${tone}`}
+    >
+      <div className="sa-kpi-icon">
+        {icon}
+      </div>
 
-/* =========================================================
-   MAIN PAGE
-========================================================= */
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+        {helper && (
+          <small>{helper}</small>
+        )}
+      </div>
+    </article>
+  );
+}
 
 export default function SkillAnalyzerPage() {
-  const navigate = useNavigate();
-
   const storedUser = useMemo(
     () => getStoredUser(),
     []
   );
 
-
-  /* =======================================================
-     STATE
-  ======================================================= */
-
-  const [profile, setProfile] = useState(null);
-
-  const [analysis, setAnalysis] = useState(
-    normalizeAnalyzerData()
+  const candidateId = useMemo(
+    () => getCandidateId(storedUser),
+    [storedUser]
   );
 
-  const [role, setRole] = useState("");
+  const [profile, setProfile] =
+    useState(null);
 
-  const [skillsInput, setSkillsInput] =
+  const [analysis, setAnalysis] =
+    useState(
+      normalizeAnalyzerData()
+    );
+
+  const [role, setRole] =
     useState("");
 
-  const [searchValue, setSearchValue] =
-    useState("");
+  const [
+    skillsInput,
+    setSkillsInput,
+  ] = useState("");
+
+  const [
+    searchValue,
+    setSearchValue,
+  ] = useState("");
 
   const [loading, setLoading] =
     useState(true);
 
-  const [analyzing, setAnalyzing] =
-    useState(false);
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
 
-  const [exporting, setExporting] =
-    useState(false);
+  const [
+    analyzing,
+    setAnalyzing,
+  ] = useState(false);
+
+  const [
+    exporting,
+    setExporting,
+  ] = useState(false);
 
   const [error, setError] =
     useState("");
 
+  const candidateName =
+    profile?.name ||
+    profile?.fullName ||
+    storedUser?.name ||
+    storedUser?.fullName ||
+    "Candidate";
 
-  /* =======================================================
-     COMPUTED USER DATA
-  ======================================================= */
+  const hasAnalysis =
+    analysis.skillsAnalyzed > 0 ||
+    analysis.overallScore > 0 ||
+    analysis.strongSkills.length > 0 ||
+    analysis.improvementSkills.length > 0;
 
-  const candidateName = getCandidateName(
-    storedUser,
-    profile
-  );
+  const candidateQuery = candidateId
+    ? `?candidateId=${encodeURIComponent(candidateId)}`
+    : "";
 
-  /* =======================================================
-     LOAD PROFILE
-  ======================================================= */
+  const loadProfile =
+    useCallback(async () => {
+      if (!candidateId) {
+        return;
+      }
 
-  const loadProfile = useCallback(async () => {
-    try {
-      const response = await apiRequest(
-        "/api/candidates/me"
-      );
+      try {
+        const response =
+          await apiRequest(
+            `/api/candidates/me${candidateQuery}`
+          );
 
-      const candidate =
-        response.candidate ||
-        response.data ||
-        response;
+        const candidate =
+          response.candidate ||
+          response.data ||
+          response;
 
-      setProfile(candidate);
+        setProfile(candidate);
 
-      setRole(
-        candidate.currentRole ||
-          candidate.role ||
-          candidate.jobTitle ||
-          ""
-      );
+        setRole(
+          candidate.currentRole ||
+            candidate.role ||
+            candidate.jobTitle ||
+            ""
+        );
 
-      const profileSkills = safeArray(
-        candidate.skills
-      )
-        .map((skill) =>
-          typeof skill === "string"
-            ? skill
-            : skill.name
-        )
-        .filter(Boolean);
+        const profileSkills =
+          safeArray(
+            candidate.skills
+          )
+            .map((skill) =>
+              typeof skill === "string"
+                ? skill
+                : skill.name
+            )
+            .filter(Boolean);
 
-      setSkillsInput(profileSkills.join(", "));
-    } catch (requestError) {
-      console.error(
-        "Profile loading error:",
-        requestError
-      );
-    }
-  }, []);
-
-
-  /* =======================================================
-     LOAD LATEST ANALYSIS
-  ======================================================= */
+        setSkillsInput(
+          profileSkills.join(", ")
+        );
+      } catch (requestError) {
+        console.error(
+          "Profile loading error:",
+          requestError
+        );
+      }
+    }, [candidateId, candidateQuery]);
 
   const loadLatestAnalysis =
     useCallback(async () => {
-      try {
-        const response = await apiRequest(
-          "/api/skill-analyzer/me"
+      if (!candidateId) {
+        throw new Error(
+          "Candidate ID is missing. Please log out and log in again."
         );
+      }
+
+      try {
+        const response =
+          await apiRequest(
+            `/api/skill-analyzer/me${candidateQuery}`
+          );
 
         setAnalysis(
-          normalizeAnalyzerData(response)
+          normalizeAnalyzerData(
+            response
+          )
         );
       } catch (requestError) {
-        /*
-          404 means candidate has never analyzed skills.
-          Do not show fake values.
-        */
-
-        if (requestError.status !== 404) {
-          console.error(
-            "Skill analyzer loading error:",
-            requestError
-          );
+        if (
+          requestError.status !== 404
+        ) {
+          throw requestError;
         }
+
+        setAnalysis(
+          normalizeAnalyzerData()
+        );
       }
-    }, []);
-
-
-  /* =======================================================
-     INITIAL PAGE LOAD
-  ======================================================= */
+    }, [candidateId, candidateQuery]);
 
   useEffect(() => {
     async function initializePage() {
       setLoading(true);
       setError("");
 
+      try {
+        if (!candidateId) {
+          throw new Error(
+            "Candidate ID is missing. Please log out and log in again."
+          );
+        }
+
+        await Promise.all([
+          loadProfile(),
+          loadLatestAnalysis(),
+        ]);
+      } catch (requestError) {
+        setError(
+          requestError.message
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    initializePage();
+  }, [
+    candidateId,
+    loadProfile,
+    loadLatestAnalysis,
+  ]);
+
+  async function handleRefresh() {
+    try {
+      setRefreshing(true);
+      setError("");
+
       await Promise.all([
         loadProfile(),
         loadLatestAnalysis(),
       ]);
-
-      setLoading(false);
+    } catch (requestError) {
+      setError(
+        requestError.message
+      );
+    } finally {
+      setRefreshing(false);
     }
-
-    initializePage();
-  }, [loadProfile, loadLatestAnalysis]);
-
-
-  /* =======================================================
-     ANALYZE SKILLS
-  ======================================================= */
+  }
 
   async function handleAnalyzeSkills() {
     const skills = skillsInput
       .split(",")
-      .map((skill) => skill.trim())
+      .map((skill) =>
+        skill.trim()
+      )
       .filter(Boolean);
+
+    if (!candidateId) {
+      setError(
+        "Candidate ID is missing. Please log out and log in again."
+      );
+      return;
+    }
 
     if (!role.trim()) {
       setError(
-        "Please enter or select your target role."
+        "Please enter your target role."
       );
-
       return;
     }
 
@@ -491,7 +559,6 @@ export default function SkillAnalyzerPage() {
       setError(
         "Please add at least one current skill."
       );
-
       return;
     }
 
@@ -499,61 +566,87 @@ export default function SkillAnalyzerPage() {
       setAnalyzing(true);
       setError("");
 
-      const response = await apiRequest(
-        "/api/skill-analyzer/analyze",
-        {
-          method: "POST",
-
-          body: JSON.stringify({
-            targetRole: role.trim(),
-            skills,
-          }),
-        }
-      );
+      const response =
+        await apiRequest(
+          "/api/skill-analyzer/analyze",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              candidateId,
+              targetRole:
+                role.trim(),
+              skills,
+            }),
+          }
+        );
 
       setAnalysis(
-        normalizeAnalyzerData(response)
+        normalizeAnalyzerData(
+          response
+        )
       );
     } catch (requestError) {
-      setError(requestError.message);
+      setError(
+        requestError.message
+      );
     } finally {
       setAnalyzing(false);
     }
   }
 
-
-  /* =======================================================
-     CREATE ROADMAP
-  ======================================================= */
-
   async function handleGenerateRoadmap() {
+    if (!candidateId) {
+      setError(
+        "Candidate ID is missing. Please log out and log in again."
+      );
+      return;
+    }
+
+    if (
+      analysis.improvementSkills
+        .length === 0
+    ) {
+      setError(
+        "Run a skill analysis first so the roadmap can use your real skill gaps."
+      );
+      return;
+    }
+
     try {
       setError("");
 
-      await apiRequest(
-        "/api/skill-analyzer/roadmap",
-        {
-          method: "POST",
+      const response =
+        await apiRequest(
+          "/api/skill-analyzer/roadmap",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              candidateId,
+              targetRole: role,
+              skillGaps:
+                analysis.improvementSkills,
+              analysisId:
+                analysis.id,
+            }),
+          }
+        );
 
-          body: JSON.stringify({
-            targetRole: role,
+      const roadmapId =
+        response.roadmap?._id ||
+        response.data?._id ||
+        response._id;
 
-            skillGaps:
-              analysis.improvementSkills,
-          }),
-        }
+      window.location.assign(
+        roadmapId
+          ? `/career-roadmap/${roadmapId}`
+          : "/career-roadmap"
       );
-
-      navigate("/career-roadmap");
     } catch (requestError) {
-      setError(requestError.message);
+      setError(
+        requestError.message
+      );
     }
   }
-
-
-  /* =======================================================
-     LEARN SKILL
-  ======================================================= */
 
   function handleLearnSkill(skill) {
     const skillName =
@@ -564,35 +657,64 @@ export default function SkillAnalyzerPage() {
           skill.title ||
           "Skill";
 
-    navigate(
+    window.location.assign(
       `/learning-path?skill=${encodeURIComponent(
         skillName
       )}`
     );
   }
 
-
-  /* =======================================================
-     VIEW MATCHING JOBS
-  ======================================================= */
-
-  function handleMatchingJobs(roleName) {
+  function handleMatchingJobs(
+    roleName
+  ) {
     const selectedRole =
       roleName || role;
 
-    navigate(
+    if (!selectedRole) {
+      setError(
+        "No matched role is available yet."
+      );
+      return;
+    }
+
+    window.location.assign(
       `/jobs?search=${encodeURIComponent(
         selectedRole
       )}`
     );
   }
 
+  function handleOpenHistory(item) {
+    const analysisId =
+      item?._id || item?.id;
 
-  /* =======================================================
-     EXPORT REPORT
-  ======================================================= */
+    if (!analysisId) {
+      setError(
+        "Analysis details are unavailable."
+      );
+      return;
+    }
+
+    window.location.assign(
+      `/skill-analyzer/history/${analysisId}`
+    );
+  }
 
   async function handleExportReport() {
+    if (!candidateId) {
+      setError(
+        "Candidate ID is missing. Please log out and log in again."
+      );
+      return;
+    }
+
+    if (!hasAnalysis) {
+      setError(
+        "Run a skill analysis before exporting a report."
+      );
+      return;
+    }
+
     try {
       setExporting(true);
       setError("");
@@ -600,20 +722,22 @@ export default function SkillAnalyzerPage() {
       const token = getToken();
 
       const response = await fetch(
-        `${API_BASE_URL}/api/skill-analyzer/report`,
+        `${API_BASE_URL}/api/skill-analyzer/report${candidateQuery}`,
         {
           headers: token
             ? {
-                Authorization: `Bearer ${token}`,
+                Authorization:
+                  `Bearer ${token}`,
               }
             : {},
         }
       );
 
       if (!response.ok) {
-        const result = await response
-          .json()
-          .catch(() => ({}));
+        const result =
+          await response
+            .json()
+            .catch(() => ({}));
 
         throw new Error(
           result.message ||
@@ -621,70 +745,74 @@ export default function SkillAnalyzerPage() {
         );
       }
 
-      const blob = await response.blob();
+      const blob =
+        await response.blob();
 
       const url =
-        window.URL.createObjectURL(blob);
+        window.URL.createObjectURL(
+          blob
+        );
 
       const anchor =
         document.createElement("a");
 
       anchor.href = url;
-
       anchor.download =
         "skill-analysis-report.pdf";
 
-      document.body.appendChild(anchor);
+      document.body.appendChild(
+        anchor
+      );
 
       anchor.click();
-
       anchor.remove();
 
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(
+        url
+      );
     } catch (requestError) {
-      setError(requestError.message);
+      setError(
+        requestError.message
+      );
     } finally {
       setExporting(false);
     }
   }
 
+  const filteredStrongSkills =
+    useMemo(() => {
+      const query =
+        searchValue
+          .trim()
+          .toLowerCase();
 
-  /* =======================================================
-     FILTERED SKILLS
-  ======================================================= */
-
-  const filteredStrongSkills = useMemo(() => {
-    const query =
-      searchValue.trim().toLowerCase();
-
-    if (!query) {
-      return analysis.strongSkills;
-    }
-
-    return analysis.strongSkills.filter(
-      (skill) => {
-        const name =
-          typeof skill === "string"
-            ? skill
-            : skill.name || skill.skill || "";
-
-        return name
-          .toLowerCase()
-          .includes(query);
+      if (!query) {
+        return analysis.strongSkills;
       }
-    );
-  }, [analysis.strongSkills, searchValue]);
 
+      return analysis.strongSkills.filter(
+        (skill) => {
+          const name =
+            typeof skill === "string"
+              ? skill
+              : skill.name ||
+                skill.skill ||
+                "";
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+          return name
+            .toLowerCase()
+            .includes(query);
+        }
+      );
+    }, [
+      analysis.strongSkills,
+      searchValue,
+    ]);
 
   if (loading) {
     return (
       <main className="sa-loading">
         <div className="sa-loader" />
-
         <strong>
           Loading your skill intelligence...
         </strong>
@@ -692,538 +820,470 @@ export default function SkillAnalyzerPage() {
     );
   }
 
-
-  /* =======================================================
-     RENDER
-  ======================================================= */
-
   return (
-    <main className="sa-main">
+    <div className="sa-page">
+      <main className="sa-main">
+        <section className="sa-dashboard-header">
+          <div>
+            <span className="sa-eyebrow">
+              <HiOutlineSparkles />
+              AI SKILL INTELLIGENCE
+            </span>
 
-          {/* ===============================================
-              PAGE HEADER
-          =============================================== */}
+            <h1>
+              Hello, {candidateName} 👋
+            </h1>
 
-          <section className="sa-page-header">
+            <p>
+              Your verified skill intelligence,
+              career readiness, and personalized
+              growth plan.
+            </p>
+          </div>
 
-            <div>
-              <span className="sa-eyebrow">
-                <HiOutlineSparkles />
-
-                AI SKILL INTELLIGENCE
-              </span>
-
-              <h1>
-                Skill Analyzer
-              </h1>
-
-              <p>
-                Understand your current strengths,
-                identify skill gaps and build a
-                personalized career roadmap from your
-                verified profile data.
-              </p>
-            </div>
-
-
-            <div className="sa-header-actions">
-
-              <div className="sa-search-box">
-                <FaSearch />
-
-                <input
-                  type="search"
-                  placeholder="Search analyzed skills..."
-                  value={searchValue}
-                  onChange={(event) =>
-                    setSearchValue(
-                      event.target.value
-                    )
-                  }
-                />
-              </div>
-
-
-              <button
-                type="button"
-                className="sa-secondary-button"
-                onClick={loadLatestAnalysis}
-              >
-                <FaRedo />
-
-                Refresh
-              </button>
-
-
-              <button
-                type="button"
-                className="sa-primary-button"
-                onClick={handleExportReport}
-                disabled={exporting}
-              >
-                <FaDownload />
-
-                {exporting
-                  ? "Exporting..."
-                  : "Export Report"}
-              </button>
-
-            </div>
-
-          </section>
-
-
-          {/* ===============================================
-              ERROR MESSAGE
-          =============================================== */}
-
-          {error && (
-            <div className="sa-error-banner">
-              <FaExclamationTriangle />
-
-              <span>{error}</span>
-
-              <button
-                type="button"
-                onClick={() => setError("")}
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-
-          {/* ===============================================
-              HERO
-          =============================================== */}
-
-          <section className="sa-hero-card">
-
-            <div className="sa-hero-score">
-
-              <ScoreRing
-                value={analysis.overallScore}
-              />
-
-            </div>
-
-
-            <div className="sa-hero-content">
-
-              <span className="sa-status-badge">
-                AI Career Intelligence
-              </span>
-
-              <h2>
-                {analysis.overallScore > 0
-                  ? `${candidateName}, here is your current career readiness.`
-                  : `${candidateName}, analyze your skills to unlock your career intelligence.`}
-              </h2>
-
-              <p>
-                {analysis.summary ||
-                  "Run your first analysis to compare your current skills with your target role requirements."}
-              </p>
-
-
-              <div className="sa-hero-buttons">
-
-                <button
-                  type="button"
-                  className="sa-primary-button"
-                  onClick={() =>
-                    document
-                      .getElementById(
-                        "skill-analysis-form"
-                      )
-                      ?.scrollIntoView({
-                        behavior: "smooth",
-                      })
-                  }
-                >
-                  Analyze Skill Gap
-
-                  <FaArrowRight />
-                </button>
-
-
-                <button
-                  type="button"
-                  className="sa-dark-button"
-                  onClick={handleGenerateRoadmap}
-                  disabled={
-                    analysis.improvementSkills
-                      .length === 0
-                  }
-                >
-                  AI Roadmap
-
-                  <FaArrowRight />
-                </button>
-
-              </div>
-
-
-              {analysis.lastAnalyzedAt && (
-                <span className="sa-last-updated">
-                  Last analyzed{" "}
-                  {formatDate(
-                    analysis.lastAnalyzedAt
-                  )}
-                </span>
-              )}
-
-            </div>
-
-
-            <div className="sa-hero-metrics">
-
-              <MetricCard
-                icon={<FaChartLine />}
-                label="Skills Analyzed"
-                value={analysis.skillsAnalyzed}
-              />
-
-              <MetricCard
-                icon={<FaCheckCircle />}
-                label="Strong Skills"
-                value={
-                  analysis.strongSkills.length
+          <div className="sa-header-actions">
+            <div className="sa-search-box">
+              <FaSearch />
+              <input
+                type="search"
+                placeholder="Search analyzed skills..."
+                value={searchValue}
+                onChange={(event) =>
+                  setSearchValue(
+                    event.target.value
+                  )
                 }
               />
-
-              <MetricCard
-                icon={
-                  <FaExclamationTriangle />
-                }
-                label="Skill Gaps"
-                value={
-                  analysis.improvementSkills
-                    .length
-                }
-              />
-
-              <MetricCard
-                icon={<HiOutlineTrendingUp />}
-                label="Career Match"
-                value={`${Math.round(
-                  analysis.overallScore
-                )}%`}
-              />
-
             </div>
 
-          </section>
-
-
-          {/* ===============================================
-              ANALYSIS WORKSPACE
-          =============================================== */}
-
-          <section className="sa-workspace-grid">
-
-            <article
-              id="skill-analysis-form"
-              className="sa-card sa-analysis-card"
+            <button
+              type="button"
+              className="sa-secondary-button"
+              onClick={handleRefresh}
+              disabled={refreshing}
             >
+              <FaRedo />
+              {refreshing
+                ? "Refreshing..."
+                : "Refresh"}
+            </button>
 
-              <div className="sa-card-header">
+            <button
+              type="button"
+              className="sa-primary-button"
+              onClick={handleExportReport}
+              disabled={
+                exporting ||
+                !hasAnalysis
+              }
+            >
+              <FaDownload />
+              {exporting
+                ? "Exporting..."
+                : "Export Report"}
+            </button>
+          </div>
+        </section>
 
-                <div>
-                  <span className="sa-card-kicker">
-                    CAREER PROFILE
-                  </span>
+        {error && (
+          <div className="sa-error-banner">
+            <FaExclamationTriangle />
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() =>
+                setError("")
+              }
+            >
+              ×
+            </button>
+          </div>
+        )}
 
-                  <h2>
-                    Analyze Your Current Skills
-                  </h2>
+        <section className="sa-kpi-grid">
+          <MetricCard
+            tone="purple"
+            icon={<FaChartLine />}
+            label="Overall Skill Score"
+            value={`${Math.round(
+              analysis.overallScore
+            )}%`}
+            helper={
+              analysis.status ||
+              "No analysis yet"
+            }
+          />
 
-                  <p>
-                    Compare your actual skills with
-                    your target role.
-                  </p>
-                </div>
+          <MetricCard
+            tone="blue"
+            icon={<FaGraduationCap />}
+            label="Skills Analyzed"
+            value={
+              analysis.skillsAnalyzed
+            }
+            helper={
+              analysis.lastAnalyzedAt
+                ? `Updated ${formatDate(
+                    analysis.lastAnalyzedAt
+                  )}`
+                : "Run your first analysis"
+            }
+          />
 
-                <FaGraduationCap />
+          <MetricCard
+            tone="green"
+            icon={<FaCheckCircle />}
+            label="Strong Skills"
+            value={
+              analysis.strongSkills
+                .length
+            }
+            helper="Verified strengths"
+          />
 
+          <MetricCard
+            tone="orange"
+            icon={
+              <FaExclamationTriangle />
+            }
+            label="Skill Gaps"
+            value={
+              analysis
+                .improvementSkills
+                .length
+            }
+            helper="Development priorities"
+          />
+
+          <MetricCard
+            tone="teal"
+            icon={<FaTrophy />}
+            label="Career Matches"
+            value={
+              analysis.careerMatches
+                .length
+            }
+            helper="Matched opportunities"
+          />
+        </section>
+
+        <section className="sa-analytics-grid">
+          <article className="sa-card sa-score-overview">
+            <div className="sa-card-header">
+              <div>
+                <span className="sa-card-kicker">
+                  SKILL SCORE OVERVIEW
+                </span>
+                <h2>Career Readiness</h2>
+                <p>
+                  Your latest verified skill analysis.
+                </p>
               </div>
+              <FaChartLine />
+            </div>
 
+            <div className="sa-score-overview-body">
+              <ScoreRing
+                value={
+                  analysis.overallScore
+                }
+              />
 
-              <label className="sa-field">
-                <span>Target Role</span>
-
-                <input
-                  type="text"
-                  value={role}
-                  placeholder="Example: Data Engineer"
-                  onChange={(event) =>
-                    setRole(event.target.value)
-                  }
-                />
-              </label>
-
-
-              <label className="sa-field">
-                <span>Current Skills</span>
-
-                <textarea
-                  rows="7"
-                  value={skillsInput}
-                  placeholder="Python, PySpark, SQL, AWS..."
-                  onChange={(event) =>
-                    setSkillsInput(
-                      event.target.value
-                    )
-                  }
-                />
-              </label>
-
-
-              <button
-                type="button"
-                className="sa-primary-button sa-full-button"
-                onClick={handleAnalyzeSkills}
-                disabled={analyzing}
-              >
-                <HiOutlineSparkles />
-
-                {analyzing
-                  ? "Analyzing your skills..."
-                  : "Analyze Skill Gap"}
-
-                {!analyzing && <FaArrowRight />}
-              </button>
-
-            </article>
-
-
-            {/* =============================================
-                SKILL BREAKDOWN
-            ============================================= */}
-
-            <article className="sa-card">
-
-              <div className="sa-card-header">
-
-                <div>
-                  <span className="sa-card-kicker">
-                    PERFORMANCE
-                  </span>
-
-                  <h2>
-                    Skill Strength Matrix
-                  </h2>
-
-                  <p>
-                    Scores calculated from your latest
-                    analysis.
-                  </p>
-                </div>
-
-                <FaChartLine />
-
-              </div>
-
-
-              {analysis.categoryBreakdown.length ===
-              0 ? (
-
-                <EmptyState
-                  icon={<FaChartLine />}
-                  title="No skill analysis yet"
-                  description="Analyze your skills to generate your real skill strength matrix."
-                />
-
-              ) : (
-
-                <div className="sa-breakdown-list">
-
-                  {analysis.categoryBreakdown.map(
+              <div className="sa-score-summary">
+                {analysis.categoryBreakdown
+                  .slice(0, 4)
+                  .map(
                     (item, index) => {
-
                       const name =
                         item.name ||
                         item.skill ||
                         item.category ||
-                        "Skill";
+                        `Category ${index + 1}`;
 
-                      const score = clamp(
+                      const score =
+                        clamp(
+                          item.score ??
+                            item.value ??
+                            item.percentage
+                        );
+
+                      return (
+                        <div
+                          key={`${name}-${index}`}
+                          className="sa-score-summary-item"
+                        >
+                          <div>
+                            <strong>{name}</strong>
+                            <span>
+                              {Math.round(score)}%
+                            </span>
+                          </div>
+                          <ProgressBar
+                            value={score}
+                          />
+                        </div>
+                      );
+                    }
+                  )}
+
+                {analysis.categoryBreakdown
+                  .length === 0 && (
+                  <EmptyState
+                    icon={<FaChartLine />}
+                    title="No score breakdown yet"
+                    description="Run an analysis to generate category-level scores."
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="sa-ai-summary">
+              <HiOutlineSparkles />
+              <p>
+                {analysis.summary ||
+                  "Your AI-generated career insight will appear here after the first analysis."}
+              </p>
+            </div>
+          </article>
+
+          <article className="sa-card sa-category-card">
+            <div className="sa-card-header">
+              <div>
+                <span className="sa-card-kicker">
+                  SKILL CATEGORY BREAKDOWN
+                </span>
+                <h2>Strength Matrix</h2>
+                <p>
+                  Performance by skill category.
+                </p>
+              </div>
+              <HiOutlineTrendingUp />
+            </div>
+
+            {analysis.categoryBreakdown
+              .length === 0 ? (
+              <EmptyState
+                icon={
+                  <HiOutlineTrendingUp />
+                }
+                title="No category data yet"
+                description="Complete your first skill analysis to unlock the strength matrix."
+              />
+            ) : (
+              <div className="sa-category-list">
+                {analysis.categoryBreakdown.map(
+                  (item, index) => {
+                    const name =
+                      item.name ||
+                      item.skill ||
+                      item.category ||
+                      "Skill Category";
+
+                    const score =
+                      clamp(
                         item.score ??
                           item.value ??
                           item.percentage
                       );
 
-                      return (
-                        <div
-                          className="sa-breakdown-item"
-                          key={
-                            item._id ||
-                            `${name}-${index}`
-                          }
-                        >
-
-                          <div>
-                            <strong>{name}</strong>
-
-                            <span>
-                              {Math.round(score)}%
-                            </span>
-                          </div>
-
-                          <ProgressBar
-                            value={score}
-                          />
-
+                    return (
+                      <div
+                        className="sa-category-row"
+                        key={
+                          item._id ||
+                          `${name}-${index}`
+                        }
+                      >
+                        <div>
+                          <strong>{name}</strong>
+                          <span>
+                            {Math.round(score)}%
+                          </span>
                         </div>
-                      );
-                    }
-                  )}
+                        <ProgressBar
+                          value={score}
+                        />
+                      </div>
+                    );
+                  }
+                )}
+              </div>
+            )}
+          </article>
 
-                </div>
-
-              )}
-
-            </article>
-
-
-            {/* =============================================
-                TOP STRENGTHS
-            ============================================= */}
-
+          <div className="sa-side-stack">
             <article className="sa-card">
-
-              <div className="sa-card-header">
-
+              <div className="sa-card-header compact">
                 <div>
                   <span className="sa-card-kicker">
                     VERIFIED STRENGTHS
                   </span>
-
-                  <h2>
-                    Top Strengths
-                  </h2>
-
-                  <p>
-                    Skills where your profile shows
-                    stronger readiness.
-                  </p>
+                  <h2>Top Strengths</h2>
                 </div>
-
                 <FaStar />
-
               </div>
 
-
-              {filteredStrongSkills.length === 0 ? (
-
+              {filteredStrongSkills
+                .length === 0 ? (
                 <EmptyState
                   icon={<FaStar />}
                   title="No strengths available"
-                  description="Complete an analysis to identify your strongest skills."
+                  description="Run an analysis to identify verified strengths."
                 />
-
               ) : (
-
                 <div className="sa-strength-list">
+                  {filteredStrongSkills
+                    .slice(0, 5)
+                    .map(
+                      (
+                        skill,
+                        index
+                      ) => {
+                        const name =
+                          typeof skill === "string"
+                            ? skill
+                            : skill.name ||
+                              skill.skill ||
+                              "Skill";
 
-                  {filteredStrongSkills.map(
-                    (skill, index) => {
+                        const score =
+                          typeof skill === "object"
+                            ? clamp(
+                                skill.score ??
+                                  skill.value
+                              )
+                            : null;
 
-                      const name =
-                        typeof skill === "string"
-                          ? skill
-                          : skill.name ||
-                            skill.skill;
+                        return (
+                          <button
+                            type="button"
+                            className="sa-strength-row"
+                            key={`${name}-${index}`}
+                            onClick={() =>
+                              handleLearnSkill(skill)
+                            }
+                          >
+                            <span className="sa-strength-icon">
+                              <FaCheckCircle />
+                            </span>
 
-                      const score =
-                        typeof skill === "object"
-                          ? clamp(
-                              skill.score ??
-                                skill.value
-                            )
-                          : null;
+                            <div>
+                              <strong>{name}</strong>
+                              <small>
+                                {score !== null
+                                  ? `${Math.round(score)}% proficiency`
+                                  : "Verified skill"}
+                              </small>
+                            </div>
 
-                      return (
-                        <div
-                          className="sa-strength-item"
-                          key={`${name}-${index}`}
-                        >
-
-                          <div className="sa-strength-icon">
-                            <FaCheckCircle />
-                          </div>
-
-                          <div>
-                            <strong>{name}</strong>
-
-                            {score !== null && (
-                              <span>
-                                {Math.round(score)}%
-                                proficiency
-                              </span>
-                            )}
-                          </div>
-
-                        </div>
-                      );
-                    }
-                  )}
-
+                            <FaArrowRight />
+                          </button>
+                        );
+                      }
+                    )}
                 </div>
-
               )}
-
             </article>
 
-          </section>
-
-
-          {/* ===============================================
-              RECOMMENDATIONS + SKILL GAPS
-          =============================================== */}
-
-          <section className="sa-insight-grid">
-
             <article className="sa-card">
-
-              <div className="sa-card-header">
-
+              <div className="sa-card-header compact">
                 <div>
                   <span className="sa-card-kicker">
-                    AI ROADMAP
+                    HISTORY
                   </span>
-
-                  <h2>
-                    Recommended Next Steps
-                  </h2>
-
-                  <p>
-                    Prioritized learning actions from
-                    your analysis.
-                  </p>
+                  <h2>Recent Analysis</h2>
                 </div>
-
-                <FaLightbulb />
-
+                <FaFileAlt />
               </div>
 
-
-              {analysis.recommendations.length ===
-              0 ? (
-
+              {analysis.recentAnalyses
+                .length === 0 ? (
                 <EmptyState
-                  icon={<FaLightbulb />}
-                  title="No recommendations yet"
-                  description="Run an analysis to generate personalized career recommendations."
+                  icon={<FaFileAlt />}
+                  title="No previous analyses"
+                  description="Your completed assessments will appear here."
                 />
-
               ) : (
+                <div className="sa-history-list">
+                  {analysis.recentAnalyses
+                    .slice(0, 3)
+                    .map(
+                      (
+                        item,
+                        index
+                      ) => (
+                        <button
+                          type="button"
+                          className="sa-history-row"
+                          key={
+                            item._id ||
+                            item.id ||
+                            index
+                          }
+                          onClick={() =>
+                            handleOpenHistory(item)
+                          }
+                        >
+                          <div>
+                            <strong>
+                              {item.targetRole ||
+                                item.role ||
+                                "Skill Analysis"}
+                            </strong>
+                            <span>
+                              {formatDate(
+                                item.createdAt ||
+                                  item.date
+                              )}
+                            </span>
+                          </div>
 
-                <div className="sa-recommendation-list">
+                          <ScoreRing
+                            compact
+                            value={
+                              item.overallScore ??
+                              item.score
+                            }
+                          />
+                        </button>
+                      )
+                    )}
+                </div>
+              )}
+            </article>
+          </div>
+        </section>
 
-                  {analysis.recommendations.map(
-                    (item, index) => {
+        <section className="sa-lower-grid">
+          <article className="sa-card">
+            <div className="sa-card-header compact">
+              <div>
+                <span className="sa-card-kicker">
+                  AI ROADMAP
+                </span>
+                <h2>
+                  Recommended Next Steps
+                </h2>
+              </div>
+              <FaLightbulb />
+            </div>
 
+            {analysis.recommendations
+              .length === 0 ? (
+              <EmptyState
+                icon={<FaLightbulb />}
+                title="No recommendations yet"
+                description="Run an analysis to generate personalized learning actions."
+              />
+            ) : (
+              <div className="sa-recommendation-list">
+                {analysis.recommendations
+                  .slice(0, 4)
+                  .map(
+                    (
+                      item,
+                      index
+                    ) => {
                       const title =
                         item.title ||
                         item.skill ||
@@ -1233,7 +1293,7 @@ export default function SkillAnalyzerPage() {
                       return (
                         <button
                           type="button"
-                          className="sa-recommendation-card"
+                          className="sa-recommendation-row"
                           key={
                             item._id ||
                             `${title}-${index}`
@@ -1242,400 +1302,206 @@ export default function SkillAnalyzerPage() {
                             handleLearnSkill(item)
                           }
                         >
-
-                          <div className="sa-recommendation-number">
-                            {String(
-                              index + 1
-                            ).padStart(2, "0")}
-                          </div>
+                          <span className="sa-recommendation-number">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
 
                           <div>
                             <strong>{title}</strong>
-
                             <p>
                               {item.description ||
                                 item.reason ||
                                 "Open your personalized learning path."}
                             </p>
-
-                            <span>
-                              {item.priority ||
-                                "Recommended"}
-                            </span>
                           </div>
 
-                          <FaArrowRight />
+                          <span className="sa-priority-badge">
+                            {item.priority ||
+                              "Recommended"}
+                          </span>
 
+                          <FaArrowRight />
                         </button>
                       );
                     }
                   )}
-
-                </div>
-
-              )}
-
-            </article>
-
-
-            <article className="sa-card">
-
-              <div className="sa-card-header">
-
-                <div>
-                  <span className="sa-card-kicker">
-                    OPPORTUNITY GAPS
-                  </span>
-
-                  <h2>
-                    Skill Gap Analysis
-                  </h2>
-
-                  <p>
-                    Missing or developing skills for
-                    your target role.
-                  </p>
-                </div>
-
-                <FaExclamationTriangle />
-
               </div>
+            )}
+          </article>
 
-
-              {analysis.improvementSkills.length ===
-              0 ? (
-
-                <EmptyState
-                  icon={<FaExclamationTriangle />}
-                  title="No skill gaps available"
-                  description="Analyze your current skills to discover your real development opportunities."
-                />
-
-              ) : (
-
-                <div className="sa-gap-list">
-
-                  {analysis.improvementSkills.map(
-                    (skill, index) => {
-
-                      const name =
-                        typeof skill === "string"
-                          ? skill
-                          : skill.name ||
-                            skill.skill;
-
-                      const priority =
-                        typeof skill === "object"
-                          ? skill.priority ||
-                            skill.level ||
-                            "Required"
-                          : "Required";
-
-                      return (
-                        <div
-                          className="sa-gap-item"
-                          key={`${name}-${index}`}
-                        >
-
-                          <div>
-                            <strong>{name}</strong>
-
-                            <span>{priority}</span>
-                          </div>
-
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleLearnSkill(skill)
-                            }
-                          >
-                            Learn
-
-                            <FaArrowRight />
-                          </button>
-
-                        </div>
-                      );
-                    }
-                  )}
-
-                </div>
-
-              )}
-
-            </article>
-
-          </section>
-
-
-          {/* ===============================================
-              CAREER MATCHES
-          =============================================== */}
-
-          <section className="sa-bottom-grid">
-
-            <article className="sa-card">
-
-              <div className="sa-card-header">
-
-                <div>
-                  <span className="sa-card-kicker">
-                    CAREER OPPORTUNITIES
-                  </span>
-
-                  <h2>
-                    Career Matches
-                  </h2>
-
-                  <p>
-                    Roles aligned with your current
-                    skill profile.
-                  </p>
-                </div>
-
-                <FaBriefcase />
-
+          <article className="sa-card">
+            <div className="sa-card-header compact">
+              <div>
+                <span className="sa-card-kicker">
+                  CAREER OPPORTUNITIES
+                </span>
+                <h2>Career Matches</h2>
               </div>
+              <FaBriefcase />
+            </div>
 
-
-              {analysis.careerMatches.length === 0 ? (
-
-                <EmptyState
-                  icon={<FaBriefcase />}
-                  title="No career matches yet"
-                  description="Career matches will appear after your skill analysis."
-                />
-
-              ) : (
-
-                <div className="sa-career-list">
-
-                  {analysis.careerMatches.map(
-                    (match, index) => {
-
+            {analysis.careerMatches
+              .length === 0 ? (
+              <EmptyState
+                icon={<FaBriefcase />}
+                title="No career matches yet"
+                description="Career matches will appear after your skill analysis."
+              />
+            ) : (
+              <div className="sa-career-list">
+                {analysis.careerMatches
+                  .slice(0, 5)
+                  .map(
+                    (
+                      match,
+                      index
+                    ) => {
                       const roleName =
                         match.role ||
                         match.name ||
                         match.title ||
                         "Career Role";
 
-                      const score = clamp(
-                        match.score ??
-                          match.matchPercentage
-                      );
+                      const score =
+                        clamp(
+                          match.score ??
+                            match.matchPercentage
+                        );
 
                       return (
                         <button
                           type="button"
-                          className="sa-career-card"
+                          className="sa-career-row"
                           key={
                             match._id ||
                             `${roleName}-${index}`
                           }
                           onClick={() =>
-                            handleMatchingJobs(
-                              roleName
-                            )
+                            handleMatchingJobs(roleName)
                           }
                         >
+                          <span className="sa-career-icon">
+                            <FaBriefcase />
+                          </span>
 
                           <div>
-                            <strong>
-                              {roleName}
-                            </strong>
-
-                            <span>
-                              {Math.round(score)}%
-                              match
-                            </span>
+                            <strong>{roleName}</strong>
+                            <small>
+                              View matching jobs
+                            </small>
                           </div>
 
-                          <ProgressBar
-                            value={score}
-                          />
-
-                          <small>
-                            View matching jobs
-                            <FaArrowRight />
-                          </small>
-
+                          <span className="sa-match-badge">
+                            {Math.round(score)}% Match
+                          </span>
                         </button>
                       );
                     }
                   )}
-
-                </div>
-
-              )}
-
-            </article>
-
-
-            {/* =============================================
-                AI INSIGHT
-            ============================================= */}
-
-            <article className="sa-card sa-ai-insight-card">
-
-              <div className="sa-ai-icon">
-                <HiOutlineSparkles />
               </div>
+            )}
+          </article>
+        </section>
 
-              <span className="sa-card-kicker">
-                AI CAREER INSIGHT
-              </span>
+        <section
+          id="skill-analysis-form"
+          className="sa-card sa-analysis-panel"
+        >
+          <div className="sa-analysis-copy">
+            <span className="sa-card-kicker">
+              RUN NEW ANALYSIS
+            </span>
 
-              <h2>
-                Personalized Guidance
-              </h2>
+            <h2>
+              Analyze your verified profile
+              against a target role
+            </h2>
 
-              <p>
-                {analysis.summary ||
-                  "Complete your first analysis to receive personalized AI career guidance based on your actual profile and skills."}
-              </p>
+            <p>
+              Enter your real current skills.
+              Results are calculated from
+              role requirements stored in your
+              backend.
+            </p>
+          </div>
 
-
-              <button
-                type="button"
-                className="sa-primary-button"
-                onClick={handleGenerateRoadmap}
-                disabled={
-                  analysis.improvementSkills
-                    .length === 0
+          <div className="sa-analysis-fields">
+            <label className="sa-field">
+              <span>Target Role</span>
+              <input
+                type="text"
+                value={role}
+                placeholder="Example: Data Engineer"
+                onChange={(event) =>
+                  setRole(
+                    event.target.value
+                  )
                 }
-              >
-                Build My Roadmap
+              />
+            </label>
 
+            <label className="sa-field">
+              <span>Current Skills</span>
+              <textarea
+                rows="4"
+                value={skillsInput}
+                placeholder="Python, PySpark, SQL, AWS..."
+                onChange={(event) =>
+                  setSkillsInput(
+                    event.target.value
+                  )
+                }
+              />
+            </label>
+
+            <button
+              type="button"
+              className="sa-primary-button sa-full-button"
+              onClick={handleAnalyzeSkills}
+              disabled={analyzing}
+            >
+              <HiOutlineSparkles />
+
+              {analyzing
+                ? "Analyzing your skills..."
+                : "Run Skill Analysis"}
+
+              {!analyzing && (
                 <FaArrowRight />
-              </button>
-
-            </article>
-
-
-            {/* =============================================
-                RECENT ANALYSES
-            ============================================= */}
-
-            <article className="sa-card">
-
-              <div className="sa-card-header">
-
-                <div>
-                  <span className="sa-card-kicker">
-                    HISTORY
-                  </span>
-
-                  <h2>
-                    Recent Analyses
-                  </h2>
-
-                  <p>
-                    Review your previous skill
-                    assessments.
-                  </p>
-                </div>
-
-                <FaFileAlt />
-
-              </div>
-
-
-              {analysis.recentAnalyses.length === 0 ? (
-
-                <EmptyState
-                  icon={<FaFileAlt />}
-                  title="No previous analyses"
-                  description="Your completed skill analyses will appear here."
-                />
-
-              ) : (
-
-                <div className="sa-history-list">
-
-                  {analysis.recentAnalyses
-                    .slice(0, 5)
-                    .map((item, index) => (
-
-                      <button
-                        type="button"
-                        className="sa-history-item"
-                        key={
-                          item._id ||
-                          index
-                        }
-                        onClick={() =>
-                          navigate(
-                            `/skill-analyzer/history/${
-                              item._id
-                            }`
-                          )
-                        }
-                      >
-
-                        <div>
-                          <strong>
-                            {item.targetRole ||
-                              item.role ||
-                              "Skill Analysis"}
-                          </strong>
-
-                          <span>
-                            {formatDate(
-                              item.createdAt ||
-                                item.date
-                            )}
-                          </span>
-                        </div>
-
-                        <strong>
-                          {Math.round(
-                            clamp(
-                              item.overallScore ??
-                                item.score
-                            )
-                          )}
-                          %
-                        </strong>
-
-                      </button>
-
-                    ))}
-
-                </div>
-
               )}
+            </button>
+          </div>
+        </section>
 
-            </article>
+        <section className="sa-roadmap-banner">
+          <div>
+            <HiOutlineSparkles />
 
-          </section>
+            <div>
+              <span>
+                AI CAREER ROADMAP
+              </span>
+              <strong>
+                Build a personalized plan
+                from your verified skill gaps
+              </strong>
+            </div>
+          </div>
 
-    </main>
+          <button
+            type="button"
+            onClick={handleGenerateRoadmap}
+            disabled={
+              analysis
+                .improvementSkills
+                .length === 0
+            }
+          >
+            Generate Roadmap
+            <FaArrowRight />
+          </button>
+        </section>
+      </main>
+    </div>
   );
 }
-
-
-/* =========================================================
-   METRIC CARD
-========================================================= */
-
-function MetricCard({
-  icon,
-  label,
-  value,
-}) {
-  return (
-    <div className="sa-metric-card">
-
-      <div className="sa-metric-icon">
-        {icon}
-      </div>
-
-      <div>
-        <span>{label}</span>
-
-        <strong>{value}</strong>
-      </div>
-
-    </div>
-  );}

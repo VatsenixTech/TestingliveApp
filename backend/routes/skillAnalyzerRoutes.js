@@ -1,207 +1,171 @@
 const express = require("express");
-const SkillAnalysis = require("../models/SkillAnalysis");
 
 const router = express.Router();
 
-function normalizeSkills(text = "") {
-  return text
-    .split(/,|\n/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+const {
+  testSkillAnalyzer,
 
-function analyzeSkills(skills, targetRole) {
-  const roleMap = {
-    "Data Engineer": [
-      "Python",
-      "SQL",
-      "PySpark",
-      "Spark",
-      "Airflow",
-      "Kafka",
-      "AWS",
-      "Azure",
-      "Databricks",
-      "Snowflake",
-      "ETL",
-      "Data Modeling",
-      "Docker",
-    ],
-    "Frontend Developer": [
-      "HTML",
-      "CSS",
-      "JavaScript",
-      "React",
-      "Redux",
-      "TypeScript",
-      "Tailwind",
-      "API Integration",
-      "Git",
-    ],
-    "Backend Developer": [
-      "Node.js",
-      "Express",
-      "MongoDB",
-      "SQL",
-      "REST API",
-      "Authentication",
-      "Docker",
-      "AWS",
-    ],
-    DevOps: [
-      "Linux",
-      "Docker",
-      "Kubernetes",
-      "CI/CD",
-      "AWS",
-      "Terraform",
-      "Monitoring",
-      "GitHub Actions",
-    ],
-    "Data Scientist": [
-      "Python",
-      "Pandas",
-      "NumPy",
-      "Machine Learning",
-      "Model Evaluation",
-      "Feature Engineering",
-      "SQL",
-    ],
-  };
+  listRoles,
 
-  const required = roleMap[targetRole] || roleMap["Data Engineer"];
+  getRoleSuggestions,
 
-  const lowerSkills = skills.map((s) => s.toLowerCase());
+  getMyAnalysis,
 
-  const strongSkills = required.filter((skill) =>
-    lowerSkills.some((s) => s.includes(skill.toLowerCase()))
-  );
+  analyzeSkills,
 
-  const missingSkills = required.filter(
-    (skill) =>
-      !lowerSkills.some((s) => s.includes(skill.toLowerCase()))
-  );
+  createRoadmap,
 
-  const overallScore = Math.round(
-    (strongSkills.length / required.length) * 100
-  );
+  exportReport,
+} = require(
+  "../controllers/skillAnalyzerController"
+);
 
-  const improvementSkills = missingSkills.slice(0, 5);
+/* =========================================================
+   TEST
 
-  const roadmap = improvementSkills.map((skill, index) => ({
-    title: skill,
-    level: index < 2 ? "High Priority" : "Medium Priority",
-    duration: index < 2 ? "2 weeks" : "1 week",
-    priority: index < 2 ? "High" : "Medium",
-  }));
+   GET /api/skill-analyzer/test
+========================================================= */
 
-  const careerMatches = [
-    {
-      role: targetRole,
-      match: overallScore,
-    },
-    {
-      role: `Junior ${targetRole}`,
-      match: Math.min(overallScore + 12, 98),
-    },
-    {
-      role: `Associate ${targetRole}`,
-      match: Math.min(overallScore + 7, 95),
-    },
-    {
-      role: `Senior ${targetRole}`,
-      match: Math.max(overallScore - 18, 35),
-    },
-  ];
+router.get(
+  "/test",
+  testSkillAnalyzer
+);
 
-  return {
-    overallScore,
-    strongSkills,
-    missingSkills,
-    improvementSkills,
-    roadmap,
-    careerMatches,
-    aiInsights:
-      overallScore >= 80
-        ? `You are strongly aligned for ${targetRole}. Focus on advanced project depth and production-level experience.`
-        : overallScore >= 55
-        ? `You have a good base for ${targetRole}. Improve the missing skills and build 2 real projects.`
-        : `You need a structured roadmap for ${targetRole}. Start with fundamentals, then build practical projects.`,
-  };
-}
+/* =========================================================
+   ROLE DISCOVERY
 
-router.post("/analyze", async (req, res) => {
-  try {
-    const { candidateId, candidateName, targetRole, currentSkills } = req.body;
+   IMPORTANT:
+   Keep these routes BEFORE /candidate/:candidateId
+   and other dynamic parameter routes.
+========================================================= */
 
-    if (!candidateId) {
-      return res.status(400).json({ message: "Candidate ID is required" });
-    }
+/*
+GET /api/skill-analyzer/roles
 
-    if (!currentSkills) {
-      return res.status(400).json({ message: "Current skills are required" });
-    }
+Examples:
 
-    const skills = Array.isArray(currentSkills)
-      ? currentSkills
-      : normalizeSkills(currentSkills);
+/roles
 
-    const result = analyzeSkills(skills, targetRole || "Data Engineer");
+/roles?search=finance
 
-    const saved = await SkillAnalysis.create({
-      candidateId,
-      candidateName,
-      targetRole,
-      currentSkills: skills,
-      ...result,
-    });
+/roles?department=Human Resources
 
-    res.status(200).json({
-      success: true,
-      analysisId: saved._id,
-      ...result,
-      saved,
-    });
-  } catch (error) {
-    console.error("SKILL ANALYZER ERROR:", error);
-    res.status(500).json({
-      message: "Skill analysis failed",
-      error: error.message,
-    });
-  }
-});
+/roles?search=data&page=1&limit=20
+*/
 
-router.get("/latest/:candidateId", async (req, res) => {
-  try {
-    const latest = await SkillAnalysis.findOne({
-      candidateId: req.params.candidateId,
-    }).sort({ createdAt: -1 });
+router.get(
+  "/roles",
+  listRoles
+);
 
-    res.json({ success: true, latest });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+/*
+GET /api/skill-analyzer/roles/suggestions?search=data
+*/
 
-router.get("/history/:candidateId", async (req, res) => {
-  try {
-    const history = await SkillAnalysis.find({
-      candidateId: req.params.candidateId,
-    }).sort({ createdAt: -1 });
+router.get(
+  "/roles/suggestions",
+  getRoleSuggestions
+);
 
-    res.json({ success: true, history });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+/* =========================================================
+   CURRENT CANDIDATE ANALYSIS
 
-router.delete("/:analysisId", async (req, res) => {
-  try {
-    await SkillAnalysis.findByIdAndDelete(req.params.analysisId);
-    res.json({ success: true, message: "Analysis deleted" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+   Works with:
+
+   req.user
+
+   OR
+
+   ?candidateId=...
+========================================================= */
+
+router.get(
+  "/me",
+  getMyAnalysis
+);
+
+/* =========================================================
+   CANDIDATE ANALYSIS BY ID
+
+   GET:
+
+   /api/skill-analyzer/candidate/:candidateId
+========================================================= */
+
+router.get(
+  "/candidate/:candidateId",
+  getMyAnalysis
+);
+
+/* =========================================================
+   RUN SKILL ANALYSIS
+
+   POST /api/skill-analyzer/analyze
+
+   BODY:
+
+   {
+     "candidateId": "...",
+
+     "targetRole": "Data Engineer",
+
+     "skills": [
+       "Python",
+       "PySpark",
+       "SQL",
+       "AWS"
+     ]
+   }
+========================================================= */
+
+router.post(
+  "/analyze",
+  analyzeSkills
+);
+
+/* =========================================================
+   CREATE CAREER ROADMAP
+
+   POST /api/skill-analyzer/roadmap
+
+   BODY:
+
+   {
+     "candidateId": "...",
+
+     "analysisId": "..."
+   }
+========================================================= */
+
+router.post(
+  "/roadmap",
+  createRoadmap
+);
+
+/* =========================================================
+   EXPORT LATEST REPORT
+
+   GET:
+
+   /api/skill-analyzer/report?candidateId=...
+========================================================= */
+
+router.get(
+  "/report",
+  exportReport
+);
+
+/* =========================================================
+   EXPORT SPECIFIC ANALYSIS
+
+   GET:
+
+   /api/skill-analyzer/export/:analysisId?candidateId=...
+========================================================= */
+
+router.get(
+  "/export/:analysisId",
+  exportReport
+);
 
 module.exports = router;

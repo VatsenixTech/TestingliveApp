@@ -5,9 +5,32 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 
-require("./config/firebaseAdmin");
+/* =========================================================
+   OPTIONAL FIREBASE ADMIN
+========================================================= */
+
+try {
+  require("./config/firebaseAdmin");
+
+  console.log(
+    "✅ Firebase Admin configuration loaded"
+  );
+} catch (error) {
+  console.warn(
+    "⚠️ Firebase Admin configuration not loaded:",
+    error.message
+  );
+}
+
+/* =========================================================
+   PASSPORT
+========================================================= */
 
 const passport = require("./config/passport");
+
+/* =========================================================
+   EXPRESS APP
+========================================================= */
 
 const app = express();
 
@@ -15,28 +38,87 @@ const app = express();
    ROUTE IMPORTS
 ========================================================= */
 
-const hrRoutes = require("./routes/hrRoutes");
-const helpRoutes = require("./routes/helpRoutes");
-const aiRoutes = require("./routes/aiRoutes");
-const candidateRoutes = require("./routes/candidates");
-const authRoutes = require("./routes/auth");
-const jobRoutes = require("./routes/jobs");
-const paymentRoutes = require("./routes/payments");
-const autoApplyRoutes = require("./routes/autoApplyRoutes");
-const protectedPdfRoutes = require("./routes/protectedPdfRoutes");
-const notificationRoutes = require("./routes/notificationRoutes");
-const recruiterRoutes = require("./routes/recruiterRoutes");
-const resumeStudioRoutes = require("./routes/resumeStudioRoutes");
-const skillAnalyzerRoutes = require("./routes/skillAnalyzerRoutes");
-const hiddenOpportunityRoutes = require("./routes/hiddenOpportunityRoutes");
-const jobAlertRoutes = require("./routes/jobAlertRoutes");
-const careerRoadmapRoutes = require("./routes/careerRoadmapRoutes");
-const candidateProfileRoutes = require("./routes/candidateProfileRoutes");
-const profileViewRoutes = require("./routes/profileViewRoutes");
-const forgotPasswordRoutes = require("./routes/forgotPasswordRoutes");
-const contactRoutes = require("./routes/contactRoutes");
-const trustPassportRoutes = require("./routes/trustPassportRoutes");
-const interviewPrepRoutes = require("./routes/interviewPrepRoutes");
+const hrRoutes =
+  require("./routes/hrRoutes");
+
+const helpRoutes =
+  require("./routes/helpRoutes");
+
+const aiRoutes =
+  require("./routes/aiRoutes");
+
+const candidateRoutes =
+  require("./routes/candidates");
+
+const authRoutes =
+  require("./routes/auth");
+
+const jobRoutes =
+  require("./routes/jobs");
+
+const paymentRoutes =
+  require("./routes/payments");
+
+const autoApplyRoutes =
+  require("./routes/autoApplyRoutes");
+
+const protectedPdfRoutes =
+  require("./routes/protectedPdfRoutes");
+
+const notificationRoutes =
+  require("./routes/notificationRoutes");
+
+const recruiterRoutes =
+  require("./routes/recruiterRoutes");
+
+const resumeStudioRoutes =
+  require("./routes/resumeStudioRoutes");
+const jobAlertsRoutes =
+  require(
+    "./routes/jobAlertsRoutes"
+  );
+
+/*
+  REAL SKILL ANALYZER ROUTES
+
+  Routes supported:
+
+  GET  /api/skill-analyzer/test
+  GET  /api/skill-analyzer/me
+  POST /api/skill-analyzer/analyze
+  POST /api/skill-analyzer/roadmap
+  GET  /api/skill-analyzer/report
+*/
+
+const skillAnalyzerRoutes =
+  require("./routes/skillAnalyzerRoutes");
+
+const hiddenOpportunityRoutes =
+  require("./routes/hiddenOpportunityRoutes");
+
+const jobAlertRoutes =
+  require("./routes/jobAlertRoutes");
+
+const careerRoadmapRoutes =
+  require("./routes/careerRoadmapRoutes");
+
+const candidateProfileRoutes =
+  require("./routes/candidateProfileRoutes");
+
+const profileViewRoutes =
+  require("./routes/profileViewRoutes");
+
+const forgotPasswordRoutes =
+  require("./routes/forgotPasswordRoutes");
+
+const contactRoutes =
+  require("./routes/contactRoutes");
+
+const trustPassportRoutes =
+  require("./routes/trustPassportRoutes");
+
+const interviewPrepRoutes =
+  require("./routes/interviewPrepRoutes");
 
 /* =========================================================
    CORS
@@ -44,31 +126,69 @@ const interviewPrepRoutes = require("./routes/interviewPrepRoutes");
 
 const allowedOrigins = [
   "http://localhost:5173",
+
   "http://localhost:3000",
+
   "https://nopromptjobs.com",
+
   "https://www.nopromptjobs.com",
 ];
 
 app.use(
   cors({
     origin(origin, callback) {
+      /*
+        Allow Postman,
+        curl,
+        server-to-server requests.
+      */
+
       if (!origin) {
-        return callback(null, true);
+        return callback(
+          null,
+          true
+        );
       }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+      /*
+        Allow configured origins.
+      */
+
+      if (
+        allowedOrigins.includes(
+          origin
+        )
+      ) {
+        return callback(
+          null,
+          true
+        );
       }
+
+      /*
+        Allow Vercel preview deployments.
+      */
 
       try {
-        const hostname = new URL(origin).hostname;
+        const hostname =
+          new URL(origin)
+            .hostname;
 
-        if (hostname.endsWith(".vercel.app")) {
-          return callback(null, true);
+        if (
+          hostname.endsWith(
+            ".vercel.app"
+          )
+        ) {
+          return callback(
+            null,
+            true
+          );
         }
       } catch (error) {
         return callback(
-          new Error("Invalid request origin")
+          new Error(
+            "Invalid request origin"
+          )
         );
       }
 
@@ -100,7 +220,7 @@ app.use(
 );
 
 /* =========================================================
-   GLOBAL MIDDLEWARE
+   BODY PARSERS
 ========================================================= */
 
 app.use(
@@ -108,23 +228,63 @@ app.use(
     limit: "20mb",
   })
 );
+app.use(
+  "/api/job-alerts",
+  jobAlertsRoutes
+);
+
+console.log(
+  "✅ Route loaded: /api/job-alerts"
+);
 
 app.use(
   express.urlencoded({
     extended: true,
+
     limit: "20mb",
   })
 );
 
-app.use(passport.initialize());
+/* =========================================================
+   PASSPORT
+========================================================= */
 
 app.use(
-  "/uploads",
-  express.static("uploads")
+  passport.initialize()
 );
 
 /* =========================================================
-   ROUTE CHECKER
+   STATIC UPLOADS
+========================================================= */
+
+app.use(
+  "/uploads",
+
+  express.static(
+    "uploads"
+  )
+);
+
+/* =========================================================
+   REQUEST LOGGER
+
+   Helps identify frontend API requests.
+========================================================= */
+
+app.use(
+  "/api",
+
+  (req, res, next) => {
+    console.log(
+      `➡️ ${req.method} ${req.originalUrl}`
+    );
+
+    next();
+  }
+);
+
+/* =========================================================
+   SAFE ROUTE REGISTRATION
 ========================================================= */
 
 const registerRoute = (
@@ -132,24 +292,37 @@ const registerRoute = (
   route,
   routeName
 ) => {
-  if (typeof route !== "function") {
+  if (
+    typeof route !==
+    "function"
+  ) {
     console.error(
       `❌ Route Error: ${routeName} is not exporting router correctly`
     );
 
-    console.error(`Path: ${path}`);
+    console.error(
+      `Path: ${path}`
+    );
+
     console.error(
       `Received type: ${typeof route}`
     );
 
     console.error(
-      `Fix ${routeName}.js and add: module.exports = router;`
+      `Fix ${routeName}.js and ensure the last line is:`
+    );
+
+    console.error(
+      "module.exports = router;"
     );
 
     process.exit(1);
   }
 
-  app.use(path, route);
+  app.use(
+    path,
+    route
+  );
 
   console.log(
     `✅ Route loaded: ${path}`
@@ -160,31 +333,59 @@ const registerRoute = (
    BASIC ROUTES
 ========================================================= */
 
-app.get("/", (req, res) => {
-  res.send(
-    "NoPromptJobs Backend Running Successfully"
-  );
-});
+app.get(
+  "/",
 
-app.get("/api/test", (req, res) => {
-  res.json({
-    success: true,
-    message: "API test route working",
-  });
-});
+  (req, res) => {
+    return res.send(
+      "NoPromptJobs Backend Running Successfully"
+    );
+  }
+);
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    success: true,
-    message:
-      "NoPromptJobs backend is healthy",
+/* =========================================================
+   API TEST
+========================================================= */
 
-    mongoDB:
-      mongoose.connection.readyState === 1
-        ? "connected"
-        : "not connected",
-  });
-});
+app.get(
+  "/api/test",
+
+  (req, res) => {
+    return res.json({
+      success: true,
+
+      message:
+        "API test route working",
+    });
+  }
+);
+
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
+
+app.get(
+  "/api/health",
+
+  (req, res) => {
+    return res.json({
+      success: true,
+
+      message:
+        "NoPromptJobs backend is healthy",
+
+      mongoDB:
+        mongoose.connection
+          .readyState === 1
+          ? "connected"
+          : "not connected",
+
+      timestamp:
+        new Date()
+          .toISOString(),
+    });
+  }
+);
 
 /* =========================================================
    SMTP TEST
@@ -192,84 +393,132 @@ app.get("/api/health", (req, res) => {
 
 app.get(
   "/api/mail-test",
+
   async (req, res) => {
     try {
-      if (!process.env.SMTP_HOST) {
-        return res.status(500).json({
-          success: false,
-          message:
-            "SMTP_HOST missing in .env",
-        });
+      if (
+        !process.env.SMTP_HOST
+      ) {
+        return res
+          .status(500)
+          .json({
+            success: false,
+
+            message:
+              "SMTP_HOST missing in .env",
+          });
       }
 
-      if (!process.env.SMTP_USER) {
-        return res.status(500).json({
-          success: false,
-          message:
-            "SMTP_USER missing in .env",
-        });
+      if (
+        !process.env.SMTP_USER
+      ) {
+        return res
+          .status(500)
+          .json({
+            success: false,
+
+            message:
+              "SMTP_USER missing in .env",
+          });
       }
 
-      if (!process.env.SMTP_PASS) {
-        return res.status(500).json({
-          success: false,
-          message:
-            "SMTP_PASS missing in .env",
-        });
+      if (
+        !process.env.SMTP_PASS
+      ) {
+        return res
+          .status(500)
+          .json({
+            success: false,
+
+            message:
+              "SMTP_PASS missing in .env",
+          });
       }
 
-      const smtpPort = Number(
-        process.env.SMTP_PORT || 587
-      );
+      const smtpPort =
+        Number(
+          process.env
+            .SMTP_PORT ||
+            587
+        );
 
       const transporter =
-        nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: smtpPort,
+        nodemailer
+          .createTransport({
+            host:
+              process.env
+                .SMTP_HOST,
 
-          secure:
-            smtpPort === 465,
+            port:
+              smtpPort,
 
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
+            secure:
+              smtpPort === 465,
 
-          tls: {
-            rejectUnauthorized: false,
-          },
+            auth: {
+              user:
+                process.env
+                  .SMTP_USER,
+
+              pass:
+                process.env
+                  .SMTP_PASS,
+            },
+
+            tls: {
+              rejectUnauthorized:
+                false,
+            },
+          });
+
+      await transporter
+        .verify();
+
+      await transporter
+        .sendMail({
+          from:
+            `"NoPromptJobs" <${
+              process.env
+                .SMTP_FROM ||
+              process.env
+                .SMTP_USER
+            }>`,
+
+          to:
+            process.env
+              .SMTP_USER,
+
+          subject:
+            "NoPromptJobs SMTP Test",
+
+          html: `
+            <div
+              style="
+                font-family: Arial, sans-serif;
+                padding: 20px;
+              "
+            >
+              <h2>
+                NoPromptJobs SMTP Test
+              </h2>
+
+              <p>
+                If you received this email,
+                SMTP is working correctly.
+              </p>
+            </div>
+          `,
         });
-
-      await transporter.verify();
-
-      await transporter.sendMail({
-        from: `"NoPromptJobs" <${
-          process.env.SMTP_FROM ||
-          process.env.SMTP_USER
-        }>`,
-        
-        to: process.env.SMTP_USER,
-
-        subject:
-          "NoPromptJobs SMTP Test",
-
-        html: `
-          <div style="font-family: Arial, sans-serif; padding: 20px;">
-            <h2>NoPromptJobs SMTP Test</h2>
-
-            <p>
-              If you received this email,
-              SMTP is working correctly.
-            </p>
-          </div>
-        `,
-      });
 
       return res.json({
         success: true,
+
         message:
           "SMTP connected successfully",
-        user: process.env.SMTP_USER,
+
+        user:
+          process.env
+            .SMTP_USER,
       });
     } catch (error) {
       console.error(
@@ -277,22 +526,36 @@ app.get(
         error
       );
 
-      return res.status(500).json({
-        success: false,
-        message:
-          "SMTP connection failed",
-        error: error.message,
-        code: error.code,
-        command: error.command,
-        response: error.response,
-      });
+      return res
+        .status(500)
+        .json({
+          success: false,
+
+          message:
+            "SMTP connection failed",
+
+          error:
+            error.message,
+
+          code:
+            error.code,
+
+          command:
+            error.command,
+
+          response:
+            error.response,
+        });
     }
   }
 );
 
 /* =========================================================
    API ROUTES
-   ALL ROUTES MUST BE BEFORE THE 404 HANDLER
+
+   IMPORTANT:
+
+   EVERY VALID ROUTE MUST BE REGISTERED BEFORE 404.
 ========================================================= */
 
 registerRoute(
@@ -367,6 +630,12 @@ registerRoute(
   "notificationRoutes"
 );
 
+/* =========================================================
+   REAL SKILL ANALYZER
+
+   Keep this route before the 404 middleware.
+========================================================= */
+
 registerRoute(
   "/api/skill-analyzer",
   skillAnalyzerRoutes,
@@ -421,10 +690,11 @@ registerRoute(
   "trustPassportRoutes"
 );
 
-/*
-  This is the missing interview route.
-  It is now correctly placed before the 404 handler.
-*/
+/* =========================================================
+   INTERVIEW PREP
+
+   Must also remain before 404.
+========================================================= */
 
 registerRoute(
   "/api/interview-prep",
@@ -434,26 +704,38 @@ registerRoute(
 
 /* =========================================================
    404 HANDLER
-   MUST REMAIN AFTER EVERY VALID ROUTE
+
+   MUST REMAIN AFTER ALL VALID ROUTES.
 ========================================================= */
 
-app.use((req, res) => {
-  console.error(
-    `❌ Route not found: ${req.method} ${req.originalUrl}`
-  );
+app.use(
+  (req, res) => {
+    console.error(
+      `❌ Route not found: ${req.method} ${req.originalUrl}`
+    );
 
-  return res.status(404).json({
-    success: false,
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
-  });
-});
+    return res
+      .status(404)
+      .json({
+        success: false,
+
+        message:
+          `Route not found: ${req.method} ${req.originalUrl}`,
+      });
+  }
+);
 
 /* =========================================================
    GLOBAL ERROR HANDLER
 ========================================================= */
 
 app.use(
-  (err, req, res, next) => {
+  (
+    err,
+    req,
+    res,
+    next
+  ) => {
     console.error(
       "SERVER ERROR:",
       err
@@ -464,71 +746,285 @@ app.use(
         "not allowed by CORS"
       )
     ) {
-      return res.status(403).json({
-        success: false,
-        message: err.message,
-      });
+      return res
+        .status(403)
+        .json({
+          success: false,
+
+          message:
+            err.message,
+        });
     }
 
-    return res.status(
-      err.status || 500
-    ).json({
-      success: false,
+    return res
+      .status(
+        err.status ||
+        500
+      )
+      .json({
+        success: false,
 
-      message:
-        err.message ||
-        "Internal Server Error",
+        message:
+          err.message ||
+          "Internal Server Error",
 
-      error:
-        process.env.NODE_ENV ===
-        "development"
-          ? err.stack
-          : undefined,
-    });
+        error:
+          process.env
+              .NODE_ENV ===
+            "development"
+            ? err.stack
+            : undefined,
+      });
   }
 );
 
 /* =========================================================
-   DATABASE + SERVER
+   DATABASE CONFIGURATION
 ========================================================= */
 
 const PORT =
-  process.env.PORT || 5000;
-
-if (!process.env.MONGO_URI) {
-  console.error(
-    "❌ MONGO_URI is missing in .env"
+  Number(
+    process.env.PORT ||
+    5000
   );
 
-  process.exit(1);
+const MONGO_URI =
+  process.env.MONGO_URI;
+
+/* =========================================================
+   MONGOOSE CONNECTION EVENTS
+========================================================= */
+
+mongoose.connection.on(
+  "connected",
+
+  () => {
+    console.log(
+      "🟢 Mongoose connection established"
+    );
+  }
+);
+
+mongoose.connection.on(
+  "disconnected",
+
+  () => {
+    console.warn(
+      "🟡 Mongoose disconnected"
+    );
+  }
+);
+
+mongoose.connection.on(
+  "error",
+
+  (error) => {
+    console.error(
+      "🔴 Mongoose connection error:",
+      error.message
+    );
+  }
+);
+
+/* =========================================================
+   DATABASE CONNECTION
+========================================================= */
+
+async function connectDatabase() {
+  if (!MONGO_URI) {
+    throw new Error(
+      "MONGO_URI is missing in .env"
+    );
+  }
+
+  /*
+    serverSelectionTimeoutMS:
+
+    Prevents MongoDB connection attempts
+    from waiting indefinitely.
+
+    socketTimeoutMS:
+
+    Allows longer-running database
+    operations without immediate failure.
+  */
+
+  await mongoose.connect(
+    MONGO_URI,
+    {
+      serverSelectionTimeoutMS:
+        15000,
+
+      socketTimeoutMS:
+        45000,
+
+      connectTimeoutMS:
+        15000,
+
+      maxPoolSize:
+        10,
+
+      minPoolSize:
+        0,
+    }
+  );
 }
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
+/* =========================================================
+   START SERVER
+========================================================= */
+
+async function startServer() {
+  try {
+    await connectDatabase();
+
     console.log(
       "✅ MongoDB Connected Successfully"
     );
 
-    app.listen(PORT, () => {
-      console.log(
-        `🚀 Server running at http://localhost:${PORT}`
-      );
+    app.listen(
+      PORT,
 
-      console.log(
-        `✅ Health check: http://localhost:${PORT}/api/health`
-      );
+      () => {
+        console.log(
+          ""
+        );
 
-      console.log(
-        `✅ Interview route: http://localhost:${PORT}/api/interview-prep/test`
-      );
-    });
-  })
-  .catch((err) => {
+        console.log(
+          "=============================================="
+        );
+
+        console.log(
+          "🚀 NoPromptJobs Backend Started Successfully"
+        );
+
+        console.log(
+          "=============================================="
+        );
+
+        console.log(
+          `🌐 Server: http://localhost:${PORT}`
+        );
+
+        console.log(
+          `❤️ Health: http://localhost:${PORT}/api/health`
+        );
+
+        console.log(
+          `🧪 API Test: http://localhost:${PORT}/api/test`
+        );
+
+        console.log(
+          `🧠 Skill Analyzer Test: http://localhost:${PORT}/api/skill-analyzer/test`
+        );
+
+        console.log(
+          `🎤 Interview Prep Test: http://localhost:${PORT}/api/interview-prep/test`
+        );
+
+        console.log(
+          "=============================================="
+        );
+
+        console.log(
+          ""
+        );
+      }
+    );
+  } catch (error) {
     console.error(
-      "❌ MongoDB Connection Error:",
-      err
+      "❌ SERVER STARTUP FAILED"
+    );
+
+    console.error(
+      "Message:",
+      error.message
+    );
+
+    if (
+      error.code ===
+        "ETIMEOUT" ||
+      error.code ===
+        "ENOTFOUND"
+    ) {
+      console.error(
+        ""
+      );
+
+      console.error(
+        "MongoDB DNS/network connection failed."
+      );
+
+      console.error(
+        "Check:"
+      );
+
+      console.error(
+        "1. Internet connection"
+      );
+
+      console.error(
+        "2. MongoDB Atlas Network Access"
+      );
+
+      console.error(
+        "3. MONGO_URI in .env"
+      );
+
+      console.error(
+        "4. DNS resolution"
+      );
+    }
+
+    process.exit(1);
+  }
+}
+
+/* =========================================================
+   GRACEFUL SHUTDOWN
+========================================================= */
+
+async function shutdown(
+  signal
+) {
+  console.log(
+    `\n${signal} received. Shutting down...`
+  );
+
+  try {
+    await mongoose
+      .connection
+      .close();
+
+    console.log(
+      "✅ MongoDB connection closed"
+    );
+
+    process.exit(0);
+  } catch (error) {
+    console.error(
+      "❌ Shutdown error:",
+      error
     );
 
     process.exit(1);
-  });
+  }
+}
+
+process.on(
+  "SIGINT",
+  () =>
+    shutdown("SIGINT")
+);
+
+process.on(
+  "SIGTERM",
+  () =>
+    shutdown("SIGTERM")
+);
+
+/* =========================================================
+   START APPLICATION
+========================================================= */
+
+startServer();

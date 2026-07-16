@@ -1,43 +1,2478 @@
-.secure-pdf-page {
+/* =========================================================
+   SKILL ANALYZER PREMIUM SAAS PAGE
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+
+.sa-page {
+  --sa-navy: #071944;
+  --sa-navy-2: #0d2c75;
+
+  --sa-blue: #2868f5;
+  --sa-blue-dark: #1550df;
+
+  --sa-purple: #8138ef;
+
+  --sa-teal: #14c7ae;
+  --sa-green: #17b978;
+
+  --sa-text: #07183f;
+  --sa-muted: #68779d;
+
+  --sa-border: #dce5f6;
+  --sa-background: #f4f7ff;
+
   min-height: 100vh;
-  background: #020617;
-  color: white;
-  position: relative;
-  overflow: hidden;
+
+  display: flex;
+
+  background:
+    radial-gradient(
+      circle at 72% 6%,
+      rgba(91, 92, 255, 0.1),
+      transparent 26%
+    ),
+    linear-gradient(
+      180deg,
+      #f8faff 0%,
+      #f2f6ff 100%
+    );
+
+  color: var(--sa-text);
 }
 
-.secure-pdf-header {
-  height: 76px;
-  padding: 16px 28px;
-  background: rgba(15, 23, 42, 0.95);
-  border-bottom: 1px solid rgba(255,255,255,.1);
+
+.sa-shell {
+  flex: 1;
+
+  min-width: 0;
+
+  margin-left: 320px;
 }
 
-.secure-pdf-header h2 {
-  margin: 0;
-}
 
-.secure-pdf-header p {
-  margin: 4px 0 0;
-  color: #94a3b8;
-}
-
-.secure-pdf-frame {
+.sa-main {
   width: 100%;
-  height: calc(100vh - 76px);
-  border: none;
+
+  max-width: 1680px;
+
+  margin: 0 auto;
+
+  padding: 30px 32px 60px;
 }
 
-.watermark {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  font-size: 42px;
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.sa-page-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  margin-bottom: 24px;
+}
+
+
+.sa-page-header h1 {
+  margin: 8px 0 8px;
+
+  font-size: clamp(34px, 3vw, 52px);
+
+  line-height: 1;
+
+  letter-spacing: -2px;
+
+  color: var(--sa-text);
+}
+
+
+.sa-page-header p {
+  max-width: 720px;
+
+  margin: 0;
+
+  color: var(--sa-muted);
+
+  font-size: 16px;
+
+  line-height: 1.7;
+}
+
+
+.sa-eyebrow,
+.sa-card-kicker {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  color: var(--sa-blue);
+
+  font-size: 12px;
+
   font-weight: 900;
-  color: rgba(255,255,255,.08);
-  transform: rotate(-25deg);
+
+  letter-spacing: 0.08em;
+}
+
+
+.sa-header-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+}
+
+
+.sa-search-box {
+  width: 310px;
+  height: 50px;
+
+  padding: 0 17px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  background: #ffffff;
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 15px;
+
+  box-shadow:
+    0 8px 30px rgba(40, 65, 130, 0.06);
+}
+
+
+.sa-search-box svg {
+  color: #8c9abe;
+}
+
+
+.sa-search-box input {
+  width: 100%;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: var(--sa-text);
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.sa-primary-button,
+.sa-secondary-button,
+.sa-dark-button {
+  min-height: 48px;
+
+  padding: 0 20px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  border: 0;
+
+  border-radius: 14px;
+
+  cursor: pointer;
+
+  font: inherit;
+
+  font-weight: 850;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.sa-primary-button {
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--sa-blue) 0%,
+      var(--sa-purple) 100%
+    );
+
+  box-shadow:
+    0 12px 28px rgba(76, 70, 240, 0.25);
+}
+
+
+.sa-secondary-button {
+  color: var(--sa-text);
+
+  background: #ffffff;
+
+  border: 1px solid var(--sa-border);
+}
+
+
+.sa-dark-button {
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #091d50,
+      #102f79
+    );
+}
+
+
+.sa-primary-button:hover:not(:disabled),
+.sa-secondary-button:hover:not(:disabled),
+.sa-dark-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+
+.sa-primary-button:disabled,
+.sa-dark-button:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.5;
+}
+
+
+.sa-full-button {
+  width: 100%;
+
+  margin-top: 6px;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.sa-error-banner {
+  min-height: 54px;
+
+  margin-bottom: 20px;
+
+  padding: 12px 17px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  border: 1px solid #ffc8cd;
+
+  border-radius: 14px;
+
+  background: #fff1f2;
+
+  color: #c2293b;
+}
+
+
+.sa-error-banner span {
+  flex: 1;
+
+  font-weight: 700;
+}
+
+
+.sa-error-banner button {
+  border: 0;
+
+  background: transparent;
+
+  color: inherit;
+
+  font-size: 24px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.sa-hero-card {
+  position: relative;
+
+  overflow: hidden;
+
+  min-height: 350px;
+
+  padding: 38px;
+
+  display: grid;
+
+  grid-template-columns:
+    230px minmax(0, 1fr) 330px;
+
+  align-items: center;
+
+  gap: 36px;
+
+  background:
+    radial-gradient(
+      circle at 72% 35%,
+      rgba(58, 117, 255, 0.2),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #f8faff 100%
+    );
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 28px;
+
+  box-shadow:
+    0 24px 65px rgba(35, 65, 145, 0.12);
+}
+
+
+.sa-hero-card::before {
+  content: "";
+
+  position: absolute;
+
+  width: 380px;
+  height: 380px;
+
+  right: 280px;
+  top: -220px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(117, 59, 255, 0.13),
+      transparent 68%
+    );
+
+  pointer-events: none;
+}
+
+
+.sa-hero-score,
+.sa-hero-content,
+.sa-hero-metrics {
+  position: relative;
+
+  z-index: 1;
+}
+
+
+/* =========================================================
+   SCORE RING
+========================================================= */
+
+.sa-score-ring {
+  width: 200px;
+  height: 200px;
+
+  padding: 17px;
+
+  border-radius: 50%;
+
+  background:
+    conic-gradient(
+      var(--sa-blue) 0deg,
+      var(--sa-purple) var(--score),
+      #e9edf7 var(--score),
+      #e9edf7 360deg
+    );
+
+  box-shadow:
+    0 18px 55px rgba(69, 72, 220, 0.2);
+}
+
+
+.sa-score-ring-inner {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #ffffff;
+
+  border-radius: 50%;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(221, 228, 246, 0.8);
+}
+
+
+.sa-score-ring-inner strong {
+  font-size: 46px;
+
+  line-height: 1;
+
+  letter-spacing: -2px;
+}
+
+
+.sa-score-ring-inner span {
+  margin-top: 9px;
+
+  color: var(--sa-green);
+
+  font-weight: 850;
+}
+
+
+/* =========================================================
+   HERO CONTENT
+========================================================= */
+
+.sa-status-badge {
+  display: inline-flex;
+
+  padding: 8px 12px;
+
+  border-radius: 999px;
+
+  background: #edf2ff;
+
+  color: var(--sa-blue);
+
+  font-size: 12px;
+
+  font-weight: 900;
+}
+
+
+.sa-hero-content h2 {
+  max-width: 650px;
+
+  margin: 15px 0 13px;
+
+  font-size: clamp(30px, 3vw, 48px);
+
+  line-height: 1.06;
+
+  letter-spacing: -2px;
+}
+
+
+.sa-hero-content p {
+  max-width: 680px;
+
+  margin: 0;
+
+  color: var(--sa-muted);
+
+  font-size: 16px;
+
+  line-height: 1.75;
+}
+
+
+.sa-hero-buttons {
+  margin-top: 24px;
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 12px;
+}
+
+
+.sa-last-updated {
+  display: block;
+
+  margin-top: 16px;
+
+  color: #8a96b4;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   HERO METRICS
+========================================================= */
+
+.sa-hero-metrics {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 12px;
+}
+
+
+.sa-metric-card {
+  min-height: 118px;
+
+  padding: 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  background:
+    rgba(255, 255, 255, 0.82);
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 12px 32px rgba(35, 60, 130, 0.07);
+
+  backdrop-filter: blur(15px);
+}
+
+
+.sa-metric-icon {
+  width: 44px;
+  height: 44px;
+
+  flex: 0 0 44px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #edf2ff,
+      #f2eaff
+    );
+
+  color: var(--sa-purple);
+
+  font-size: 18px;
+}
+
+
+.sa-metric-card span {
+  display: block;
+
+  color: var(--sa-muted);
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+
+.sa-metric-card strong {
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 25px;
+}
+
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.sa-workspace-grid {
+  margin-top: 24px;
+
+  display: grid;
+
+  grid-template-columns:
+    1.05fr 1.25fr 0.85fr;
+
+  gap: 20px;
+}
+
+
+.sa-insight-grid {
+  margin-top: 20px;
+
+  display: grid;
+
+  grid-template-columns: 0.9fr 1.1fr;
+
+  gap: 20px;
+}
+
+
+.sa-bottom-grid {
+  margin-top: 20px;
+
+  display: grid;
+
+  grid-template-columns:
+    1.15fr 0.8fr 0.9fr;
+
+  gap: 20px;
+}
+
+
+.sa-card {
+  min-width: 0;
+
+  padding: 25px;
+
+  background:
+    rgba(255, 255, 255, 0.94);
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 16px 45px rgba(36, 64, 135, 0.08);
+}
+
+
+.sa-card-header {
+  margin-bottom: 22px;
+
+  display: flex;
+
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+
+.sa-card-header > svg {
+  color: var(--sa-purple);
+
+  font-size: 22px;
+}
+
+
+.sa-card-header h2 {
+  margin: 6px 0 5px;
+
+  font-size: 22px;
+
+  letter-spacing: -0.7px;
+}
+
+
+.sa-card-header p {
+  margin: 0;
+
+  color: var(--sa-muted);
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.sa-field {
+  display: block;
+
+  margin-bottom: 17px;
+}
+
+
+.sa-field > span {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #263861;
+
+  font-size: 12px;
+
+  font-weight: 850;
+}
+
+
+.sa-field input,
+.sa-field textarea {
+  width: 100%;
+
+  border: 1px solid var(--sa-border);
+
+  outline: 0;
+
+  background: #f9fbff;
+
+  color: var(--sa-text);
+
+  border-radius: 14px;
+
+  font: inherit;
+}
+
+
+.sa-field input {
+  height: 50px;
+
+  padding: 0 15px;
+}
+
+
+.sa-field textarea {
+  padding: 15px;
+
+  resize: vertical;
+
+  line-height: 1.6;
+}
+
+
+.sa-field input:focus,
+.sa-field textarea:focus {
+  border-color: #7c78ff;
+
+  box-shadow:
+    0 0 0 4px rgba(94, 94, 255, 0.1);
+}
+
+
+/* =========================================================
+   BREAKDOWN
+========================================================= */
+
+.sa-breakdown-list {
+  display: grid;
+
+  gap: 19px;
+}
+
+
+.sa-breakdown-item > div:first-child {
+  margin-bottom: 8px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+}
+
+
+.sa-breakdown-item strong {
+  font-size: 13px;
+}
+
+
+.sa-breakdown-item span {
+  color: var(--sa-blue);
+
+  font-size: 12px;
+
+  font-weight: 900;
+}
+
+
+.sa-progress-track {
+  width: 100%;
+  height: 8px;
+
+  overflow: hidden;
+
+  background: #e9edf7;
+
+  border-radius: 999px;
+}
+
+
+.sa-progress-fill {
+  display: block;
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--sa-blue),
+      var(--sa-teal),
+      var(--sa-purple)
+    );
+
+  transition: width 0.5s ease;
+}
+
+
+/* =========================================================
+   STRENGTHS
+========================================================= */
+
+.sa-strength-list {
+  display: grid;
+
+  gap: 11px;
+}
+
+
+.sa-strength-item {
+  min-height: 62px;
+
+  padding: 12px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  background: #f8faff;
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 14px;
+}
+
+
+.sa-strength-icon {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+
+  place-items: center;
+
+  flex: 0 0 38px;
+
+  border-radius: 11px;
+
+  background: #eafbf4;
+
+  color: var(--sa-green);
+}
+
+
+.sa-strength-item strong,
+.sa-strength-item span {
+  display: block;
+}
+
+
+.sa-strength-item strong {
+  font-size: 13px;
+}
+
+
+.sa-strength-item span {
+  margin-top: 4px;
+
+  color: var(--sa-muted);
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   RECOMMENDATIONS
+========================================================= */
+
+.sa-recommendation-list {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+
+.sa-recommendation-card {
+  width: 100%;
+
+  min-height: 130px;
+
+  padding: 16px;
+
+  display: grid;
+
+  grid-template-columns:
+    40px minmax(0, 1fr) auto;
+
+  align-items: flex-start;
+
+  gap: 13px;
+
+  text-align: left;
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f8faff
+    );
+
+  color: var(--sa-text);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.sa-recommendation-card:hover {
+  transform: translateY(-3px);
+
+  border-color: #a7baff;
+
+  box-shadow:
+    0 16px 35px rgba(42, 74, 160, 0.1);
+}
+
+
+.sa-recommendation-number {
+  width: 40px;
+  height: 40px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--sa-blue),
+      var(--sa-purple)
+    );
+
+  color: #ffffff;
+
+  font-size: 12px;
+
+  font-weight: 900;
+}
+
+
+.sa-recommendation-card strong {
+  display: block;
+
+  font-size: 14px;
+}
+
+
+.sa-recommendation-card p {
+  margin: 6px 0 8px;
+
+  color: var(--sa-muted);
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+
+.sa-recommendation-card span {
+  color: var(--sa-blue);
+
+  font-size: 11px;
+
+  font-weight: 850;
+}
+
+
+/* =========================================================
+   SKILL GAPS
+========================================================= */
+
+.sa-gap-list {
+  display: grid;
+
+  gap: 10px;
+}
+
+
+.sa-gap-item {
+  min-height: 70px;
+
+  padding: 13px 14px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  background: #f8faff;
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 14px;
+}
+
+
+.sa-gap-item strong,
+.sa-gap-item span {
+  display: block;
+}
+
+
+.sa-gap-item strong {
+  font-size: 14px;
+}
+
+
+.sa-gap-item span {
+  margin-top: 4px;
+
+  color: #ef7c23;
+
+  font-size: 11px;
+
+  font-weight: 850;
+}
+
+
+.sa-gap-item button {
+  min-height: 38px;
+
+  padding: 0 14px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--sa-blue),
+      var(--sa-purple)
+    );
+
+  color: #ffffff;
+
+  font-weight: 850;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   CAREER MATCHES
+========================================================= */
+
+.sa-career-list {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+
+.sa-career-card {
+  padding: 17px;
+
+  text-align: left;
+
+  background: #f8faff;
+
+  color: var(--sa-text);
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 15px;
+
+  cursor: pointer;
+}
+
+
+.sa-career-card > div:first-child {
+  margin-bottom: 12px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+}
+
+
+.sa-career-card strong {
+  font-size: 13px;
+}
+
+
+.sa-career-card span {
+  color: var(--sa-green);
+
+  font-size: 12px;
+
+  font-weight: 900;
+}
+
+
+.sa-career-card small {
+  margin-top: 11px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: var(--sa-blue);
+
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   AI INSIGHT
+========================================================= */
+
+.sa-ai-insight-card {
+  position: relative;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 85% 10%,
+      rgba(103, 72, 255, 0.18),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f4f1ff
+    );
+}
+
+
+.sa-ai-icon {
+  width: 54px;
+  height: 54px;
+
+  margin-bottom: 20px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--sa-blue),
+      var(--sa-purple)
+    );
+
+  color: #ffffff;
+
+  font-size: 24px;
+
+  box-shadow:
+    0 15px 32px rgba(89, 60, 240, 0.25);
+}
+
+
+.sa-ai-insight-card h2 {
+  margin: 7px 0 10px;
+
+  font-size: 24px;
+}
+
+
+.sa-ai-insight-card p {
+  margin: 0 0 22px;
+
+  color: var(--sa-muted);
+
+  line-height: 1.75;
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+.sa-history-list {
+  display: grid;
+
+  gap: 10px;
+}
+
+
+.sa-history-item {
+  width: 100%;
+
+  min-height: 62px;
+
+  padding: 12px 14px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  text-align: left;
+
+  background: #f8faff;
+
+  border: 1px solid var(--sa-border);
+
+  border-radius: 13px;
+
+  color: var(--sa-text);
+
+  cursor: pointer;
+}
+
+
+.sa-history-item div strong,
+.sa-history-item div span {
+  display: block;
+}
+
+
+.sa-history-item div strong {
+  font-size: 13px;
+}
+
+
+.sa-history-item div span {
+  margin-top: 4px;
+
+  color: var(--sa-muted);
+
+  font-size: 11px;
+}
+
+
+.sa-history-item > strong {
+  color: var(--sa-blue);
+
+  font-size: 17px;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.sa-empty-state {
+  min-height: 220px;
+
+  padding: 30px 18px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
   text-align: center;
+
+  background: #fafbff;
+
+  border: 1px dashed #cfd9ef;
+
+  border-radius: 16px;
+}
+
+
+.sa-empty-icon {
+  width: 52px;
+  height: 52px;
+
+  margin-bottom: 14px;
+
+  display: grid;
+
+  place-items: center;
+
+  border-radius: 15px;
+
+  background: #edf2ff;
+
+  color: var(--sa-purple);
+
+  font-size: 21px;
+}
+
+
+.sa-empty-state strong {
+  font-size: 15px;
+}
+
+
+.sa-empty-state p {
+  max-width: 300px;
+
+  margin: 8px 0 0;
+
+  color: var(--sa-muted);
+
+  font-size: 12px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.sa-loading {
+  min-height: calc(100vh - 90px);
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 16px;
+
+  color: var(--sa-blue);
+}
+
+
+.sa-loader {
+  width: 48px;
+  height: 48px;
+
+  border: 4px solid #dfe6f8;
+
+  border-top-color: var(--sa-blue);
+
+  border-radius: 50%;
+
+  animation:
+    sa-spin 0.8s linear infinite;
+}
+
+
+@keyframes sa-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   LARGE LAPTOP
+========================================================= */
+
+@media (max-width: 1450px) {
+  .sa-main {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+
+  .sa-hero-card {
+    grid-template-columns:
+      190px minmax(0, 1fr) 290px;
+
+    gap: 25px;
+
+    padding: 30px;
+  }
+
+
+  .sa-score-ring {
+    width: 175px;
+    height: 175px;
+  }
+
+
+  .sa-workspace-grid {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+
+  .sa-workspace-grid > :last-child {
+    grid-column: 1 / -1;
+  }
+
+
+  .sa-strength-list {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+
+  .sa-bottom-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+
+  .sa-bottom-grid > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+  .sa-shell {
+    margin-left: 0;
+  }
+
+
+  .sa-page-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .sa-header-actions {
+    width: 100%;
+
+    flex-wrap: wrap;
+  }
+
+
+  .sa-search-box {
+    flex: 1;
+
+    min-width: 260px;
+  }
+
+
+  .sa-hero-card {
+    grid-template-columns:
+      180px minmax(0, 1fr);
+  }
+
+
+  .sa-hero-metrics {
+    grid-column: 1 / -1;
+
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr));
+  }
+
+
+  .sa-workspace-grid,
+  .sa-insight-grid,
+  .sa-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .sa-workspace-grid > :last-child,
+  .sa-bottom-grid > :last-child {
+    grid-column: auto;
+  }
+
+
+  .sa-strength-list {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 720px) {
+  .sa-main {
+    padding:
+      20px 14px 45px;
+  }
+
+
+  .sa-page-header h1 {
+    font-size: 36px;
+  }
+
+
+  .sa-header-actions {
+    display: grid;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+
+  .sa-search-box {
+    width: 100%;
+    min-width: 0;
+
+    grid-column: 1 / -1;
+  }
+
+
+  .sa-hero-card {
+    padding: 24px;
+
+    grid-template-columns: 1fr;
+
+    text-align: center;
+  }
+
+
+  .sa-hero-score {
+    display: flex;
+
+    justify-content: center;
+  }
+
+
+  .sa-hero-content p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+
+  .sa-hero-buttons {
+    justify-content: center;
+  }
+
+
+  .sa-hero-metrics {
+    grid-column: auto;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+
+  .sa-recommendation-list,
+  .sa-career-list,
+  .sa-strength-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  .sa-header-actions {
+    grid-template-columns: 1fr;
+  }
+
+
+  .sa-search-box {
+    grid-column: auto;
+  }
+
+
+  .sa-primary-button,
+  .sa-secondary-button,
+  .sa-dark-button {
+    width: 100%;
+  }
+
+
+  .sa-hero-metrics {
+    grid-template-columns: 1fr;
+  }
+
+
+  .sa-score-ring {
+    width: 160px;
+    height: 160px;
+  }
+
+
+  .sa-score-ring-inner strong {
+    font-size: 38px;
+  }
+
+
+  .sa-card,
+  .sa-hero-card {
+    border-radius: 18px;
+  }
+}
+/* =========================================================
+   SKILL ANALYZER FINAL COMPACT LAYOUT FIX
+   Add this block at the VERY END of SkillAnalyzerPage.css
+========================================================= */
+
+.sa-main {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 26px 26px 34px !important;
+  overflow: visible !important;
+}
+
+.sa-main,
+.sa-main * {
+  box-sizing: border-box !important;
+}
+
+.sa-main section,
+.sa-main article,
+.sa-main div {
+  min-width: 0;
+}
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.sa-page-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 24px !important;
+
+  width: 100% !important;
+  margin: 0 0 18px !important;
+}
+
+.sa-page-header > div:first-child {
+  min-width: 0 !important;
+}
+
+.sa-page-header h1 {
+  margin: 7px 0 6px !important;
+  font-size: clamp(32px, 3vw, 46px) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -1.4px !important;
+}
+
+.sa-page-header p {
+  max-width: 760px !important;
+  margin: 0 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.sa-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+}
+
+.sa-search-box {
+  width: 295px !important;
+  height: 48px !important;
+}
+
+.sa-primary-button,
+.sa-secondary-button,
+.sa-dark-button {
+  min-height: 46px !important;
+  padding: 0 17px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+}
+
+/* =========================================================
+   HERO CARD
+========================================================= */
+
+.sa-hero-card {
+  min-height: 0 !important;
+
+  display: grid !important;
+  grid-template-columns:
+    205px minmax(0, 1fr) minmax(280px, 330px) !important;
+
+  align-items: center !important;
+  gap: 28px !important;
+
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 28px 30px !important;
+
+  border-radius: 22px !important;
+}
+
+.sa-score-ring {
+  width: 175px !important;
+  height: 175px !important;
+  padding: 15px !important;
+}
+
+.sa-score-ring-inner strong {
+  font-size: 42px !important;
+}
+
+.sa-hero-content h2 {
+  max-width: 620px !important;
+  margin: 12px 0 10px !important;
+  font-size: clamp(29px, 3vw, 43px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -1.5px !important;
+}
+
+.sa-hero-content p {
+  max-width: 650px !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+}
+
+.sa-hero-buttons {
+  margin-top: 18px !important;
+}
+
+.sa-hero-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.sa-metric-card {
+  min-height: 100px !important;
+  padding: 14px !important;
+  border-radius: 15px !important;
+}
+
+.sa-metric-icon {
+  width: 40px !important;
+  height: 40px !important;
+  flex: 0 0 40px !important;
+}
+
+.sa-metric-card strong {
+  margin-top: 4px !important;
+  font-size: 21px !important;
+}
+
+/* =========================================================
+   MAIN CARD GRIDS
+========================================================= */
+
+.sa-workspace-grid {
+  display: grid !important;
+  grid-template-columns:
+    minmax(290px, 0.9fr)
+    minmax(360px, 1.15fr)
+    minmax(280px, 0.85fr) !important;
+
+  align-items: stretch !important;
+  gap: 18px !important;
+
+  width: 100% !important;
+  margin-top: 18px !important;
+}
+
+.sa-insight-grid {
+  display: grid !important;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr)) !important;
+
+  align-items: stretch !important;
+  gap: 18px !important;
+
+  width: 100% !important;
+  margin-top: 18px !important;
+}
+
+.sa-bottom-grid {
+  display: grid !important;
+  grid-template-columns:
+    minmax(0, 1.15fr)
+    minmax(250px, 0.8fr)
+    minmax(0, 0.95fr) !important;
+
+  align-items: stretch !important;
+  gap: 18px !important;
+
+  width: 100% !important;
+  margin-top: 18px !important;
+}
+
+.sa-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+
+  padding: 22px !important;
+
+  border-radius: 19px !important;
+}
+
+.sa-card-header {
+  margin-bottom: 17px !important;
+}
+
+.sa-card-header h2 {
+  margin: 5px 0 4px !important;
+  font-size: 20px !important;
+  line-height: 1.2 !important;
+}
+
+.sa-card-header p {
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+
+/* =========================================================
+   ANALYSIS FORM
+========================================================= */
+
+.sa-field {
+  margin-bottom: 14px !important;
+}
+
+.sa-field input {
+  height: 48px !important;
+}
+
+.sa-field textarea {
+  min-height: 155px !important;
+  max-height: 220px !important;
+}
+
+.sa-full-button {
+  min-height: 46px !important;
+  margin-top: 4px !important;
+}
+
+/* =========================================================
+   EMPTY STATES
+========================================================= */
+
+.sa-empty-state {
+  min-height: 185px !important;
+  padding: 24px 16px !important;
+  border-radius: 14px !important;
+}
+
+.sa-empty-icon {
+  width: 50px !important;
+  height: 50px !important;
+  margin-bottom: 12px !important;
+}
+
+.sa-empty-state strong {
+  font-size: 14px !important;
+}
+
+.sa-empty-state p {
+  max-width: 290px !important;
+  margin-top: 7px !important;
+  font-size: 11px !important;
+  line-height: 1.55 !important;
+}
+
+/* =========================================================
+   CONTENT LISTS
+========================================================= */
+
+.sa-breakdown-list,
+.sa-strength-list,
+.sa-gap-list,
+.sa-history-list {
+  gap: 10px !important;
+}
+
+.sa-strength-item,
+.sa-gap-item,
+.sa-history-item {
+  min-height: 58px !important;
+}
+
+.sa-recommendation-list,
+.sa-career-list {
+  gap: 10px !important;
+}
+
+.sa-recommendation-card {
+  min-height: 112px !important;
+  padding: 14px !important;
+}
+
+.sa-career-card {
+  padding: 15px !important;
+}
+
+/* =========================================================
+   AI INSIGHT CARD
+========================================================= */
+
+.sa-ai-insight-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-height: 0 !important;
+}
+
+.sa-ai-icon {
+  width: 50px !important;
+  height: 50px !important;
+  margin-bottom: 16px !important;
+}
+
+.sa-ai-insight-card h2 {
+  margin: 6px 0 9px !important;
+  font-size: 22px !important;
+}
+
+.sa-ai-insight-card p {
+  margin-bottom: 18px !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1380px) {
+  .sa-main {
+    padding: 22px 22px 32px !important;
+  }
+
+  .sa-page-header {
+    grid-template-columns: 1fr !important;
+    align-items: flex-start !important;
+  }
+
+  .sa-header-actions {
+    justify-content: flex-start !important;
+    width: 100% !important;
+  }
+
+  .sa-search-box {
+    flex: 1 1 280px !important;
+    width: auto !important;
+  }
+
+  .sa-hero-card {
+    grid-template-columns:
+      180px minmax(0, 1fr) minmax(260px, 300px) !important;
+    gap: 22px !important;
+  }
+
+  .sa-score-ring {
+    width: 160px !important;
+    height: 160px !important;
+  }
+
+  .sa-workspace-grid {
+    grid-template-columns:
+      minmax(280px, 0.9fr)
+      minmax(340px, 1.1fr) !important;
+  }
+
+  .sa-workspace-grid > :last-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  .sa-strength-list {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1050px) {
+  .sa-hero-card {
+    grid-template-columns: 1fr !important;
+    text-align: center !important;
+  }
+
+  .sa-hero-score {
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .sa-hero-content p {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .sa-hero-buttons {
+    justify-content: center !important;
+  }
+
+  .sa-hero-metrics {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .sa-workspace-grid,
+  .sa-insight-grid,
+  .sa-bottom-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sa-workspace-grid > :last-child {
+    grid-column: auto !important;
+  }
+
+  .sa-strength-list {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .sa-main {
+    padding: 16px 14px 28px !important;
+  }
+
+  .sa-page-header h1 {
+    font-size: 34px !important;
+  }
+
+  .sa-header-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .sa-search-box,
+  .sa-primary-button,
+  .sa-secondary-button,
+  .sa-dark-button {
+    width: 100% !important;
+  }
+
+  .sa-hero-card {
+    padding: 22px 18px !important;
+  }
+
+  .sa-hero-content h2 {
+    font-size: 31px !important;
+  }
+
+  .sa-hero-metrics {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .sa-strength-list,
+  .sa-recommendation-list,
+  .sa-career-list {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sa-hero-metrics {
+    grid-template-columns: 1fr !important;
+ 
+  }
+}
+
+
+/* =========================================================
+   DEFINITIVE BUTTON + PAGE VISIBILITY FIX
+   Keep this block at the absolute END of SkillAnalyzerPage.css
+========================================================= */
+
+/*
+ * SkillAnalyzerPage.jsx now renders:
+ *
+ * <div className="sa-page">
+ *   <main className="sa-main">...</main>
+ * </div>
+ *
+ * These variables are also repeated on .sa-main as a defensive fallback
+ * in case the page is rendered inside another layout wrapper.
+ */
+.sa-main {
+  --sa-navy: #071944;
+  --sa-navy-2: #0d2c75;
+  --sa-blue: #2868f5;
+  --sa-blue-dark: #1550df;
+  --sa-purple: #8138ef;
+  --sa-teal: #14c7ae;
+  --sa-green: #17b978;
+  --sa-text: #07183f;
+  --sa-muted: #68779d;
+  --sa-border: #dce5f6;
+  --sa-background: #f4f7ff;
+}
+
+/* The dashboard layout already provides the sidebar spacing. */
+.sa-page {
+  width: 100%;
+  min-width: 0;
+  display: block;
+  background: transparent;
+}
+
+.sa-page .sa-main {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------
+   ALL MAIN ACTION BUTTONS
+--------------------------------------------------------- */
+
+.sa-page .sa-primary-button,
+.sa-page .sa-secondary-button,
+.sa-page .sa-dark-button,
+.sa-page .sa-full-button,
+.sa-page .sa-gap-item button,
+.sa-page .sa-recommendation-card,
+.sa-page .sa-career-card,
+.sa-page .sa-history-item {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  opacity: 1;
+  visibility: visible;
+
+  font-family: inherit;
+  text-decoration: none;
+}
+
+/* Primary blue-purple buttons */
+.sa-page .sa-primary-button,
+.sa-page .sa-full-button {
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2f6df6 0%,
+      #6550f2 52%,
+      #8a35eb 100%
+    ) !important;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.18) !important;
+
+  box-shadow:
+    0 14px 30px
+    rgba(73, 73, 226, 0.28) !important;
+
+  text-shadow:
+    0 1px 1px
+    rgba(0, 0, 0, 0.12);
+}
+
+/* Dark roadmap button */
+.sa-page .sa-dark-button {
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0b1f54,
+      #173d9d
+    ) !important;
+
+  border:
+    1px solid
+    rgba(87, 125, 232, 0.42) !important;
+
+  box-shadow:
+    0 13px 28px
+    rgba(16, 42, 110, 0.22) !important;
+}
+
+/* White refresh button */
+.sa-page .sa-secondary-button {
+  color: #101b43 !important;
+  background: #ffffff !important;
+
+  border:
+    1px solid
+    #d8e1f3 !important;
+
+  box-shadow:
+    0 10px 24px
+    rgba(35, 58, 121, 0.09) !important;
+}
+
+/* Keep icons and text above button sheen */
+.sa-page .sa-primary-button > *,
+.sa-page .sa-secondary-button > *,
+.sa-page .sa-dark-button > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Premium sheen */
+.sa-page .sa-primary-button::before,
+.sa-page .sa-dark-button::before {
+  content: "";
+
+  position: absolute;
+  inset: 1px 1px auto;
+  height: 48%;
+
+  z-index: 1;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.22),
+      rgba(255, 255, 255, 0)
+    );
+
+  pointer-events: none;
+}
+
+/* Hover */
+.sa-page .sa-primary-button:hover:not(:disabled),
+.sa-page .sa-secondary-button:hover:not(:disabled),
+.sa-page .sa-dark-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.03);
+}
+
+/* ---------------------------------------------------------
+   DISABLED BUTTONS MUST STILL BE CLEARLY VISIBLE
+--------------------------------------------------------- */
+
+.sa-page .sa-primary-button:disabled,
+.sa-page .sa-dark-button:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Disabled primary */
+.sa-page .sa-primary-button:disabled {
+  color: #8c96b5 !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eef1fa,
+      #e5e9f5
+    ) !important;
+
+  border:
+    1px solid
+    #d8deed !important;
+
+  text-shadow: none !important;
+}
+
+/* Disabled dark roadmap */
+.sa-page .sa-dark-button:disabled {
+  color: #7380a3 !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e8ecf6,
+      #dce3f2
+    ) !important;
+
+  border:
+    1px solid
+    #d1d9ea !important;
+
+  text-shadow: none !important;
+}
+
+.sa-page .sa-primary-button:disabled::before,
+.sa-page .sa-dark-button:disabled::before {
+  display: none;
+}
+
+/* ---------------------------------------------------------
+   ANALYZE FORM BUTTON
+--------------------------------------------------------- */
+
+.sa-page .sa-analysis-card .sa-full-button {
+  width: 100% !important;
+  min-height: 50px !important;
+  margin-top: 8px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  gap: 10px !important;
+
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+/* ---------------------------------------------------------
+   HERO BUTTON AREA
+--------------------------------------------------------- */
+
+.sa-page .sa-hero-buttons {
+  position: relative;
+  z-index: 4;
+
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+
+  gap: 12px !important;
+}
+
+.sa-page .sa-hero-buttons .sa-primary-button,
+.sa-page .sa-hero-buttons .sa-dark-button {
+  min-width: 168px;
+}
+
+/* ---------------------------------------------------------
+   HEADER ACTIONS
+--------------------------------------------------------- */
+
+.sa-page .sa-header-actions {
+  position: relative;
+  z-index: 5;
+}
+
+.sa-page .sa-header-actions .sa-primary-button,
+.sa-page .sa-header-actions .sa-secondary-button {
+  min-width: 112px;
+}
+
+/* ---------------------------------------------------------
+   AI INSIGHT BUTTON
+--------------------------------------------------------- */
+
+.sa-page .sa-ai-insight-card .sa-primary-button {
+  width: 100% !important;
+  margin-top: auto !important;
+}
+
+/* ---------------------------------------------------------
+   CARD BUTTONS
+--------------------------------------------------------- */
+
+.sa-page .sa-gap-item button {
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2d6cf6,
+      #7e39ed
+    ) !important;
+
+  box-shadow:
+    0 9px 20px
+    rgba(73, 76, 224, 0.2);
+}
+
+.sa-page .sa-recommendation-card,
+.sa-page .sa-career-card,
+.sa-page .sa-history-item {
+  color: #07183f !important;
+  background: #f8faff !important;
+  border:
+    1px solid
+    #dce5f6 !important;
+}
+
+.sa-page .sa-recommendation-card:hover,
+.sa-page .sa-career-card:hover,
+.sa-page .sa-history-item:hover {
+  transform: translateY(-2px);
+  border-color: #9eb3ef !important;
+
+  box-shadow:
+    0 14px 30px
+    rgba(43, 67, 136, 0.1);
+}
+
+/* ---------------------------------------------------------
+   EMPTY FORM BUTTON SAFETY
+--------------------------------------------------------- */
+
+.sa-page button {
+  min-width: 0;
+}
+
+.sa-page button svg {
+  flex: 0 0 auto;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVE BUTTONS
+--------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .sa-page .sa-header-actions .sa-primary-button,
+  .sa-page .sa-header-actions .sa-secondary-button,
+  .sa-page .sa-hero-buttons .sa-primary-button,
+  .sa-page .sa-hero-buttons .sa-dark-button {
+    width: 100% !important;
+  }
+
+  .sa-page .sa-hero-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
 }

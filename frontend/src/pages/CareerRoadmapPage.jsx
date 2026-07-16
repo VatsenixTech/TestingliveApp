@@ -1,479 +1,336 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import "./CareerRoadmapPage.css";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "");
+
+const ICONS = {
+  target: "◎",
+  calendar: "▣",
+  level: "▥",
+  refresh: "↻",
+  export: "⇩",
+  search: "⌕",
+  bell: "♟",
+  message: "□",
+  skill: "◇",
+  project: "⌘",
+  streak: "♨",
+  milestone: "◉",
+  check: "✓",
+  resource: "▤",
+  lock: "▣",
+};
+
+const asArray = (value) => (Array.isArray(value) ? value : []);
+const number = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+const clamp = (value) => Math.min(100, Math.max(0, number(value)));
+
+function normalizeRoadmap(payload) {
+  const source = payload?.roadmap || payload?.data?.roadmap || payload?.data || payload || {};
+  const stages = asArray(source.stages || source.phases || source.roadmapStages).map(
+    (stage, index) => ({
+      ...stage,
+      id: stage._id || stage.id || stage.stageId || String(index + 1),
+      title: stage.title || stage.name || stage.stageName || `Stage ${index + 1}`,
+      timeline:
+        stage.timeline ||
+        stage.duration ||
+        (stage.startMonth && stage.endMonth
+          ? `Months ${stage.startMonth}–${stage.endMonth}`
+          : "Timeline not set"),
+      progress: clamp(stage.progress ?? stage.completionPercentage),
+      skills: asArray(stage.skills || stage.topics || stage.competencies).map((skill) =>
+        typeof skill === "string"
+          ? { name: skill, completed: false }
+          : {
+              ...skill,
+              name: skill.name || skill.title || skill.skillName || "Skill",
+              completed: Boolean(skill.completed || skill.isCompleted),
+            }
+      ),
+      status: stage.status || (number(stage.progress) >= 100 ? "completed" : index === 0 ? "active" : "upcoming"),
+    })
+  );
+
+  return {
+    ...source,
+    id: source._id || source.id,
+    targetRole: source.targetRole || source.role || source.careerGoal || "",
+    timeline: source.timeline || source.duration || (source.durationMonths ? `${source.durationMonths} Months` : ""),
+    experienceLevel: source.experienceLevel || source.currentLevel || source.level || "",
+    progress: clamp(source.progress ?? source.overallProgress),
+    stages,
+    milestones: asArray(source.milestones || source.upcomingMilestones).map((milestone) => ({
+      ...milestone,
+      dueIn: milestone.dueIn || (milestone.dueInDays != null ? `${milestone.dueInDays} days` : ""),
+    })),
+    resources: asArray(source.resources || source.recommendedResources),
+  };
+}
+
+function ProgressRing({ value }) {
+  const progress = clamp(value);
+  return (
+    <div
+      className="cr-progress-ring"
+      style={{ "--cr-progress": `${progress * 3.6}deg` }}
+      aria-label={`${progress}% complete`}
+    >
+      <div>{progress}%</div>
+    </div>
+  );
+}
+
+function MetricCard({ icon, tone, label, value, suffix, note, progress }) {
+  return (
+    <article className="cr-metric-card">
+      {label === "Overall Progress" ? (
+        <ProgressRing value={progress} />
+      ) : (
+        <span className={`cr-metric-icon ${tone || "blue"}`}>{icon}</span>
+      )}
+      <div className="cr-metric-copy">
+        <span>{label}</span>
+        <strong>
+          {value} {suffix && <small>{suffix}</small>}
+        </strong>
+        <p>{note}</p>
+      </div>
+      {typeof progress === "number" && label !== "Overall Progress" && (
+        <div className="cr-mini-progress">
+          <i style={{ width: `${clamp(progress)}%` }} />
+        </div>
+      )}
+    </article>
+  );
+}
 
 function CareerRoadmapPage() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const candidateId = user?._id || user?.candidateId || user?.id;
-  const name = user?.name || user?.fullName || "Candidate";
-
   const [roadmap, setRoadmap] = useState(null);
-  const [targetRole, setTargetRole] = useState(user?.role || user?.currentRole || "Data Engineer");
-  const [durationMonths, setDurationMonths] = useState(12);
-  const [currentLevel, setCurrentLevel] = useState("Beginner");
-  const [activeTab, setActiveTab] = useState("Roadmap");
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [savingStage, setSavingStage] = useState("");
   const [error, setError] = useState("");
+  const [expandedStage, setExpandedStage] = useState("");
+  const [form, setForm] = useState({
+    targetRole: "",
+    timeline: "12 Months",
+    experienceLevel: "Advanced",
+  });
 
-  const allSkills = useMemo(() => {
-    return (roadmap?.stages || []).flatMap((stage) =>
-      (stage.skills || []).map((skill) => ({
-        ...skill,
-        stage: stage.title,
-      }))
-    );
-  }, [roadmap]);
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
 
-  const stats = {
-    overallProgress: roadmap?.overallProgress || 0,
-    skillsToLearn: allSkills.filter((s) => Number(s.progress || 0) < 100).length,
-    projectCount: roadmap?.projects?.length || 0,
-    estimatedTime: roadmap?.durationMonths || durationMonths,
-    nextMilestone: roadmap?.nextMilestone?.title || "Not Available",
-    nextMilestoneDays: roadmap?.nextMilestone?.dueInDays || 0,
-  };
+  const candidateId = user?.candidateId || user?._id || user?.id || "";
+  const goTo = (path) => { window.location.href = path; };
 
-  function goTo(path) {
-    window.location.href = path;
-  }
+  const requestConfig = useMemo(() => {
+    const token = localStorage.getItem("token") || localStorage.getItem("candidateToken");
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  }, []);
 
-  useEffect(() => {
-    fetchRoadmap();
-  }, [candidateId]);
-
-  async function fetchRoadmap() {
+  const loadRoadmap = useCallback(async ({ quiet = false } = {}) => {
     if (!candidateId) {
-      setError("Candidate login required.");
-      setLoading(false);
+      goTo("/candidate-login");
       return;
     }
 
     try {
-      setLoading(true);
+      if (!quiet) setLoading(true);
       setError("");
-
-      const res = await axios.get(`${API_BASE}/api/career-roadmap/${candidateId}`);
-      const data = res.data.roadmap;
-
-      setRoadmap(data || null);
-
-      if (data) {
-        setTargetRole(data.targetRole || targetRole);
-        setCurrentLevel(data.currentLevel || currentLevel);
-        setDurationMonths(data.durationMonths || durationMonths);
+      const response = await axios.get(
+        `${API_URL}/api/career-roadmap/${candidateId}`,
+        requestConfig
+      );
+      const normalized = normalizeRoadmap(response.data);
+      setRoadmap(normalized);
+      setForm({
+        targetRole: normalized.targetRole || user?.targetRole || user?.desiredRole || "",
+        timeline: normalized.timeline || "12 Months",
+        experienceLevel: normalized.experienceLevel || user?.experienceLevel || "Advanced",
+      });
+    } catch (requestError) {
+      if (requestError.response?.status === 404) {
+        setRoadmap(null);
+        setForm((current) => ({
+          ...current,
+          targetRole: user?.targetRole || user?.desiredRole || "",
+          experienceLevel: user?.experienceLevel || current.experienceLevel,
+        }));
+      } else {
+        setError(requestError.response?.data?.message || "Unable to load your career roadmap.");
       }
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to load career roadmap.");
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
-  }
+  }, [candidateId, requestConfig, user]);
 
-  async function generateRoadmap() {
-    if (!candidateId) {
-      alert("Please login again.");
+  useEffect(() => {
+    loadRoadmap();
+  }, [loadRoadmap]);
+
+  const generateRoadmap = async () => {
+    if (!form.targetRole.trim()) {
+      setError("Please enter your target role before generating the roadmap.");
       return;
     }
 
     try {
       setGenerating(true);
-
-      const res = await axios.post(`${API_BASE}/api/career-roadmap/generate`, {
-        candidateId,
-        targetRole,
-        currentLevel,
-        durationMonths,
-      });
-
-      setRoadmap(res.data.roadmap);
-      alert(res.data.message || "Career roadmap generated from your real profile data.");
-    } catch (err) {
-      alert(err.response?.data?.message || "Roadmap generation failed.");
+      setError("");
+      const response = await axios.post(
+        `${API_URL}/api/career-roadmap/generate`,
+        {
+          candidateId,
+          targetRole: form.targetRole.trim(),
+          durationMonths: Number.parseInt(form.timeline, 10) || 12,
+          currentLevel: form.experienceLevel,
+        },
+        requestConfig
+      );
+      setRoadmap(normalizeRoadmap(response.data));
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Roadmap generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
-  }
+  };
 
-  async function updateProgress() {
-    if (!roadmap?._id) return;
+  const updateStageProgress = async (stage) => {
+    const roadmapId = roadmap?.id || roadmap?._id;
+    if (!roadmapId) return;
 
     try {
-      const nextProgress = Math.min(100, Number(roadmap.overallProgress || 0) + 5);
-
-      const res = await axios.patch(
-        `${API_BASE}/api/career-roadmap/progress/${roadmap._id}`,
-        { overallProgress: nextProgress }
+      setSavingStage(stage.id);
+      setError("");
+      await axios.patch(
+        `${API_URL}/api/career-roadmap/progress/${roadmapId}`,
+        { overallProgress: Math.min(100, overallProgress + 5) },
+        requestConfig
       );
-
-      setRoadmap(res.data.roadmap);
-    } catch (err) {
-      alert(err.response?.data?.message || "Progress update failed.");
+      await loadRoadmap({ quiet: true });
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Could not update this stage.");
+    } finally {
+      setSavingStage("");
     }
-  }
+  };
 
-  function downloadReport() {
-    if (!roadmap) {
-      alert("No roadmap available.");
-      return;
-    }
-
-    const content = `
-NoPromptJobs Career Roadmap Report
-
-Candidate: ${name}
-Target Role: ${roadmap.targetRole}
-Current Level: ${roadmap.currentLevel}
-Duration: ${roadmap.durationMonths} Months
-Overall Progress: ${roadmap.overallProgress}%
-
-Stages:
-${(roadmap.stages || [])
-  .map((s) => `Stage ${s.stageNo}: ${s.title} - ${s.timeline} - ${s.status} - ${s.progress}%`)
-  .join("\n")}
-
-Skills:
-${allSkills.map((skill) => `${skill.name}: ${skill.progress}%`).join("\n")}
-
-Projects:
-${(roadmap.projects || []).map((p) => `${p.title} - ${p.status}`).join("\n")}
-
-Milestones:
-${(roadmap.milestones || []).map((m) => `${m.title} - ${m.dueInDays} days - ${m.status}`).join("\n")}
-`;
-
-    const blob = new Blob([content], { type: "text/plain" });
+  const exportPlan = () => {
+    if (!roadmap) return;
+    const blob = new Blob([JSON.stringify(roadmap, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const file = document.createElement("a");
-
-    file.href = url;
-    file.download = "career-roadmap-report.txt";
-    file.click();
-
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${(roadmap.targetRole || "career").replace(/\s+/g, "-").toLowerCase()}-roadmap.json`;
+    link.click();
     URL.revokeObjectURL(url);
-  }
+  };
 
+  const stages = roadmap?.stages || [];
+  const completedSkills = stages.flatMap((stage) => stage.skills).filter((skill) => skill.completed).length;
+  const totalSkills = stages.reduce((total, stage) => total + stage.skills.length, 0);
+  const projects = asArray(roadmap?.projects);
+  const completedProjects = projects.filter((project) => project.completed || project.isCompleted).length;
+  const overallProgress = roadmap?.progress || (stages.length
+    ? Math.round(stages.reduce((sum, stage) => sum + stage.progress, 0) / stages.length)
+    : 0);
+
+  const filteredStages = stages;
+
+  const nextMilestone = roadmap?.milestones?.[0];
   return (
-    <main className="cr-page">
-      <aside className="cr-sidebar">
-        <div className="cr-logo">
-          <img src="/logo.png" alt="NoPromptJobs" />
-        </div>
-
-        <nav className="cr-menu">
-          <button onClick={() => goTo("/ultimate-dashboard")}>🏠 Dashboard</button>
-          <button onClick={() => goTo("/resume-studio")}>📄 AI Resume Review</button>
-          <button onClick={() => goTo("/services")}>🤖 AI Workspace</button>
-          <button onClick={() => goTo("/skill-analyzer")}>📊 Skill Analyzer</button>
-          <button className="active">🧭 Career Roadmap</button>
-          <button onClick={() => goTo("/salary-predictor")}>💰 Salary Predictor</button>
-          <button onClick={() => goTo("/job-alerts")}>🔔 Job Alerts</button>
-          <button onClick={() => goTo("/saved-jobs")}>❤️ Saved Jobs</button>
-          <button onClick={() => goTo("/hidden-opportunities")}>💎 Hidden Opportunities</button>
-          <button onClick={() => goTo("/ai-interview-prep")}>🎤 AI Interview Prep</button>
-          <button onClick={() => goTo("/ai-interview-prep?tab=Question%20Bank")}>📚 Question Bank</button>
-          <button onClick={() => goTo("/applications")}>📂 Applications</button>
-          <button onClick={() => goTo("/ai-interview-prep?tab=My%20Reports")}>📄 Reports</button>
-          <button onClick={() => goTo("/trust-passport")}>🛡 Trust Passport</button>
-          <button onClick={() => goTo("/settings")}>⚙ Settings</button>
-        </nav>
-      </aside>
-
-      <section className="cr-main">
-        <header className="cr-topbar">
-          <div className="cr-search">
-            <span>⌕</span>
-            <input placeholder="Search roadmap skills, projects, resources..." />
-            <b>⌘ K</b>
-          </div>
-
-          <button className="cr-ai" onClick={() => goTo("/services")}>
-            ✨ AI Assistant
-          </button>
-
-          <div className="cr-user">
-            <img src={user?.profileImageUrl || "/profile.png"} alt="Candidate" />
-            <div>
-              <h4>{name}</h4>
-              <p>{roadmap?.targetRole || targetRole}</p>
-            </div>
-          </div>
-        </header>
-
-        <section className="cr-header">
-          <div>
-            <h1>Career Roadmap</h1>
-            <p>Generated from your real candidate profile, skills and target role.</p>
-          </div>
-
-          <div className="cr-actions">
-            <button onClick={fetchRoadmap}>⟳ Refresh</button>
-            <button onClick={downloadReport}>⬇ Download Report</button>
-          </div>
-        </section>
-
-        <section className="cr-controls">
-          <select value={targetRole} onChange={(e) => setTargetRole(e.target.value)}>
-            <option>Data Engineer</option>
-            <option>Frontend Developer</option>
-            <option>Backend Developer</option>
-            <option>Full Stack Developer</option>
-            <option>DevOps Engineer</option>
-            <option>Data Scientist</option>
-            <option>Cybersecurity Analyst</option>
-            <option>SAP Consultant</option>
-          </select>
-
-          <select value={durationMonths} onChange={(e) => setDurationMonths(Number(e.target.value))}>
-            <option value={3}>Next 3 Months</option>
-            <option value={6}>Next 6 Months</option>
-            <option value={12}>Next 12 Months</option>
-            <option value={18}>Next 18 Months</option>
-          </select>
-
-          <select value={currentLevel} onChange={(e) => setCurrentLevel(e.target.value)}>
-            <option>Beginner</option>
-            <option>Intermediate</option>
-            <option>Advanced</option>
-          </select>
-
-          <button onClick={generateRoadmap} disabled={generating}>
-            {generating ? "Generating..." : "Generate From My Profile"}
-          </button>
-        </section>
-
-        {loading && <div className="cr-empty">Loading career roadmap...</div>}
-        {error && !loading && <div className="cr-empty">{error}</div>}
-
-        {!loading && !error && !roadmap && (
-          <div className="cr-empty">
-            No roadmap found for your profile. Select target role and click
-            <b> Generate From My Profile</b>.
-          </div>
-        )}
-
-        {!loading && !error && roadmap && (
-          <>
-            <section className="cr-stats">
-              <article>
-                <div className="cr-ring">{stats.overallProgress}%</div>
-                <p>Overall Progress</p>
-                <h2>{stats.overallProgress}%</h2>
-                <small>Saved in MongoDB</small>
-              </article>
-
-              <article>
-                <div>🧩</div>
-                <p>Skills Remaining</p>
-                <h2>{stats.skillsToLearn}</h2>
-                <small>Based on your real profile gap</small>
-              </article>
-
-              <article>
-                <div>🎁</div>
-                <p>Project Milestones</p>
-                <h2>{stats.projectCount}</h2>
-                <small>From roadmap data</small>
-              </article>
-
-              <article>
-                <div>⏱</div>
-                <p>Estimated Time</p>
-                <h2>{stats.estimatedTime} Months</h2>
-                <small>Selected timeline</small>
-              </article>
-
-              <article>
-                <div>🎯</div>
-                <p>Next Milestone</p>
-                <h2>{stats.nextMilestone}</h2>
-                <small>In {stats.nextMilestoneDays} days</small>
-              </article>
+      <main className="career-roadmap-page">
+        <section className="cr-shell">
+          <div className="cr-content">
+            <section className="cr-heading-row">
+              <div>
+                <div className="cr-title-line">
+                  <h1>Career Roadmap</h1>
+                  <span className="cr-ai-badge">✣ AI Personalized</span>
+                </div>
+                <p>Your personalized path to becoming a <strong>{roadmap?.targetRole || form.targetRole || "career professional"}</strong></p>
+              </div>
+              <div className="cr-heading-actions">
+                <button type="button" onClick={generateRoadmap} disabled={generating}>
+                  {ICONS.refresh} {generating ? "Generating..." : "Regenerate Roadmap"}
+                </button>
+                <button type="button" onClick={exportPlan} disabled={!roadmap}>{ICONS.export} Export Plan</button>
+              </div>
             </section>
 
-            <section className="cr-layout">
-              <section className="cr-center">
-                <div className="cr-tabs">
-                  {["Roadmap", "Skills", "Projects", "Resources", "Milestones", "Assessments"].map((tab) => (
-                    <button
-                      key={tab}
-                      className={activeTab === tab ? "active" : ""}
-                      onClick={() => setActiveTab(tab)}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
+            {error && <div className="cr-error"><span>!</span>{error}<button onClick={() => setError("")}>×</button></div>}
 
-                {activeTab === "Roadmap" && (
-                  <div className="cr-timeline">
-                    {(roadmap.stages || []).map((stage) => (
-                      <article className={`cr-stage stage-${stage.stageNo}`} key={stage._id || stage.stageNo}>
-                        <div className="stage-left">
-                          <span>{stage.stageNo}</span>
-                          <b>STAGE {stage.stageNo}</b>
-                          <p>{stage.timeline}</p>
-                        </div>
+            <section className="cr-controls">
+              <label><span>{ICONS.target}</span><small>Target Role</small><input value={form.targetRole} onChange={(e) => setForm({ ...form, targetRole: e.target.value })} placeholder="e.g. Data Engineer" /></label>
+              <label><span>{ICONS.calendar}</span><small>Timeline</small><select value={form.timeline} onChange={(e) => setForm({ ...form, timeline: e.target.value })}><option>6 Months</option><option>12 Months</option><option>18 Months</option><option>24 Months</option></select></label>
+              <label><span>{ICONS.level}</span><small>Experience Level</small><select value={form.experienceLevel} onChange={(e) => setForm({ ...form, experienceLevel: e.target.value })}><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></label>
+            </section>
 
-                        <div className="stage-main">
-                          <h3>{stage.title}</h3>
-                          <p>{stage.subtitle}</p>
-
-                          <div className="stage-skills">
-                            {(stage.skills || []).map((skill) => (
-                              <span key={skill.name}>
-                                {skill.name}
-                                <b>{skill.progress}%</b>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="stage-status">
-                          <small>{stage.status}</small>
-                          <h2>{stage.progress}%</h2>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
-
-                {activeTab === "Skills" && (
-                  <div className="cr-grid">
-                    {allSkills.map((skill) => (
-                      <div className="cr-card" key={`${skill.stage}-${skill.name}`}>
-                        <h3>{skill.name}</h3>
-                        <p>{skill.stage}</p>
-                        <div className="cr-progress">
-                          <span style={{ width: `${skill.progress}%` }}></span>
-                        </div>
-                        <b>{skill.progress}% Completed</b>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {activeTab === "Projects" && (
-                  <div className="cr-grid">
-                    {(roadmap.projects || []).map((project) => (
-                      <div className="cr-card" key={project._id || project.title}>
-                        <h3>{project.title}</h3>
-                        <p>{project.description}</p>
-                        <span className="project-status">{project.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {activeTab === "Resources" && (
-                  <div className="cr-grid">
-                    {(roadmap.resources || []).map((resource) => (
-                      <div className="cr-card" key={resource._id || resource.title}>
-                        <h3>{resource.title}</h3>
-                        <p>By {resource.provider}</p>
-                        <b>⭐ {resource.rating || "-"}</b>
-                        <button
-                          onClick={() =>
-                            resource.url
-                              ? goTo(resource.url)
-                              : alert("No resource URL saved for this item.")
-                          }
-                        >
-                          Open Resource →
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {activeTab === "Milestones" && (
-                  <div className="cr-grid">
-                    {(roadmap.milestones || []).map((milestone) => (
-                      <div className="cr-card" key={milestone._id || milestone.title}>
-                        <h3>{milestone.title}</h3>
-                        <p>Due in {milestone.dueInDays} days</p>
-                        <span className="project-status">{milestone.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {activeTab === "Assessments" && (
-                  <div className="cr-grid">
-                    <div className="cr-card">
-                      <h3>Skill Assessment</h3>
-                      <p>Use your real skills to check readiness.</p>
-                      <button onClick={() => goTo("/skill-analyzer")}>Start Assessment →</button>
-                    </div>
-
-                    <div className="cr-card">
-                      <h3>Mock Interview</h3>
-                      <p>Practice based on selected target role.</p>
-                      <button onClick={() => goTo("/ai-interview-prep")}>Start Interview →</button>
-                    </div>
-                  </div>
-                )}
+            {loading ? (
+              <section className="cr-loading-grid">{Array.from({ length: 10 }).map((_, index) => <div key={index} />)}</section>
+            ) : !roadmap || stages.length === 0 ? (
+              <section className="cr-empty-state">
+                <div className="cr-empty-icon">◎</div>
+                <h2>Create your personalized career roadmap</h2>
+                <p>We will analyze your real profile, skills and target role to build a practical learning plan.</p>
+                <button onClick={generateRoadmap} disabled={generating}>{generating ? "Analyzing profile..." : "Generate From My Profile →"}</button>
               </section>
+            ) : (
+              <>
+                <section className="cr-metrics">
+                  <MetricCard label="Overall Progress" progress={overallProgress} value={overallProgress} note="Keep going! You're on track." />
+                  <MetricCard icon={ICONS.skill} tone="green" label="Skills Completed" value={`${completedSkills}/${totalSkills}`} progress={totalSkills ? (completedSkills / totalSkills) * 100 : 0} note={`${totalSkills ? Math.round((completedSkills / totalSkills) * 100) : 0}% of skills mastered`} />
+                  <MetricCard icon={ICONS.project} tone="purple" label="Projects" value={`${completedProjects}/${projects.length || roadmap?.projectCount || 0}`} progress={projects.length ? (completedProjects / projects.length) * 100 : 0} note="Portfolio projects completed" />
+                  <MetricCard icon={ICONS.streak} tone="orange" label="Learning Streak" value={number(roadmap.learningStreak)} suffix="days" note="Build consistency every day" />
+                  <MetricCard icon={ICONS.milestone} tone="blue" label="Next Milestone" value={nextMilestone?.title || nextMilestone?.name || "Not scheduled"} note={nextMilestone?.dueIn || nextMilestone?.dueDate || "Keep progressing"} />
+                </section>
 
-              <aside className="cr-right">
-                <div className="cr-side-card goal">
-                  <div className="side-head">
-                    <h3>Your Career Goal</h3>
-                    <button onClick={generateRoadmap}>Regenerate</button>
+                <section className="cr-dashboard-grid">
+                  <div className="cr-roadmap-list">
+                    {filteredStages.length ? filteredStages.map((stage, index) => {
+                      const expanded = expandedStage === stage.id;
+                      const locked = stage.status === "locked";
+                      return (
+                        <article className={`cr-stage-card ${stage.status}`} key={stage.id}>
+                          <div className="cr-stage-number">{index + 1}</div>
+                          <div className="cr-stage-main">
+                            <div className="cr-stage-title"><h3>{stage.title}</h3><span>{stage.status}</span><small>{stage.timeline}</small></div>
+                            <div className="cr-stage-skills">
+                              {stage.skills.slice(0, expanded ? undefined : 4).map((skill, skillIndex) => <span key={`${stage.id}-${skillIndex}`} className={skill.completed ? "done" : ""}>{skill.completed ? ICONS.check : "•"} {skill.name}</span>)}
+                            </div>
+                            <div className="cr-stage-progress"><i style={{ width: `${stage.progress}%` }} /></div>
+                          </div>
+                          <div className="cr-stage-status"><strong>{stage.progress}%</strong><small>Complete</small></div>
+                          <div className="cr-stage-actions">
+                            <button disabled={locked || savingStage === stage.id} onClick={() => updateStageProgress(stage)}>{locked ? `${ICONS.lock} Locked` : savingStage === stage.id ? "Saving..." : stage.progress > 0 ? "Continue Learning" : "Start Stage"}</button>
+                            <button onClick={() => setExpandedStage(expanded ? "" : stage.id)}>{expanded ? "Hide Details" : "View Details"} →</button>
+                          </div>
+                        </article>
+                      );
+                    }) : <div className="cr-no-results">No roadmap stages are available.</div>}
                   </div>
 
-                  <h2>{roadmap.targetRole}</h2>
-                  <p>Level: {roadmap.currentLevel}</p>
-                  <p>Timeline: {roadmap.durationMonths} months</p>
-                  <p>Progress: {roadmap.overallProgress}%</p>
-
-                  <div className="cr-progress">
-                    <span style={{ width: `${roadmap.overallProgress}%` }}></span>
-                  </div>
-
-                  <button onClick={updateProgress}>Update Progress</button>
-                </div>
-
-                <div className="cr-side-card">
-                  <h3>Recommended for You</h3>
-
-                  {(roadmap.resources || []).slice(0, 3).map((resource) => (
-                    <div className="resource-row" key={resource._id || resource.title}>
-                      <div>📘</div>
-                      <section>
-                        <b>{resource.title}</b>
-                        <p>By {resource.provider}</p>
-                        <small>⭐ {resource.rating || "-"}</small>
-                      </section>
-                    </div>
-                  ))}
-
-                  <button onClick={() => setActiveTab("Resources")}>View All Recommendations →</button>
-                </div>
-
-                <div className="cr-side-card">
-                  <h3>Upcoming Milestones</h3>
-
-                  {(roadmap.milestones || []).slice(0, 3).map((milestone) => (
-                    <div className="milestone-row" key={milestone._id || milestone.title}>
-                      <span></span>
-                      <section>
-                        <b>{milestone.title}</b>
-                        <p>In {milestone.dueInDays} days</p>
-                      </section>
-                    </div>
-                  ))}
-
-                  <button onClick={() => setActiveTab("Milestones")}>View All Milestones →</button>
-                </div>
-              </aside>
-            </section>
-          </>
-        )}
-      </section>
-    </main>
+                  <aside className="cr-right-column">
+                    <article className="cr-side-card cr-goal-card"><h3>{ICONS.target} Your Career Goal</h3><div><span>On Track</span><strong>{roadmap.targetRole}</strong><p>{roadmap.goalDescription || `Build the skills and experience needed for ${roadmap.targetRole}.`}</p><small>{ICONS.calendar} Target Timeline: {roadmap.timeline}</small></div></article>
+                    <article className="cr-side-card"><header><h3>⚑ Upcoming Milestones</h3><button onClick={() => goTo("/career-roadmap/milestones")}>View All</button></header>{roadmap.milestones.length ? roadmap.milestones.slice(0, 4).map((milestone, index) => <div className="cr-milestone" key={milestone._id || milestone.id || index}><i>{index + 1}</i><p><strong>{milestone.title || milestone.name}</strong><small>{milestone.description || milestone.subtitle || "Roadmap milestone"}</small></p><span>{milestone.dueIn || milestone.dueDate || "Upcoming"}</span></div>) : <p className="cr-side-empty">No milestones scheduled yet.</p>}</article>
+                    <article className="cr-side-card"><header><h3>Recommended Resources</h3><button onClick={() => goTo("/resources")}>View All</button></header>{roadmap.resources.length ? roadmap.resources.slice(0, 3).map((resource, index) => <button className="cr-resource" key={resource._id || resource.id || index} onClick={() => resource.url && window.open(resource.url, "_blank", "noopener,noreferrer")}><i>{ICONS.resource}</i><p><strong>{resource.title || resource.name}</strong><small>{resource.provider || resource.source || "Learning resource"}</small></p><span>{resource.rating ? `${resource.rating} ★` : "Open →"}</span></button>) : <p className="cr-side-empty">Resources will appear after your roadmap is generated.</p>}</article>
+                  </aside>
+                </section>
+              </>
+            )}
+          </div>
+        </section>
+      </main>
   );
 }
 

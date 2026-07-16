@@ -1,463 +1,675 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  BellRing,
+  BriefcaseBusiness,
+  CalendarClock,
+  CheckCircle2,
+  ChevronDown,
+  Download,
+  Eye,
+  Flame,
+  IndianRupee,
+  Lightbulb,
+  LoaderCircle,
+  MapPin,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Users,
+  X,
+} from "lucide-react";
 import "./HiddenOpportunitiesPage.css";
 
-const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-function HiddenOpportunitiesPage() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+function readStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "{}");
+  } catch {
+    return {};
+  }
+}
 
+function authConfig() {
+  const token = localStorage.getItem("token");
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+}
+
+function numberOrZero(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function parseClosingDays(value) {
+  if (typeof value === "number") return value;
+  const match = String(value || "").match(/\d+/);
+  return match ? Number(match[0]) : null;
+}
+
+function experienceText(job) {
+  if (job.experience) return String(job.experience);
+  if (job.experienceRange) return String(job.experienceRange);
+
+  const minimum = job.minExperience ?? job.experienceMin;
+  const maximum = job.maxExperience ?? job.experienceMax;
+
+  if (minimum != null && maximum != null) return `${minimum}–${maximum} Yrs`;
+  if (minimum != null) return `${minimum}+ Yrs`;
+  return "Not specified";
+}
+
+function salaryText(job) {
+  if (job.salary) return String(job.salary);
+
+  const minimum = job.salaryMin;
+  const maximum = job.salaryMax;
+
+  if (minimum != null && maximum != null) return `₹${minimum}–${maximum} LPA`;
+  if (minimum != null) return `₹${minimum}+ LPA`;
+  return "Not disclosed";
+}
+
+function normalizeJob(job) {
+  const company = job.companyName || job.company || "Company not disclosed";
+  const closesIn = parseClosingDays(job.closesIn ?? job.timeLeft);
+
+  return {
+    id: job._id || job.id,
+    title: job.role || job.title || job.jobTitle || "Role not specified",
+    company,
+    companyLogo: job.companyLogo || job.logoUrl || "",
+    logo: company.slice(0, 1).toUpperCase(),
+    location: job.location || "Location not specified",
+    experience: experienceText(job),
+    salary: salaryText(job),
+    salaryMin: numberOrZero(job.salaryMin),
+    salaryMax: numberOrZero(job.salaryMax),
+    roleType: job.workMode || job.employmentType || job.roleType || "Not specified",
+    skills: Array.isArray(job.requiredSkills)
+      ? job.requiredSkills
+      : Array.isArray(job.skills)
+        ? job.skills
+        : [],
+    match: Math.max(0, Math.min(100, numberOrZero(job.aiMatch ?? job.match))),
+    closesIn,
+    timeLeft: job.timeLeft || (closesIn != null ? `${closesIn} days` : "Not specified"),
+    description: job.description || "",
+    opportunityType: job.opportunityType || "Hidden opportunity",
+    referralRequested: Boolean(job.referralRequested),
+    hasApplied: Boolean(job.hasApplied),
+    raw: job,
+  };
+}
+
+function MatchRing({ value, large = false }) {
+  const safeValue = Math.max(0, Math.min(100, numberOrZero(value)));
+  const degrees = Math.round((safeValue / 100) * 360);
+
+  return (
+    <div
+      className={`match-ring ${large ? "match-ring--large" : ""}`}
+      style={{ "--match-value": `${degrees}deg` }}
+      aria-label={`${safeValue}% AI match`}
+    >
+      <div className="match-ring__center">
+        <strong>{safeValue}%</strong>
+        {large && <span>Career Fit</span>}
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({ metric }) {
+  const Icon = metric.icon;
+
+  return (
+    <article className="metric-card">
+      <div className={`metric-card__icon metric-card__icon--${metric.tone}`}>
+        <Icon size={25} strokeWidth={2.2} />
+      </div>
+
+      <div className="metric-card__body">
+        <span className="metric-card__label">{metric.label}</span>
+        <strong className="metric-card__value">{metric.value}</strong>
+        <span className={`metric-card__trend ${metric.warning ? "metric-card__trend--warning" : ""}`}>
+          <TrendingUp size={12} />
+          <small>{metric.note}</small>
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function JobCard({ job, onViewRole }) {
+  return (
+    <article className="job-card">
+      <div className="job-card__logo">
+        {job.companyLogo ? (
+          <img src={job.companyLogo} alt={`${job.company} logo`} />
+        ) : (
+          job.logo
+        )}
+      </div>
+
+      <div className="job-card__main">
+        <div className="job-card__heading">
+          <h3>{job.title}</h3>
+          <span className="verified-company">
+            {job.company} <CheckCircle2 size={14} />
+          </span>
+        </div>
+
+        <div className="job-card__meta">
+          <span><MapPin size={14} />{job.location}</span>
+          <span><BriefcaseBusiness size={14} />{job.experience}</span>
+          <span><IndianRupee size={14} />{job.salary.replace(/^₹/, "")}</span>
+        </div>
+
+        <div className="skill-list" aria-label="Required skills">
+          {job.skills.length > 0 ? (
+            job.skills.slice(0, 6).map((skill) => <span key={skill}>{skill}</span>)
+          ) : (
+            <span>Skills not specified</span>
+          )}
+        </div>
+      </div>
+
+      <div className="job-card__match">
+        <MatchRing value={job.match} />
+        <span>AI Match</span>
+      </div>
+
+      <div className="job-card__actions">
+        <button type="button" className="button button--outline" onClick={() => onViewRole(job)}>
+          View Role <ArrowRight size={16} />
+        </button>
+        <span className="closing-text">
+          <CalendarClock size={14} />
+          {job.closesIn != null ? `Closing in ${job.closesIn} days` : job.timeLeft}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+export default function HiddenOpportunitiesPage() {
+  const navigate = useNavigate();
+  const user = useMemo(readStoredUser, []);
   const candidateId = user?._id || user?.candidateId || user?.id;
-  const name = user?.name || user?.fullName || "Candidate";
-  const role = user?.role || user?.currentRole || "Candidate";
-
-  const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("All");
-  const [workMode, setWorkMode] = useState("All");
-  const [salaryRange, setSalaryRange] = useState("All");
-  const [matchOnly, setMatchOnly] = useState(true);
+  const candidateName = user?.name || user?.fullName || "Candidate";
 
   const [jobs, setJobs] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [selectedJob, setSelectedJob] = useState(null);
+  const [serverStats, setServerStats] = useState({});
+  const [query, setQuery] = useState("");
+  const [roleType, setRoleType] = useState("All");
+  const [location, setLocation] = useState("All");
+  const [experience, setExperience] = useState("All");
+  const [aiOnly, setAiOnly] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [actionName, setActionName] = useState("");
+  const [notice, setNotice] = useState("");
 
-  function goTo(path) {
-    window.location.href = path;
-  }
-
-  useEffect(() => {
-    fetchHiddenOpportunities();
-  }, [candidateId]);
-
-  async function fetchHiddenOpportunities() {
+  const fetchHiddenOpportunities = useCallback(async (isRefresh = false) => {
     if (!candidateId) {
-      setError("Candidate login required.");
+      setError("Candidate login is required to load hidden opportunities.");
       setLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
-      setError("");
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
 
-      const res = await axios.get(
-        `${API_BASE}/api/hidden-opportunities/candidate/${candidateId}`
+      setError("");
+      const response = await axios.get(
+        `${API_BASE}/api/hidden-opportunities/candidate/${candidateId}`,
+        authConfig()
       );
 
-      setJobs(res.data.opportunities || []);
-      setStats(res.data.stats || null);
-    } catch (err) {
+      const opportunities = Array.isArray(response.data?.opportunities)
+        ? response.data.opportunities
+        : [];
+
+      setJobs(opportunities.map(normalizeJob));
+      setServerStats(response.data?.stats || {});
+    } catch (requestError) {
       setError(
-        err.response?.data?.message || "Failed to load hidden opportunities."
+        requestError.response?.data?.message ||
+          "Failed to load hidden opportunities from the server."
       );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }
+  }, [candidateId]);
+
+  useEffect(() => {
+    fetchHiddenOpportunities();
+  }, [fetchHiddenOpportunities]);
+
+  const locations = useMemo(
+    () => [...new Set(jobs.map((job) => job.location).filter(Boolean))].sort(),
+    [jobs]
+  );
+
+  const roleTypes = useMemo(
+    () => [...new Set(jobs.map((job) => job.roleType).filter(Boolean))].sort(),
+    [jobs]
+  );
 
   const filteredJobs = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
     return jobs.filter((job) => {
-      const text = `${job.companyName || ""} ${job.role || ""} ${(job.requiredSkills || []).join(" ")}`.toLowerCase();
+      const searchableText = [job.title, job.company, job.location, job.roleType, ...job.skills]
+        .join(" ")
+        .toLowerCase();
 
-      const searchOk = text.includes(search.toLowerCase());
+      const minimumExperience = Number.parseInt(job.experience, 10);
+      const matchesExperience =
+        experience === "All" ||
+        (experience === "0–2 years" && minimumExperience <= 2) ||
+        (experience === "3–5 years" && minimumExperience >= 3 && minimumExperience <= 5) ||
+        (experience === "5+ years" && minimumExperience >= 5) ||
+        Number.isNaN(minimumExperience);
 
-      const locationOk =
-        location === "All" || (job.location || "").includes(location);
-
-      const modeOk =
-        workMode === "All" || job.workMode === workMode;
-
-      const matchOk = !matchOnly || Number(job.aiMatch || 0) >= 80;
-
-      let salaryOk = true;
-      if (salaryRange === "30-40") {
-        salaryOk = Number(job.salaryMin) >= 30 && Number(job.salaryMax) <= 45;
-      }
-      if (salaryRange === "40-50") {
-        salaryOk = Number(job.salaryMin) >= 40 && Number(job.salaryMax) <= 55;
-      }
-      if (salaryRange === "50+") {
-        salaryOk = Number(job.salaryMax) >= 50;
-      }
-
-      return searchOk && locationOk && modeOk && matchOk && salaryOk;
+      return (
+        (!normalizedQuery || searchableText.includes(normalizedQuery)) &&
+        (roleType === "All" || job.roleType === roleType) &&
+        (location === "All" || job.location === location) &&
+        matchesExperience &&
+        (!aiOnly || job.match >= 80)
+      );
     });
-  }, [jobs, search, location, workMode, salaryRange, matchOnly]);
+  }, [aiOnly, experience, jobs, location, query, roleType]);
+
+  const calculatedStats = useMemo(() => {
+    const salaries = jobs
+      .map((job) => {
+        if (job.salaryMin && job.salaryMax) return (job.salaryMin + job.salaryMax) / 2;
+        return job.salaryMax || job.salaryMin || 0;
+      })
+      .filter((salary) => salary > 0);
+
+    return {
+      hiddenJobs: serverStats.hiddenJobs ?? jobs.length,
+      closingSoon:
+        serverStats.closingSoon ??
+        serverStats.emergencyOpenings ??
+        jobs.filter((job) => job.closesIn != null && job.closesIn <= 7).length,
+      avgSalary:
+        serverStats.avgSalary ??
+        (salaries.length
+          ? Math.round((salaries.reduce((sum, salary) => sum + salary, 0) / salaries.length) * 10) / 10
+          : 0),
+      recruiterInvites: serverStats.recruiterInvites ?? 0,
+      bestMatch:
+        serverStats.bestMatch ??
+        jobs.reduce((highest, job) => Math.max(highest, job.match), 0),
+      profileViews: serverStats.profileViews ?? 0,
+    };
+  }, [jobs, serverStats]);
+
+  const metrics = useMemo(() => [
+    {
+      label: "Hidden Jobs",
+      value: calculatedStats.hiddenJobs,
+      note: "Live opportunities",
+      icon: BriefcaseBusiness,
+      tone: "blue",
+    },
+    {
+      label: "Closing Soon",
+      value: calculatedStats.closingSoon,
+      note: "Within 7 days",
+      icon: Flame,
+      tone: "violet",
+      warning: true,
+    },
+    {
+      label: "Avg. Salary",
+      value: `₹${calculatedStats.avgSalary} LPA`,
+      note: "From live roles",
+      icon: IndianRupee,
+      tone: "green",
+    },
+    {
+      label: "Recruiter Invites",
+      value: calculatedStats.recruiterInvites,
+      note: "Current invites",
+      icon: Users,
+      tone: "purple",
+    },
+    {
+      label: "Best AI Match",
+      value: `${calculatedStats.bestMatch}%`,
+      note: "Current profile fit",
+      icon: Target,
+      tone: "orange",
+    },
+  ], [calculatedStats]);
+
+  const topSkills = useMemo(() => {
+    const counts = new Map();
+    jobs.forEach((job) => {
+      job.skills.forEach((skill) => counts.set(skill, (counts.get(skill) || 0) + 1));
+    });
+
+    return [...counts.entries()]
+      .sort((first, second) => second[1] - first[1])
+      .slice(0, 3)
+      .map(([skill]) => skill);
+  }, [jobs]);
+
+  const bestJob = useMemo(
+    () => jobs.reduce((best, job) => (!best || job.match > best.match ? job : best), null),
+    [jobs]
+  );
+
+  function exportJobs() {
+    if (filteredJobs.length === 0) {
+      setNotice("There are no filtered opportunities to export.");
+      return;
+    }
+
+    const headings = ["Role", "Company", "Location", "Experience", "Work Mode", "Salary", "AI Match"];
+    const rows = filteredJobs.map((job) => [
+      job.title,
+      job.company,
+      job.location,
+      job.experience,
+      job.roleType,
+      job.salary,
+      `${job.match}%`,
+    ]);
+
+    const csv = [headings, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+      .join("\n");
+
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "hidden-opportunities.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function showAllJobs() {
+    setQuery("");
+    setRoleType("All");
+    setLocation("All");
+    setExperience("All");
+    setAiOnly(false);
+    document.querySelector(".job-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   async function requestReferral(job) {
     try {
-      const res = await axios.post(
-        `${API_BASE}/api/hidden-opportunities/referral/${job._id}`,
-        { candidateId }
+      setActionName("referral");
+      setNotice("");
+      const response = await axios.post(
+        `${API_BASE}/api/hidden-opportunities/referral/${job.id}`,
+        { candidateId },
+        authConfig()
       );
 
-      alert(res.data.message || "Referral request submitted.");
-      fetchHiddenOpportunities();
-    } catch (err) {
-      alert(err.response?.data?.message || "Referral request failed.");
+      setNotice(response.data?.message || "Referral request submitted.");
+      await fetchHiddenOpportunities(true);
+      setSelectedJob((current) => current ? { ...current, referralRequested: true } : current);
+    } catch (requestError) {
+      setNotice(requestError.response?.data?.message || "Referral request failed.");
+    } finally {
+      setActionName("");
     }
   }
 
   async function applyConfidentially(job) {
     try {
-      const res = await axios.post(
-        `${API_BASE}/api/hidden-opportunities/apply/${job._id}`,
-        { candidateId }
+      setActionName("apply");
+      setNotice("");
+      const response = await axios.post(
+        `${API_BASE}/api/hidden-opportunities/apply/${job.id}`,
+        { candidateId },
+        authConfig()
       );
 
-      alert(res.data.message || "Confidential application submitted.");
-      setSelectedJob(null);
-      fetchHiddenOpportunities();
-    } catch (err) {
-      alert(err.response?.data?.message || "Application failed.");
+      setNotice(response.data?.message || "Application submitted successfully.");
+      await fetchHiddenOpportunities(true);
+      setSelectedJob((current) => current ? { ...current, hasApplied: true } : current);
+    } catch (requestError) {
+      setNotice(requestError.response?.data?.message || "Application failed.");
+    } finally {
+      setActionName("");
     }
   }
 
-  function exportReport() {
-    const text = `
-NoPromptJobs Hidden Opportunities Report
-
-Candidate: ${name}
-Role: ${role}
-
-Hidden Jobs: ${stats?.hiddenJobs || 0}
-Emergency Openings: ${stats?.emergencyOpenings || 0}
-Average Salary: ₹${stats?.avgSalary || 0} LPA
-Recruiter Invites: ${stats?.recruiterInvites || 0}
-Referral Available: ${stats?.referralAvailable || 0}
-Best AI Match: ${stats?.bestMatch || 0}%
-
-Opportunities:
-${filteredJobs
-  .map(
-    (j) =>
-      `${j.companyName} - ${j.role} - ₹${j.salaryMin}-${j.salaryMax} LPA - ${j.aiMatch}% Match - ${j.timeLeft}`
-  )
-  .join("\n")}
-`;
-
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-
-    a.href = url;
-    a.download = "hidden-opportunities-report.txt";
-    a.click();
-
-    URL.revokeObjectURL(url);
-  }
-
-  function getTypeIcon(type) {
-    if (type === "Emergency Opening") return "🔥";
-    if (type === "Confidential Hiring") return "🔒";
-    if (type === "Referral Opening") return "👥";
-    if (type === "Fast Track Interview") return "⚡";
-    if (type === "Contract Role") return "💼";
-    if (type === "Premium High Salary") return "👑";
-    return "🛡";
-  }
-
   return (
-    <main className="ho-page">
-      <aside className="ho-sidebar">
-        <div className="ho-logo">
-          <img src="/logo.png" alt="NoPromptJobs" />
+    <main className="hidden-opportunities-page">
+      <header className="page-heading">
+        <div>
+          <div className="page-heading__eyebrow">
+            <Sparkles size={15} /> AI-curated for {candidateName}
+          </div>
+          <h1>Hidden Opportunities <span aria-hidden="true">♛</span></h1>
+          <p>Exclusive roles matched to your live candidate profile</p>
         </div>
 
-        <nav className="ho-menu">
-          <button onClick={() => goTo("/ultimate-dashboard")}>🏠 Dashboard</button>
-          <button onClick={() => goTo("/resume-studio")}>📄 AI Resume Review</button>
-          <button onClick={() => goTo("/skill-analyzer")}>📊 Skill Analyzer</button>
-          <button onClick={() => goTo("/career-roadmap")}>🧭 Career Roadmap</button>
-          <button onClick={() => goTo("/salary-predictor")}>💰 Salary Predictor</button>
-          <button onClick={() => goTo("/jobs")}>💼 Job Matcher</button>
-          <button onClick={() => goTo("/ai-interview-prep")}>🎤 Interview Prep</button>
-          <button onClick={() => goTo("/ai-interview-prep?tab=Question%20Bank")}>
-            📚 Question Bank
+        <div className="page-heading__actions">
+          <button type="button" className="button button--ghost" onClick={() => fetchHiddenOpportunities(true)} disabled={refreshing}>
+            <RefreshCw size={17} className={refreshing ? "spin" : ""} /> Refresh
           </button>
-          <button className="active">🛡 Hidden Opportunities</button>
-          <button onClick={() => goTo("/applications")}>📂 My Applications</button>
-          <button onClick={() => goTo("/ai-interview-prep?tab=My%20Reports")}>
-            📈 Reports
+          <button type="button" className="button button--ghost" onClick={exportJobs}>
+            <Download size={17} /> Export
           </button>
-          <button onClick={() => goTo("/settings")}>⚙ Settings</button>
-        </nav>
-
-        <div className="ho-profile">
-          <div className="ho-profile-img">
-            <img src={user?.profileImageUrl || "/profile.png"} alt="Candidate" />
-          </div>
-          <div>
-            <h4>{name}</h4>
-            <p>{role}</p>
-          </div>
-          <span>{stats?.bestMatch || 0}%</span>
         </div>
-      </aside>
+      </header>
 
-      <section className="ho-main">
-        <header className="ho-header">
-          <div>
-            <h1>Hidden Opportunities 👑</h1>
-            <p>
-              Emergency openings, confidential hiring, referral roles and recruiter-only jobs.
-            </p>
-          </div>
+      {notice && (
+        <div className="ho-notice" role="status">
+          <span>{notice}</span>
+          <button type="button" aria-label="Close message" onClick={() => setNotice("")}><X size={16} /></button>
+        </div>
+      )}
 
-          <div className="ho-header-actions">
-            <button onClick={fetchHiddenOpportunities}>⟳ Refresh</button>
-            <button onClick={exportReport}>⬇ Export</button>
-            <div className="ho-avatar">{name.slice(0, 2).toUpperCase()}</div>
-          </div>
-        </header>
+      <section className="filter-bar" aria-label="Opportunity filters">
+        <label className="search-field">
+          <Search size={19} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search live opportunities..." />
+        </label>
 
-        <section className="ho-filter-card">
-          <div className="ho-search">
-            <span>⌕</span>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search hidden jobs, companies, roles, skills..."
-            />
-          </div>
-
-          <select value={location} onChange={(e) => setLocation(e.target.value)}>
+        <label className="select-field">
+          <span>Role Type</span>
+          <select value={roleType} onChange={(event) => setRoleType(event.target.value)}>
             <option>All</option>
-            <option>Bangalore</option>
-            <option>Hyderabad</option>
-            <option>Pune</option>
-            <option>Chennai</option>
-            <option>Mumbai</option>
-            <option>Remote</option>
+            {roleTypes.map((type) => <option key={type}>{type}</option>)}
           </select>
+          <ChevronDown size={15} />
+        </label>
 
-          <select value={workMode} onChange={(e) => setWorkMode(e.target.value)}>
+        <label className="select-field">
+          <span>Location</span>
+          <select value={location} onChange={(event) => setLocation(event.target.value)}>
             <option>All</option>
-            <option>Remote</option>
-            <option>Hybrid</option>
-            <option>Onsite</option>
+            {locations.map((item) => <option key={item}>{item}</option>)}
           </select>
+          <ChevronDown size={15} />
+        </label>
 
-          <select value={salaryRange} onChange={(e) => setSalaryRange(e.target.value)}>
+        <label className="select-field">
+          <span>Experience</span>
+          <select value={experience} onChange={(event) => setExperience(event.target.value)}>
             <option>All</option>
-            <option value="30-40">₹30-40 LPA</option>
-            <option value="40-50">₹40-50 LPA</option>
-            <option value="50+">₹50+ LPA</option>
+            <option>0–2 years</option>
+            <option>3–5 years</option>
+            <option>5+ years</option>
           </select>
+          <ChevronDown size={15} />
+        </label>
 
-          <label className="ho-toggle">
-            AI Match Only
-            <input
-              type="checkbox"
-              checked={matchOnly}
-              onChange={(e) => setMatchOnly(e.target.checked)}
-            />
-            <span></span>
-          </label>
-        </section>
-
-        <section className="ho-stats-grid">
-          {[
-            ["💼", stats?.hiddenJobs || 0, "Hidden Jobs", "Active now"],
-            ["🔥", stats?.emergencyOpenings || 0, "Emergency", "Closing soon"],
-            ["💵", `₹${stats?.avgSalary || 0} LPA`, "Avg. Salary", "Market estimate"],
-            ["👥", stats?.recruiterInvites || 0, "Recruiter Invites", "High match roles"],
-            ["🎯", `${stats?.bestMatch || 0}%`, "Best AI Match", "Profile fit"],
-          ].map((item) => (
-            <article className="ho-stat" key={item[2]}>
-              <div>{item[0]}</div>
-              <h2>{item[1]}</h2>
-              <p>{item[2]}</p>
-              <small>{item[3]}</small>
-            </article>
-          ))}
-        </section>
-
-        {loading && (
-          <div className="ho-section-card">
-            <div className="ho-empty">Loading hidden opportunities...</div>
-          </div>
-        )}
-
-        {error && !loading && (
-          <div className="ho-section-card">
-            <div className="ho-empty">{error}</div>
-          </div>
-        )}
-
-        {!loading && !error && (
-          <section className="ho-content-grid">
-            <section className="ho-left">
-              <div className="ho-section-card">
-                <div className="ho-section-title">
-                  <h2>Real Hidden Opportunities</h2>
-                  <span>Recruiter Verified</span>
-                </div>
-
-                {filteredJobs.length === 0 ? (
-                  <div className="ho-empty">
-                    No matching hidden opportunities found right now.
-                  </div>
-                ) : (
-                  filteredJobs.map((job) => (
-                    <article className="ho-job-card" key={job._id}>
-                      <div className="ho-company-logo">
-                        {job.companyLogo ? (
-                          <img src={job.companyLogo} alt={job.companyName} />
-                        ) : (
-                          (job.companyName || "C").slice(0, 1)
-                        )}
-                      </div>
-
-                      <div className="ho-job-main">
-                        <span className={`exclusive ${job.urgencyLevel?.toLowerCase()}`}>
-                          {getTypeIcon(job.opportunityType)} {job.opportunityType}
-                        </span>
-
-                        <span className="deadline-badge">⏳ {job.timeLeft}</span>
-
-                        <h3>{job.role}</h3>
-
-                        <p>
-                          {job.companyName} • {job.location} • {job.workMode}
-                        </p>
-
-                        <div className="ho-tags">
-                          {(job.requiredSkills || []).map((skill) => (
-                            <span key={skill}>{skill}</span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="ho-recruiter">
-                        <p>Openings</p>
-                        <b>{job.openings || 1}</b>
-                        <p>Applicants</p>
-                        <h4>{job.applicantsCount || 0}</h4>
-                      </div>
-
-                      <div className="ho-match">
-                        <div>{job.aiMatch || 0}%</div>
-                        <p>
-                          {(job.aiMatch || 0) >= 90
-                            ? "Very Strong Match"
-                            : "Strong Match"}
-                        </p>
-                      </div>
-
-                      <div className="ho-actions">
-                        <button onClick={() => setSelectedJob(job)}>
-                          View Details
-                        </button>
-
-                        <button
-                          disabled={job.referralRequested}
-                          onClick={() => requestReferral(job)}
-                        >
-                          {job.referralRequested ? "Referral Requested" : "Request Referral"}
-                        </button>
-
-                        <button
-                          disabled={job.hasApplied}
-                          onClick={() => applyConfidentially(job)}
-                        >
-                          {job.hasApplied ? "Applied" : "Apply Confidentially"}
-                        </button>
-                      </div>
-                    </article>
-                  ))
-                )}
-              </div>
-            </section>
-
-            <aside className="ho-right">
-              <div className="ho-insight-card">
-                <h3>AI Career Intelligence <span>BETA</span></h3>
-                <div className="career-ring">{stats?.bestMatch || 0}%</div>
-                <b>Best Match Score</b>
-                <p>Your profile is compared with active hidden roles.</p>
-              </div>
-
-              <div className="ho-insight-card">
-                <h3>Hidden Opportunity Types</h3>
-                <p>🔥 Emergency openings close within 24–72 hours.</p>
-                <p>🔒 Confidential hiring is recruiter-only.</p>
-                <p>👥 Referral openings require referral approval.</p>
-                <p>⚡ Fast-track roles can schedule interviews quickly.</p>
-              </div>
-
-              <div className="ho-insight-card">
-                <h3>Improve Your Match</h3>
-                <p>✅ Keep resume updated.</p>
-                <p>✅ Complete Trust Passport.</p>
-                <p>✅ Add missing skills.</p>
-                <p>✅ Practice AI interviews.</p>
-              </div>
-            </aside>
-          </section>
-        )}
+        <label className="toggle-field">
+          <span>AI Match Only</span>
+          <input type="checkbox" checked={aiOnly} onChange={(event) => setAiOnly(event.target.checked)} />
+          <span className="toggle-field__track" aria-hidden="true"><span /></span>
+        </label>
       </section>
 
-      {selectedJob && (
-        <div className="ho-modal">
-          <div className="ho-modal-card">
-            <button className="close" onClick={() => setSelectedJob(null)}>
-              ×
-            </button>
+      {loading ? (
+        <div className="ho-loading"><LoaderCircle className="spin" size={28} /> Loading real opportunities...</div>
+      ) : error ? (
+        <div className="ho-error" role="alert">
+          <p>{error}</p>
+          <button type="button" className="button button--outline" onClick={() => fetchHiddenOpportunities()}>Try Again</button>
+        </div>
+      ) : (
+        <>
+          <section className="metric-grid" aria-label="Hidden opportunity summary">
+            {metrics.map((metric) => <MetricCard key={metric.label} metric={metric} />)}
+          </section>
 
-            <h2>{selectedJob.role}</h2>
-            <h3>{selectedJob.companyName}</h3>
-
-            <p>
-              {selectedJob.description ||
-                "This is a hidden recruiter-side opportunity available only to matching candidates."}
-            </p>
-
-            <div className="modal-grid">
-              <div>
-                <b>Salary</b>
-                <span>
-                  ₹{selectedJob.salaryMin}-{selectedJob.salaryMax} LPA
-                </span>
+          <section className="opportunity-layout">
+            <div className="opportunity-panel panel">
+              <div className="panel__heading">
+                <h2>Top Hidden Opportunities</h2>
+                <span className="verified-pill"><ShieldCheck size={14} /> Recruiter Verified</span>
               </div>
 
-              <div>
-                <b>AI Match</b>
-                <span>{selectedJob.aiMatch}%</span>
+              <div className="job-list">
+                {filteredJobs.length ? (
+                  filteredJobs.map((job) => <JobCard key={job.id} job={job} onViewRole={setSelectedJob} />)
+                ) : (
+                  <div className="empty-state">
+                    <Search size={28} />
+                    <h3>No matching opportunities</h3>
+                    <p>No database records match the selected filters.</p>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <b>Closing</b>
-                <span>{selectedJob.timeLeft}</span>
-              </div>
-
-              <div>
-                <b>Type</b>
-                <span>{selectedJob.opportunityType}</span>
-              </div>
+              <button type="button" className="view-all-button" onClick={showAllJobs}>
+                View All Hidden Opportunities <ArrowRight size={16} />
+              </button>
             </div>
 
-            <button
-              disabled={selectedJob.referralRequested}
-              onClick={() => requestReferral(selectedJob)}
-            >
-              {selectedJob.referralRequested ? "Referral Requested" : "Request Referral"}
+            <aside className="intelligence-column">
+              <section className="intelligence-card panel">
+                <div className="panel__heading">
+                  <h2>AI Career Intelligence</h2>
+                  <span className="beta-pill">LIVE</span>
+                </div>
+
+                <div className="intelligence-card__content">
+                  <MatchRing value={calculatedStats.bestMatch} large />
+                  <div className="insight-list">
+                    <article className="insight-item">
+                      <div className="insight-item__icon"><TrendingUp size={19} /></div>
+                      <div>
+                        <h3>{bestJob ? "Best Current Match" : "No Active Match"}</h3>
+                        <p>
+                          {bestJob
+                            ? `${bestJob.title} at ${bestJob.company} is your highest live match at ${bestJob.match}%.`
+                            : "No hidden opportunity is currently matched to your profile."}
+                        </p>
+                      </div>
+                    </article>
+                    <article className="insight-item">
+                      <div className="insight-item__icon"><Lightbulb size={19} /></div>
+                      <div>
+                        <h3>Most Requested Skills</h3>
+                        <p>
+                          {topSkills.length
+                            ? `${topSkills.join(", ")} appear most often in your live matched roles.`
+                            : "Skill demand will appear when matched roles are available."}
+                        </p>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+
+                <button type="button" className="text-button" onClick={() => navigate("/career-roadmap")}>
+                  View Full Career Insights <ArrowRight size={15} />
+                </button>
+              </section>
+
+              <section className="activity-card panel">
+                <div className="panel__heading">
+                  <h2>Recruiter Activity</h2>
+                  <button type="button" className="text-button" onClick={() => navigate("/applications")}>
+                    View All <ArrowRight size={14} />
+                  </button>
+                </div>
+
+                <div className="activity-row">
+                  <div className="activity-row__icon activity-row__icon--purple"><Eye size={19} /></div>
+                  <div><strong>Profile Views</strong><span>Recruiters viewed your profile</span></div>
+                  <div className="activity-row__stat"><strong>{calculatedStats.profileViews}</strong></div>
+                </div>
+                <div className="activity-row">
+                  <div className="activity-row__icon activity-row__icon--green"><BellRing size={19} /></div>
+                  <div><strong>Invitations</strong><span>Current recruiter invitations</span></div>
+                  <div className="activity-row__stat"><strong>{calculatedStats.recruiterInvites}</strong></div>
+                </div>
+
+                <button type="button" className="button button--wide" onClick={() => navigate("/applications")}>
+                  Go to Applications <ArrowRight size={16} />
+                </button>
+              </section>
+            </aside>
+          </section>
+        </>
+      )}
+
+      {selectedJob && (
+        <div className="ho-modal" role="dialog" aria-modal="true" aria-labelledby="hidden-role-title" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setSelectedJob(null);
+        }}>
+          <div className="ho-modal__card">
+            <button type="button" className="ho-modal__close" aria-label="Close role details" onClick={() => setSelectedJob(null)}>
+              <X size={20} />
             </button>
 
-            <button
-              disabled={selectedJob.hasApplied}
-              onClick={() => applyConfidentially(selectedJob)}
-            >
-              {selectedJob.hasApplied ? "Already Applied" : "Apply Confidentially"}
-            </button>
+            <span className="verified-pill"><ShieldCheck size={14} /> {selectedJob.opportunityType}</span>
+            <h2 id="hidden-role-title">{selectedJob.title}</h2>
+            <h3>{selectedJob.company}</h3>
+            <p>{selectedJob.description || "The recruiter has not added a public description for this confidential role."}</p>
+
+            <div className="ho-modal__details">
+              <div><span>Location</span><strong>{selectedJob.location}</strong></div>
+              <div><span>Experience</span><strong>{selectedJob.experience}</strong></div>
+              <div><span>Salary</span><strong>{selectedJob.salary}</strong></div>
+              <div><span>AI match</span><strong>{selectedJob.match}%</strong></div>
+            </div>
+
+            <div className="ho-modal__actions">
+              <button
+                type="button"
+                className="button button--ghost"
+                disabled={selectedJob.referralRequested || actionName !== ""}
+                onClick={() => requestReferral(selectedJob)}
+              >
+                {actionName === "referral" ? "Requesting..." : selectedJob.referralRequested ? "Referral Requested" : "Request Referral"}
+              </button>
+              <button
+                type="button"
+                className="button button--wide"
+                disabled={selectedJob.hasApplied || actionName !== ""}
+                onClick={() => applyConfidentially(selectedJob)}
+              >
+                {actionName === "apply" ? "Applying..." : selectedJob.hasApplied ? "Already Applied" : "Apply Confidentially"}
+              </button>
+            </div>
           </div>
         </div>
       )}
     </main>
   );
 }
-
-export default HiddenOpportunitiesPage;

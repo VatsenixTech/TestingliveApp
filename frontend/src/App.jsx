@@ -1,50 +1,136 @@
-import { calculateProfileStrength } from "./utils/profileStrength";
-import AIInterviewSessionPage from "./pages/AIInterviewSessionPage";
-import InterviewReportPage from "./pages/InterviewReportPage";
-import HowItWorksPage from "./pages/HowItWorksPage";
-import BlogPage from "./pages/BlogPage";
-import CareersPage from "./pages/CareersPage";
-import AIWorkspacePage from "./pages/AIWorkspacePage";
-import AutoApplyPage from "./pages/AutoApplyPage";
-import TrustPassportPage from "./pages/TrustPassportPage";
-import InterviewAlerts from "./pages/InterviewAlerts";
-import PremiumCareerDashboard from "./pages/PremiumCareerDashboard";
-import HrOfferLetter from "./pages/HrOfferLetter";
-import CandidateLogin from "./pages/CandidateLogin";
-import HrOfferLetterDetails from "./pages/HrOfferLetterDetails";
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import axios from "axios";
-import { FcGoogle } from "react-icons/fc";
-import { FaLinkedinIn, FaFacebookF, FaMicrosoft } from "react-icons/fa";
-import "./index.css";
-import JobDetailsPage from "./pages/JobDetailsPage";
-import AIInterviewPrepPage from "./pages/AIInterviewPrepPage";
-import MobileCandidateDashboard from "./pages/MobileCandidateDashboard";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "./firebase";
-import ApplicationsPage from "./pages/ApplicationsPage";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
-import ResumeStudio from "./pages/ResumeStudio";
-import SkillAnalyzerPage from "./pages/SkillAnalyzerPage";
-import SalaryPredictorPage from "./pages/SalaryPredictorPage";
-import HiddenOpportunitiesPage from "./pages/HiddenOpportunitiesPage";
-import JobAlertsPage from "./pages/JobAlertsPage";
-import CareerRoadmapPage from "./pages/CareerRoadmapPage";
-import CandidateProfilePage from "./pages/CandidateProfilePage";
-import CandidateSettings from "./pages/CandidateSettings";
-import HelpChatWidget from "./components/HelpChatWidget";
-import CandidateForgotPassword from "./pages/CandidateForgotPassword";
-import PremiumTermsPage from "./pages/PremiumTermsPage";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import PremiumContactPage from "./pages/PremiumContactPage";
-import HrPortalDashboard from "./pages/HrPortalDashboard";
-import HelpCenterPage from "./pages/HelpCenterPage";
+
+import {
+  signInWithPopup,
+} from "firebase/auth";
+
+import {
+  auth,
+  googleProvider,
+} from "./firebase";
+
+import {
+  calculateProfileStrength,
+} from "./utils/profileStrength";
+
+
+/* =========================================================
+   ICONS
+========================================================= */
+
+import {
+  FcGoogle,
+} from "react-icons/fc";
+
+import {
+  FaLinkedinIn,
+  FaFacebookF,
+  FaMicrosoft,
+} from "react-icons/fa";
+
+
+/* =========================================================
+   SWIPER
+========================================================= */
+
+import {
+  Swiper,
+  SwiperSlide,
+} from "swiper/react";
+
+import {
+  Navigation,
+} from "swiper/modules";
+
 import "swiper/css";
 import "swiper/css/navigation";
 
 
+/* =========================================================
+   GLOBAL CSS
+========================================================= */
 
+import "./index.css";
+
+
+/* =========================================================
+   MAIN PAGES
+========================================================= */
+
+import SalaryPredictor from "./pages/SalaryPredictor";
+
+import AIInterviewSessionPage from "./pages/AIInterviewSessionPage";
+
+import InterviewReportPage from "./pages/InterviewReportPage";
+
+import HowItWorksPage from "./pages/HowItWorksPage";
+
+import BlogPage from "./pages/BlogPage";
+
+import CareersPage from "./pages/CareersPage";
+
+import AIWorkspacePage from "./pages/AIWorkspacePage";
+
+import AutoApplyPage from "./pages/AutoApplyPage";
+
+import TrustPassportPage from "./pages/TrustPassportPage";
+
+import InterviewAlerts from "./pages/InterviewAlerts";
+
+import PremiumCareerDashboard from "./pages/PremiumCareerDashboard";
+
+import HrOfferLetter from "./pages/HrOfferLetter";
+
+import CandidateLogin from "./pages/CandidateLogin";
+
+import HrOfferLetterDetails from "./pages/HrOfferLetterDetails";
+
+import JobDetailsPage from "./pages/JobDetailsPage";
+
+import AIInterviewPrepPage from "./pages/AIInterviewPrepPage";
+
+import MobileCandidateDashboard from "./pages/MobileCandidateDashboard";
+
+import ApplicationsPage from "./pages/ApplicationsPage";
+
+import ResumeStudio from "./pages/ResumeStudio";
+
+import SkillAnalyzerPage from "./pages/SkillAnalyzerPage";
+
+import HiddenOpportunitiesPage from "./pages/HiddenOpportunitiesPage";
+
+import JobAlertsPage from "./pages/JobAlertsPage";
+
+import CareerRoadmapPage from "./pages/CareerRoadmapPage";
+
+import CandidateProfilePage from "./pages/CandidateProfilePage";
+
+import CandidateSettings from "./pages/CandidateSettings";
+
+import CandidateForgotPassword from "./pages/CandidateForgotPassword";
+
+import PremiumTermsPage from "./pages/PremiumTermsPage";
+
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+
+import PremiumContactPage from "./pages/PremiumContactPage";
+
+import HrPortalDashboard from "./pages/HrPortalDashboard";
+
+import HelpCenterPage from "./pages/HelpCenterPage";
+
+
+/* =========================================================
+   COMPONENTS
+========================================================= */
+
+import HelpChatWidget from "./components/HelpChatWidget";
 
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -4128,7 +4214,7 @@ function App() {
 
   if (path === "/salary-predictor") {
     return renderUltimatePage(
-      <SalaryPredictorPage />
+      <SalaryPredictor/>
     );
   }
 
@@ -5719,13 +5805,29 @@ function FileInput({ label, name, accept, onChange }) {
 //     </>
 //   );
 
-
 function CandidatePremiumSidebar({
   candidateId,
   unreadCount = 0,
   profileStrength = 90,
   goTo,
 }) {
+  const currentPath = window.location.pathname;
+
+  const isActive = (...paths) => {
+    return paths.some((path) => {
+      if (path.includes(":candidateId")) {
+        const basePath = path.replace("/:candidateId", "");
+        return currentPath.startsWith(basePath);
+      }
+
+      return currentPath === path;
+    });
+  };
+
+  const menuClass = (...paths) => {
+    return isActive(...paths) ? "active" : "";
+  };
+
   return (
     <aside className="npj-glass-sidebar npj-unified-sidebar">
       <div className="npj-glass-logo-wrap">
@@ -5735,68 +5837,125 @@ function CandidatePremiumSidebar({
       <nav className="npj-glass-menu">
         <p className="npj-menu-label">Overview</p>
 
-        <button onClick={() => goTo(`/dashboard/${candidateId}`)}>
+        <button
+          type="button"
+          className={menuClass("/dashboard/:candidateId", "/ultimate-dashboard")}
+          onClick={() =>
+            goTo(
+              candidateId
+                ? `/dashboard/${candidateId}`
+                : "/candidate-login"
+            )
+          }
+        >
           <span>▦</span>
           <b>Dashboard</b>
         </button>
 
         <p className="npj-menu-label">Main</p>
 
-        <button onClick={() => goTo("/jobs")}>
+        <button
+          type="button"
+          className={menuClass("/jobs")}
+          onClick={() => goTo("/jobs")}
+        >
           <span>⌕</span>
           <b>Find Jobs</b>
         </button>
 
-        <button onClick={() => goTo("/companies")}>
+        <button
+          type="button"
+          className={menuClass("/companies")}
+          onClick={() => goTo("/companies")}
+        >
           <span>▥</span>
           <b>Companies</b>
         </button>
 
-    <button onClick={() => goTo("/services")}>
-  <span>▤</span>
-  <b>Applications</b>
-</button>
-
-        <button onClick={() => goTo("/saved-jobs")}>
-          <span>♡</span>
-          <b>Saved Jobs</b>
+        <button
+          type="button"
+          className={menuClass("/services", "/applications")}
+          onClick={() => goTo("/services")}
+        >
+          <span>▤</span>
+          <b>Applications</b>
         </button>
 
-        <button onClick={() => goTo("/notifications")}>
+        <button
+          type="button"
+          className={menuClass("/career-roadmap")}
+          onClick={() => goTo("/career-roadmap")}
+        >
+          <span>🧭</span>
+          <b>Career Roadmap</b>
+        </button>
+
+        <button
+          type="button"
+          className={menuClass("/notifications", "/messages")}
+          onClick={() => goTo("/notifications")}
+        >
           <span>✉</span>
           <b>Messages</b>
-          {unreadCount > 0 && <em>{unreadCount}</em>}
+
+          {Number(unreadCount) > 0 && (
+            <em>{Number(unreadCount)}</em>
+          )}
         </button>
 
-        <p className="npj-menu-label">CARRER Tools</p>
+        <p className="npj-menu-label">Career Tools</p>
 
-        <button onClick={() => goTo("/services")}>
+        <button
+          type="button"
+          className={menuClass("/resume-studio")}
+          onClick={() => goTo("/resume-studio")}
+        >
           <span>◫</span>
           <b>Resume Studio</b>
         </button>
 
-        <button onClick={() => goTo("/services")}>
+        <button
+          type="button"
+          className={menuClass("/ai-interview-prep")}
+          onClick={() => goTo("/ai-interview-prep")}
+        >
           <span>◉</span>
           <b>AI Interview Prep</b>
         </button>
 
-        <button onClick={() => goTo("/services")}>
+        <button
+          type="button"
+          className={menuClass("/skill-analyzer")}
+          onClick={() => goTo("/skill-analyzer")}
+        >
           <span>◎</span>
           <b>Skill Assessment</b>
         </button>
 
-        <button onClick={() => goTo("/services")}>
+        <button
+          type="button"
+          className={menuClass("/salary-predictor")}
+          onClick={() => goTo("/salary-predictor")}
+        >
           <span>◔</span>
           <b>Salary Predictor</b>
         </button>
 
-        <button onClick={() => goTo("/services")}>
+        <button
+          type="button"
+          className={menuClass("/trust-passport")}
+          onClick={() => goTo("/trust-passport")}
+        >
           <span>▣</span>
           <b>Trust Passport</b>
-          <i>{profileStrength}%</i>
+          <i>{Number(profileStrength) || 0}%</i>
         </button>
 
-        <button onClick={() => goTo("/services")}>
+        <button
+          type="button"
+          className={menuClass("/career-tools")}
+          onClick={() => goTo("/career-tools")}
+        >
           <span>🔗</span>
           <b>Career Tools</b>
           <small>›</small>
@@ -5804,15 +5963,21 @@ function CandidatePremiumSidebar({
 
         <p className="npj-menu-label">Account</p>
 
-        <button onClick={() => goTo("/settings")}>
+        <button
+          type="button"
+          className={menuClass("/settings")}
+          onClick={() => goTo("/settings")}
+        >
           <span>⚙</span>
           <b>Settings</b>
         </button>
 
         <button
+          type="button"
           onClick={() => {
             localStorage.removeItem("user");
             localStorage.removeItem("token");
+            localStorage.removeItem("candidateToken");
             goTo("/candidate-login");
           }}
         >
@@ -5822,8 +5987,7 @@ function CandidatePremiumSidebar({
       </nav>
     </aside>
   );
-}
-function CandidateDashboard() {
+}function CandidateDashboard() {
   const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const [candidate, setCandidate] = useState(savedUser || null);
   const [jobs, setJobs] = useState([]);
@@ -6143,7 +6307,7 @@ const unreadCount = notifications.filter(
               ["⌕", "Find Jobs", "/jobs"],
               ["▥", "Companies", "/companies"],
               ["▤", "Applications", "/applications"],
-              ["♡", "Saved Jobs", "/saved-jobs"],
+              ["🧭", "Career Roadmap", "/career-roadmap"],
               [
                 "👁",
                 "Profile Views",

@@ -179,7 +179,7 @@ function DashboardFooter({ goTo }) {
       <div className="ud-footer-bottom">
         <span>© 2026 NoPromptJobs.com. All rights reserved.</span>
         <span><FaShieldHalved /> Secure &amp; Verified Platform</span>
-        <span><FaCircleCheck /> ISO 27001 Certified</span>
+        <span><FaCircleCheck /> AI-Powered Career Platform</span>
         <span>Made with ♥ in India</span>
       </div>
     </footer>
@@ -191,6 +191,7 @@ export default function PremiumCareerDashboard({ children = null }) {
   const candidateId = user?.candidateId || user?._id || user?.id || "";
   const name = user?.name || user?.fullName || "Candidate";
   const profileImage = user?.profileImageUrl || user?.profileImage || "/profile.png";
+  const currentPath = window.location.pathname;
 
   const [aiQuestion, setAiQuestion] = useState("");
   const [loading, setLoading] = useState(false);
@@ -199,6 +200,30 @@ export default function PremiumCareerDashboard({ children = null }) {
 
   const goTo = (path) => {
     window.location.assign(path);
+  };
+
+  const isMenuActive = (itemPath) => {
+    if (!itemPath) return false;
+
+    const normalizePath = (value) => {
+      const normalized = String(value || "").replace(/\/+$/, "");
+      return normalized || "/";
+    };
+
+    const pagePath = normalizePath(currentPath);
+    const menuPath = normalizePath(itemPath);
+
+    if (menuPath === "/ultimate-dashboard") {
+      return (
+        pagePath === "/ultimate-dashboard" ||
+        pagePath.startsWith("/dashboard/")
+      );
+    }
+
+    return (
+      pagePath === menuPath ||
+      pagePath.startsWith(`${menuPath}/`)
+    );
   };
 
   const authHeaders = () => {
@@ -317,7 +342,13 @@ export default function PremiumCareerDashboard({ children = null }) {
   const menuGroups = [
     {
       title: "OVERVIEW",
-      items: [{ icon: <HiOutlineHome />, label: "Dashboard", path: "/ultimate-dashboard", active: !children }],
+      items: [
+        {
+          icon: <HiOutlineHome />,
+          label: "Dashboard",
+          path: "/ultimate-dashboard",
+        },
+      ],
     },
     {
       title: "MAIN",
@@ -326,12 +357,16 @@ export default function PremiumCareerDashboard({ children = null }) {
         { icon: <FaRocket />, label: "Auto Apply", path: "/auto-apply", count: data.autoApply.length },
         { icon: <FaShieldHalved />, label: "Trust Score", path: "/trust-passport", count: Math.round(data.trustScore) },
         { icon: <RiRobot2Line />, label: "AI Workspace", path: "/services" },
-        { icon: <FaFileLines />, label: "Resume Studio", path: "/resume-studio", active: Boolean(children) },
+        { icon: <FaFileLines />, label: "Resume Studio", path: "/resume-studio" },
         { icon: <FaMicrophone />, label: "AI Interview Prep", path: "/ai-interview-prep" },
         { icon: <MdOutlineAutoGraph />, label: "Skill Analyzer", path: "/skill-analyzer" },
         { icon: <FaChartLine />, label: "Salary Predictor", path: "/salary-predictor" },
         { icon: <FaBell />, label: "Job Alerts", path: "/job-alerts", count: jobAlerts.length },
-        { icon: <FaHeart />, label: "Saved Jobs", path: "/saved-jobs", count: data.savedJobs.length },
+        {
+          icon: <span aria-hidden="true">🧭</span>,
+          label: "Career Roadmap",
+          path: "/career-roadmap",
+        },
         { icon: <HiOutlineLightBulb />, label: "Hidden Opportunities", path: "/hidden-opportunities" },
       ],
     },
@@ -371,7 +406,7 @@ export default function PremiumCareerDashboard({ children = null }) {
               {group.items.map((item) => (
                 <button
                   key={item.label}
-                  className={item.active ? "active" : ""}
+                  className={isMenuActive(item.path) ? "active" : ""}
                   onClick={() => {
                     setSidebarOpen(false);
                     if (item.action === "logout") logout();

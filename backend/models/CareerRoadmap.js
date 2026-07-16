@@ -1,102 +1,78 @@
 const mongoose = require("mongoose");
 
-const careerRoadmapSchema = new mongoose.Schema(
-  {
-    candidateId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Candidate",
-      required: true,
-      index: true,
-    },
+const roadmapItemSchema =
+  new mongoose.Schema(
+    {
+      skill: {
+        type: String,
+        required: true,
+      },
 
-    targetRole: {
-      type: String,
-      required: true,
-      default: "Data Engineer",
-    },
-
-    currentLevel: {
-      type: String,
-      enum: ["Beginner", "Intermediate", "Advanced"],
-      default: "Beginner",
-    },
-
-    durationMonths: {
-      type: Number,
-      default: 12,
-    },
-
-    overallProgress: {
-      type: Number,
-      default: 0,
-    },
-
-    nextMilestone: {
-      title: String,
-      dueInDays: Number,
-    },
-
-    stages: [
-      {
-        stageNo: Number,
-        title: String,
-        subtitle: String,
-        timeline: String,
-        status: {
-          type: String,
-          enum: ["Completed", "In Progress", "Pending"],
-          default: "Pending",
-        },
-        progress: {
-          type: Number,
-          default: 0,
-        },
-        skills: [
-          {
-            name: String,
-            progress: {
-              type: Number,
-              default: 0,
-            },
-          },
+      priority: {
+        type: String,
+        enum: [
+          "Critical",
+          "High",
+          "Medium",
+          "Low",
         ],
+        default: "Medium",
       },
-    ],
 
-    projects: [
-      {
-        title: String,
-        description: String,
-        status: {
-          type: String,
-          enum: ["Completed", "In Progress", "Pending"],
-          default: "Pending",
-        },
+      status: {
+        type: String,
+        enum: [
+          "not-started",
+          "in-progress",
+          "completed",
+        ],
+        default: "not-started",
       },
-    ],
 
-    resources: [
-      {
-        title: String,
-        provider: String,
-        rating: Number,
-        url: String,
+      recommendedWeeks: {
+        type: Number,
+        min: 1,
+        default: 2,
       },
-    ],
+    },
+    {
+      _id: true,
+    }
+  );
 
-    milestones: [
-      {
-        title: String,
-        dueInDays: Number,
-        status: {
-          type: String,
-          enum: ["Completed", "In Progress", "Pending"],
-          default: "Pending",
-        },
+const careerRoadmapSchema =
+  new mongoose.Schema(
+    {
+      candidateId: {
+        type:
+          mongoose.Schema.Types.ObjectId,
+        ref: "Candidate",
+        required: true,
+        index: true,
       },
-    ],
-  },
-  { timestamps: true }
+
+      analysisId: {
+        type:
+          mongoose.Schema.Types.ObjectId,
+        ref: "SkillAnalysis",
+        required: true,
+      },
+
+      targetRole: {
+        type: String,
+        required: true,
+      },
+
+      items: [
+        roadmapItemSchema,
+      ],
+    },
+    {
+      timestamps: true,
+    }
+  );
+
+module.exports = mongoose.model(
+  "CareerRoadmap",
+  careerRoadmapSchema
 );
-
-module.exports = mongoose.model("CareerRoadmap", careerRoadmapSchema);

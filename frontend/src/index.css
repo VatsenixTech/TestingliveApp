@@ -33192,4 +33192,445 @@ body,
   .np-register-card {
     padding: 24px 18px !important;
   }
+}/* =====================================================
+   SAVED JOBS DASHBOARD LAYOUT FIX
+   Paste at the END of SavedJobsPage.css
+   ===================================================== */
+
+/* The application already provides the page positioning */
+.saved-jobs-page {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 100vh;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
+  color: #101a3d;
+  background:
+    radial-gradient(
+      circle at 80% 0%,
+      rgba(115, 67, 235, 0.07),
+      transparent 30%
+    ),
+    #f4f7fd;
+}
+
+/*
+ * Remove the second sidebar offset.
+ * The main dashboard layout already creates this space.
+ */
+.saved-jobs-main {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 26px 30px 55px !important;
+}
+
+/* Hide the duplicate Saved Jobs top bar */
+.npj-compact-topbar,
+.saved-topbar {
+  display: none !important;
+}
+
+/* Remove old unnecessary page containers */
+.saved-content {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide page heading if your global dashboard already has one */
+.saved-page-heading {
+  width: 100%;
+  margin: 0 0 18px;
+}
+
+/* =====================================================
+   HERO FIX
+   ===================================================== */
+
+.saved-hero,
+.saved-hero-premium {
+  position: relative !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 300px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 360px 190px !important;
+  align-items: center !important;
+  gap: 30px !important;
+  margin: 0 !important;
+  padding: 42px 48px !important;
+  overflow: hidden !important;
+  color: #ffffff !important;
+  background:
+    radial-gradient(
+      circle at 67% 52%,
+      rgba(147, 75, 255, 0.68),
+      transparent 24%
+    ),
+    linear-gradient(
+      115deg,
+      #10205f 0%,
+      #2951df 54%,
+      #8928ff 100%
+    ) !important;
+  border: 0 !important;
+  border-radius: 30px !important;
+  box-shadow: 0 25px 65px rgba(45, 70, 184, 0.2) !important;
+  isolation: isolate;
+}
+
+.saved-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0.04),
+      transparent 58%
+    );
+}
+
+/* Prevent heading and image from overlapping */
+.saved-hero-text,
+.saved-hero-copy {
+  position: relative !important;
+  z-index: 4 !important;
+  width: 100% !important;
+  max-width: 650px !important;
+  min-width: 0 !important;
+}
+
+.saved-hero-text > span {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  backdrop-filter: blur(8px);
+}
+
+.saved-hero-text h1,
+.saved-hero-copy h2 {
+  width: 100% !important;
+  max-width: 620px !important;
+  margin: 20px 0 13px !important;
+  overflow: visible !important;
+  color: #ffffff !important;
+  font-size: clamp(38px, 3.5vw, 54px) !important;
+  font-weight: 850 !important;
+  line-height: 1.04 !important;
+  letter-spacing: -2px !important;
+  white-space: normal !important;
+  text-overflow: unset !important;
+}
+
+.saved-hero-text p,
+.saved-hero-copy p {
+  width: 100% !important;
+  max-width: 600px !important;
+  margin: 0 !important;
+  color: #e0e7ff !important;
+  font-size: 15px !important;
+  font-weight: 550 !important;
+  line-height: 1.65 !important;
+}
+
+/* Hero illustration stays in its own column */
+.saved-hero-art {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  min-width: 280px !important;
+  min-height: 210px !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Hero Find More Jobs button */
+.saved-hero > button {
+  position: relative !important;
+  z-index: 5 !important;
+  width: 190px !important;
+  min-width: 190px !important;
+  min-height: 58px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 12px 22px !important;
+  color: #3153dd !important;
+  background: #ffffff !important;
+  border: 0 !important;
+  border-radius: 17px !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 14px 34px rgba(17, 29, 94, 0.22) !important;
+}
+
+.saved-hero > button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(17, 29, 94, 0.3) !important;
+}
+
+/* =====================================================
+   STATISTICS FIX
+   ===================================================== */
+
+.saved-stats,
+.saved-stats-premium,
+.saved-summary-grid {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  margin: 24px 0 !important;
+}
+
+.saved-stats > article,
+.saved-summary-grid > article {
+  position: relative;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 145px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 22px !important;
+  overflow: hidden;
+  padding: 27px !important;
+  background: #ffffff !important;
+  border: 1px solid #dfe6f2 !important;
+  border-radius: 22px !important;
+  box-shadow: 0 17px 45px rgba(42, 61, 130, 0.08) !important;
+}
+
+.saved-stat-icon,
+.summary-icon {
+  width: 72px !important;
+  height: 72px !important;
+  display: grid !important;
+  flex: 0 0 auto !important;
+  place-items: center !important;
+  border-radius: 22px !important;
+  font-size: 30px !important;
+}
+
+.saved-stat-icon.purple,
+.summary-icon-purple {
+  color: #8432ee !important;
+  background: #eee7ff !important;
+}
+
+.saved-stat-icon.orange {
+  color: #ff7433 !important;
+  background: #fff0dd !important;
+}
+
+.saved-stat-icon.green,
+.summary-icon-green {
+  color: #0fb47a !important;
+  background: #def8ec !important;
+}
+
+.saved-stats article b,
+.saved-summary-grid article strong {
+  display: block;
+  color: #101a3d !important;
+  font-size: 31px !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+}
+
+.saved-stats article p,
+.saved-summary-grid article p {
+  margin: 9px 0 0 !important;
+  color: #66728f !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+}
+
+/* =====================================================
+   JOB LIST / EMPTY STATE
+   ===================================================== */
+
+.saved-jobs-grid,
+.saved-jobs-panel,
+.saved-empty,
+.empty-premium-box {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.saved-empty,
+.saved-empty-premium {
+  min-height: 390px !important;
+  display: grid !important;
+  grid-template-columns: minmax(240px, 0.75fr) minmax(340px, 1fr) !important;
+  align-items: center !important;
+  gap: 55px !important;
+  margin: 0 !important;
+  padding: 48px 65px !important;
+  background: #ffffff !important;
+  border: 1px solid #dfe6f2 !important;
+  border-radius: 26px !important;
+  box-shadow: 0 18px 50px rgba(42, 61, 130, 0.08) !important;
+}
+
+.saved-empty-art {
+  width: 270px !important;
+  height: 230px !important;
+  margin: 0 auto !important;
+}
+
+.saved-empty h2 {
+  margin: 0 0 10px !important;
+  color: #101a3d !important;
+  font-size: 30px !important;
+  font-weight: 850 !important;
+}
+
+.saved-empty p {
+  max-width: 550px !important;
+  margin: 0 !important;
+  color: #65718d !important;
+  font-size: 15px !important;
+  line-height: 1.65 !important;
+}
+
+.saved-empty button {
+  min-height: 48px !important;
+  margin-top: 22px !important;
+  padding: 0 22px !important;
+  color: #ffffff !important;
+  background: linear-gradient(
+    120deg,
+    #315ff6,
+    #7935ef
+  ) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  font-weight: 850 !important;
+}
+
+/* =====================================================
+   FOOTER DUPLICATION FIX
+   ===================================================== */
+
+/*
+ * SavedJobsPage receives a footer, but your main layout
+ * already renders another footer. Hide the immediate
+ * duplicate footer added by SavedJobsPage.
+ */
+.saved-jobs-page + footer,
+.saved-jobs-page + .premium-footer,
+.saved-jobs-page + .npj-footer {
+  display: none !important;
+}
+
+/* Never add another sidebar offset to the footer */
+.saved-jobs-page ~ footer {
+  margin-left: 0 !important;
+}
+
+/* =====================================================
+   RESPONSIVE FIXES
+   ===================================================== */
+
+@media (max-width: 1400px) {
+  .saved-hero,
+  .saved-hero-premium {
+    grid-template-columns: minmax(0, 1fr) 300px !important;
+  }
+
+  .saved-hero > button {
+    grid-column: 1 !important;
+    justify-self: start !important;
+  }
+
+  .saved-hero-art {
+    grid-column: 2 !important;
+    grid-row: 1 / 3 !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .saved-jobs-main {
+    padding: 22px !important;
+  }
+
+  .saved-hero,
+  .saved-hero-premium {
+    grid-template-columns: 1fr !important;
+  }
+
+  .saved-hero-text,
+  .saved-hero-copy {
+    max-width: 68% !important;
+  }
+
+  .saved-hero-art {
+    position: absolute !important;
+    inset: 20px 20px 20px 56% !important;
+    opacity: 0.5 !important;
+  }
+
+  .saved-stats,
+  .saved-stats-premium,
+  .saved-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .saved-jobs-main {
+    padding: 15px !important;
+  }
+
+  .saved-hero,
+  .saved-hero-premium {
+    min-height: 390px !important;
+    padding: 30px 24px !important;
+    border-radius: 23px !important;
+  }
+
+  .saved-hero-text,
+  .saved-hero-copy {
+    max-width: 100% !important;
+  }
+
+  .saved-hero-text h1,
+  .saved-hero-copy h2 {
+    font-size: 36px !important;
+  }
+
+  .saved-hero-art {
+    inset: 52% -10% -10% 24% !important;
+    opacity: 0.3 !important;
+  }
+
+  .saved-empty,
+  .saved-empty-premium {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    padding: 30px 20px !important;
+    text-align: center !important;
+  }
+
+  .saved-empty p {
+    margin-right: auto !important;
+    margin-left: auto !important;
+  }
 }
