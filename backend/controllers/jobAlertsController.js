@@ -4,7 +4,7 @@ const Candidate =
   require("../models/Candidate");
 
 const Job =
-  require("../models/Job");
+  require("../models/job");
 
 const CandidateJobAlert =
   require("../models/CandidateJobAlert");
