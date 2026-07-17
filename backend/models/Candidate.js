@@ -261,6 +261,49 @@ const candidateSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    plan: {
+      type: String,
+      enum: ["Basic", "Pro", "Ultimate"],
+      default: "Basic",
+    },
+
+    activePlan: {
+      type: String,
+      enum: ["Basic", "Pro", "Ultimate"],
+      default: "Basic",
+    },
+
+    subscriptionStatus: {
+      type: String,
+      enum: ["inactive", "active", "expired", "cancelled"],
+      default: "inactive",
+    },
+
+    subscriptionActivatedAt: {
+      type: Date,
+      default: null,
+    },
+
+    subscriptionSource: {
+      type: String,
+      default: "",
+    },
+
+    appliedCoupon: {
+      type: String,
+      default: "",
+    },
+
+    razorpayPaymentId: {
+      type: String,
+      default: "",
+    },
+
+    razorpayPaymentLinkId: {
+      type: String,
+      default: "",
+    },
     settings: {
       darkMode: {
         type: Boolean,

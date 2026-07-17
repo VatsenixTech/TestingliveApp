@@ -44,6 +44,7 @@ const hrRoutes =
 const helpRoutes =
   require("./routes/helpRoutes");
 
+
 const aiRoutes =
   require("./routes/aiRoutes");
 
@@ -110,6 +111,7 @@ const profileViewRoutes =
 
 const forgotPasswordRoutes =
   require("./routes/forgotPasswordRoutes");
+  
 
 const contactRoutes =
   require("./routes/contactRoutes");
@@ -119,7 +121,8 @@ const trustPassportRoutes =
 
 const interviewPrepRoutes =
   require("./routes/interviewPrepRoutes");
-
+const applicationRoutes =
+require("./routes/applicationRoutes");
 /* =========================================================
    CORS
 ========================================================= */
@@ -127,12 +130,41 @@ const interviewPrepRoutes =
 const allowedOrigins = [
   "http://localhost:5173",
 
+  "http://localhost:5174",
+
   "http://localhost:3000",
 
   "https://nopromptjobs.com",
 
   "https://www.nopromptjobs.com",
 ];
+
+const isLocalDevOrigin = (origin) => {
+  try {
+    const { protocol, hostname, port } = new URL(origin);
+
+    if (!["http:", "https:"].includes(protocol)) {
+      return false;
+    }
+
+    const isLocalhost =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1";
+
+    const isPrivateLan =
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("10.") ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+    const isVitePort =
+      Number(port) >= 5173 &&
+      Number(port) <= 5179;
+
+    return isLocalhost || (isPrivateLan && isVitePort);
+  } catch (error) {
+    return false;
+  }
+};
 
 app.use(
   cors({
@@ -157,7 +189,8 @@ app.use(
       if (
         allowedOrigins.includes(
           origin
-        )
+        ) ||
+        isLocalDevOrigin(origin)
       ) {
         return callback(
           null,
@@ -222,7 +255,14 @@ app.use(
 /* =========================================================
    BODY PARSERS
 ========================================================= */
-
+app.use(
+"/api/jobs",
+jobRoutes
+);
+app.use(
+ "/api/applications",
+ applicationRoutes
+);
 app.use(
   express.json({
     limit: "20mb",

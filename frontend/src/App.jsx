@@ -10,6 +10,7 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 
+
 import {
   auth,
   googleProvider,
@@ -88,6 +89,7 @@ import PremiumCareerDashboard from "./pages/PremiumCareerDashboard";
 import HrOfferLetter from "./pages/HrOfferLetter";
 
 import CandidateLogin from "./pages/CandidateLogin";
+import AboutPage from "./pages/AboutPage";
 
 import HrOfferLetterDetails from "./pages/HrOfferLetterDetails";
 
@@ -108,6 +110,7 @@ import HiddenOpportunitiesPage from "./pages/HiddenOpportunitiesPage";
 import JobAlertsPage from "./pages/JobAlertsPage";
 
 import CareerRoadmapPage from "./pages/CareerRoadmapPage";
+import AIInterviewReportsPage from "./pages/AIInterviewReportsPage";
 
 import CandidateProfilePage from "./pages/CandidateProfilePage";
 
@@ -2018,15 +2021,51 @@ function JobsPage() {
   };
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const candidateId = user?.candidateId || user?._id || user?.id || "";
+
+  const getTokenPayload = () => {
+    const token = localStorage.getItem("token");
+    if (!token || !token.includes(".")) return {};
+
+    try {
+      const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      return JSON.parse(atob(base64));
+    } catch (error) {
+      console.log("TOKEN DECODE ERROR:", error);
+      return {};
+    }
+  };
+
+  const getCandidateId = () => {
+    const tokenPayload = getTokenPayload();
+
+    return (
+      user?.candidateId ||
+      user?._id ||
+      user?.id ||
+      user?.candidate?._id ||
+      user?.candidate?.id ||
+      tokenPayload?.candidateId ||
+      tokenPayload?._id ||
+      tokenPayload?.id ||
+      tokenPayload?.userId ||
+      localStorage.getItem("candidateId") ||
+      localStorage.getItem("candidate_id") ||
+      localStorage.getItem("userId") ||
+      ""
+    );
+  };
+
+  const candidateId = getCandidateId();
 
   const dashboardPath = candidateId ? `/dashboard/${candidateId}` : "/dashboard";
   const profilePath = candidateId ? `/profile/${candidateId}` : "/profile";
 
   const COUPONS = {
-    NPJ100: { code: "NPJ100", label: "₹100 OFF", discount: 100 },
-    PRO200: { code: "PRO200", label: "₹200 OFF", discount: 200 },
-    ULTIMATE500: { code: "ULTIMATE500", label: "₹500 OFF", discount: 500 },
+    NPJ100: { code: "NPJ100", label: "Testing coupon - Ultimate unlock", discount: 1999 },
+    PRO200: { code: "PRO200", label: "Testing coupon - Ultimate unlock", discount: 1999 },
+    ULTIMATE500: { code: "ULTIMATE500", label: "Testing coupon - Ultimate unlock", discount: 1999 },
+    ULTIMATE100: { code: "ULTIMATE100", label: "Testing coupon - Ultimate unlock", discount: 1999 },
+    FREEULTIMATE: { code: "FREEULTIMATE", label: "Testing coupon - Ultimate unlock", discount: 1999 },
   };
 
   const plans = {
@@ -2070,11 +2109,11 @@ function JobsPage() {
     const plan = plans[planKey];
     if (!plan || plan.offerPrice === 0) return 0;
 
-    const discount = appliedCoupon?.discount || 0;
+    const discount = planKey === "ultimate" ? appliedCoupon?.discount || 0 : 0;
     return Math.max(plan.offerPrice - discount, 0);
   };
 
-  const applyCoupon = () => {
+  const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
 
     if (!code) {
@@ -2088,8 +2127,58 @@ function JobsPage() {
       return;
     }
 
-    setAppliedCoupon(COUPONS[code]);
-    alert(`${COUPONS[code].label} coupon applied successfully`);
+    const coupon = COUPONS[code];
+    setAppliedCoupon(coupon);
+    alert(`${coupon.label} coupon applied successfully`);
+
+    if (coupon.discount >= plans.ultimate.offerPrice) {
+      const resolvedCandidateId = getCandidateId();
+
+      if (!resolvedCandidateId) {
+        alert("Please login before applying this Ultimate coupon");
+        goTo("/candidate-login");
+        return;
+      }
+
+      try {
+        const response = await axios.post(
+          `${API_URL}/api/payments/create-payment-link`,
+          {
+            planKey: "ultimate",
+            couponCode: coupon.code,
+            candidateId: resolvedCandidateId,
+            planName: plans.ultimate.name,
+            name: user?.name || user?.fullName || "NoPromptJobs User",
+            email: user?.email || "customer@example.com",
+            contact: user?.mobile || user?.phone || "9999999999",
+          }
+        );
+
+        if (response.data?.unlocked) {
+          if (response.data?.candidate) {
+            localStorage.setItem("user", JSON.stringify(response.data.candidate));
+            localStorage.setItem("plan", response.data.candidate.plan || "Ultimate");
+            localStorage.setItem(
+              "activePlan",
+              response.data.candidate.activePlan || "Ultimate"
+            );
+            localStorage.setItem(
+              "subscriptionStatus",
+              response.data.candidate.subscriptionStatus || "active"
+            );
+            localStorage.setItem("candidateId", resolvedCandidateId);
+          }
+
+          goTo(response.data?.redirectUrl || "/ultimate-dashboard");
+          return;
+        }
+
+        alert(response.data?.message || "Unable to activate coupon");
+      } catch (error) {
+        console.log("COUPON ACTIVATION ERROR:", error);
+        alert(error.response?.data?.message || "Coupon activation failed");
+      }
+    }
   };
 
   const removeCoupon = () => {
@@ -2099,8 +2188,9 @@ function JobsPage() {
 
   const startPayment = async (planKey) => {
     const plan = plans[planKey];
+    const resolvedCandidateId = getCandidateId();
 
-    if (!candidateId) {
+    if (!resolvedCandidateId) {
       alert("Please login before upgrading your plan");
       goTo("/candidate-login");
       return;
@@ -2108,6 +2198,16 @@ function JobsPage() {
 
     if (planKey === "ultimate" && isUltimateUser()) {
       goTo("/ultimate-dashboard");
+      return;
+    }
+
+    if (planKey === "ultimate" && !appliedCoupon) {
+      setCouponCode("FREEULTIMATE");
+      document.querySelector(".coupon-box")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      alert("For testing, apply any coupon code first. FREEULTIMATE is filled for you.");
       return;
     }
 
@@ -2131,13 +2231,35 @@ function JobsPage() {
       const response = await axios.post(
         `${API_URL}/api/payments/create-payment-link`,
         {
-          amount: finalPrice,
+          planKey,
+          couponCode: appliedCoupon?.code || "",
+          candidateId: resolvedCandidateId,
           planName: plan.name,
           name: user?.name || user?.fullName || "NoPromptJobs User",
           email: user?.email || "customer@example.com",
           contact: user?.mobile || user?.phone || "9999999999",
         }
       );
+
+      if (response.data?.unlocked) {
+        if (response.data?.candidate) {
+          localStorage.setItem("user", JSON.stringify(response.data.candidate));
+          localStorage.setItem("plan", response.data.candidate.plan || plan.name);
+          localStorage.setItem(
+            "activePlan",
+            response.data.candidate.activePlan || plan.name
+          );
+          localStorage.setItem(
+            "subscriptionStatus",
+            response.data.candidate.subscriptionStatus || "active"
+          );
+          localStorage.setItem("candidateId", resolvedCandidateId);
+        }
+
+        alert(response.data?.message || "Plan activated successfully");
+        goTo(response.data?.redirectUrl || "/ultimate-dashboard");
+        return;
+      }
 
       if (!response.data?.success || !response.data?.paymentLink) {
         alert(response.data?.message || "Unable to create payment link");
@@ -2467,8 +2589,8 @@ function JobsPage() {
 
       <section className="coupon-box">
         <div>
-          <h3>Have a coupon?</h3>
-          <p>Apply coupon code before upgrading your plan.</p>
+          <h3>Testing coupons</h3>
+          <p>Use any listed coupon to activate Ultimate and open the dashboard.</p>
         </div>
 
         <div className="coupon-actions">
@@ -2485,13 +2607,24 @@ function JobsPage() {
           )}
         </div>
 
+        <div className="coupon-suggestions">
+          {Object.keys(COUPONS).map((code) => (
+            <button key={code} type="button" onClick={() => setCouponCode(code)}>
+              {code}
+            </button>
+          ))}
+        </div>
+
+        <p className="coupon-note">
+          Testing mode: payment link integration can be enabled later.
+        </p>
+
         {appliedCoupon && (
           <strong className="coupon-success">
-            Coupon applied: {appliedCoupon.code} — {appliedCoupon.label}
+            Coupon applied: {appliedCoupon.code} - {appliedCoupon.label}
           </strong>
         )}
       </section>
-
       <section className="pricing-section">
         <div className="price-card">
           <h3>Basic</h3>
@@ -3907,6 +4040,9 @@ function App() {
     return withChat(<PremiumTermsPage />);
   }
 
+  if (path === "/about") {
+  return withChat(<AboutPage />);
+}
   /* =====================================================
      HELP CENTER
   ===================================================== */
@@ -4015,6 +4151,7 @@ function App() {
       <TrustPassportActivityPage />
     );
   }
+
 
   /* =====================================================
      CANDIDATE PROFILE
@@ -10409,3 +10546,8 @@ const handleSidebarNavigation = (path) => {
 }
 
 export default App;
+
+
+
+
+

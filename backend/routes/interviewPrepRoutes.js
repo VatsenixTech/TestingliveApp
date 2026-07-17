@@ -1414,6 +1414,317 @@ router.patch(
    Keep this after /start, /answers and /complete.
 ========================================================= */
 
+
+
+/* =========================================================
+   GET ALL COMPLETED INTERVIEW REPORTS
+   GET /api/interview-prep/reports
+========================================================= */
+
+router.get("/reports", async (req, res) => {
+  try {
+    const candidateId =
+      getCandidateId(req);
+
+    console.log(
+      "✅ GET /api/interview-prep/reports reached"
+    );
+
+    console.log(
+      "Reports candidate ID:",
+      candidateId
+    );
+
+    if (!candidateId) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Candidate ID is required.",
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        candidateId
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid candidate ID.",
+      });
+    }
+
+    const sessions =
+      await InterviewSession.find({
+        candidateId,
+        status: "completed",
+      })
+        .sort({
+          completedAt: -1,
+          updatedAt: -1,
+        })
+        .limit(100)
+        .lean();
+
+    const reports = sessions.map(
+      (session) => ({
+        _id: session._id,
+
+        sessionId:
+          session._id,
+
+        candidateId:
+          session.candidateId,
+
+        role:
+          session.role,
+
+        experienceLevel:
+          session.experienceLevel,
+
+        interviewType:
+          session.interviewType,
+
+        status:
+          session.status,
+
+        questionCount:
+          session.questionCount,
+
+        questionsAttempted:
+          session.questionsAttempted,
+
+        averageScore:
+          session.averageScore,
+
+        overallScore:
+          session.averageScore,
+
+        technicalScore:
+          session.technicalScore,
+
+        communicationScore:
+          session.communicationScore,
+
+        confidenceScore:
+          session.confidenceScore,
+
+        strongAreas:
+          session.strongAreas || [],
+
+        improvementAreas:
+          session.improvementAreas ||
+          [],
+
+        reportSummary:
+          session.reportSummary || "",
+
+        feedback:
+          session.reportSummary || "",
+
+        startedAt:
+          session.startedAt,
+
+        completedAt:
+          session.completedAt,
+
+        createdAt:
+          session.createdAt,
+
+        updatedAt:
+          session.updatedAt,
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+
+      count:
+        reports.length,
+
+      data: {
+        reports,
+      },
+
+      reports,
+    });
+  } catch (error) {
+    console.error(
+      "Get interview reports error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        error.message ||
+        "Unable to retrieve interview reports.",
+    });
+  }
+});
+
+/* =========================================================
+   GET ONE INTERVIEW REPORT
+   GET /api/interview-prep/reports/:sessionId
+========================================================= */
+
+router.get(
+  "/reports/:sessionId",
+  async (req, res) => {
+    try {
+      const candidateId =
+        getCandidateId(req);
+
+      const { sessionId } =
+        req.params;
+
+      if (!candidateId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Candidate ID is required.",
+        });
+      }
+
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          candidateId
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid candidate ID.",
+        });
+      }
+
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          sessionId
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid interview session ID.",
+        });
+      }
+
+      const session =
+        await InterviewSession.findOne({
+          _id: sessionId,
+          candidateId,
+          status: "completed",
+        }).lean();
+
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Completed interview report was not found.",
+        });
+      }
+
+      const report = {
+        _id:
+          session._id,
+
+        sessionId:
+          session._id,
+
+        candidateId:
+          session.candidateId,
+
+        role:
+          session.role,
+
+        experienceLevel:
+          session.experienceLevel,
+
+        interviewType:
+          session.interviewType,
+
+        status:
+          session.status,
+
+        questionCount:
+          session.questionCount,
+
+        questionsAttempted:
+          session.questionsAttempted,
+
+        averageScore:
+          session.averageScore,
+
+        overallScore:
+          session.averageScore,
+
+        technicalScore:
+          session.technicalScore,
+
+        communicationScore:
+          session.communicationScore,
+
+        confidenceScore:
+          session.confidenceScore,
+
+        strongAreas:
+          session.strongAreas || [],
+
+        improvementAreas:
+          session.improvementAreas ||
+          [],
+
+        reportSummary:
+          session.reportSummary || "",
+
+        feedback:
+          session.reportSummary || "",
+
+        questions:
+          session.questions || [],
+
+        startedAt:
+          session.startedAt,
+
+        completedAt:
+          session.completedAt,
+
+        createdAt:
+          session.createdAt,
+
+        updatedAt:
+          session.updatedAt,
+      };
+
+      return res.status(200).json({
+        success: true,
+
+        data:
+          report,
+
+        report,
+      });
+    } catch (error) {
+      console.error(
+        "Get interview report error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          error.message ||
+          "Unable to retrieve interview report.",
+      });
+    }
+  }
+);
+
+
 router.get(
   "/sessions/:sessionId",
   async (req, res) => {

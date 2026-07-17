@@ -2612,36 +2612,6 @@ async function resolveRoleProfile(
    Exact → Alias → Legacy → AI Generation
 ========================================================= */
 
-async function resolveRoleProfile(targetRole) {
-  const existingMatch =
-    await findRoleProfile(targetRole);
-
-  if (existingMatch) {
-    return {
-      profile:
-        existingMatch.profile,
-
-      generated: false,
-
-      matchType:
-        existingMatch.matchType,
-    };
-  }
-
-  const generatedProfile =
-    await generateRoleProfile(targetRole);
-
-  return {
-    profile:
-      generatedProfile,
-
-    generated: true,
-
-    matchType:
-      "AI_GENERATED",
-  };
-}
-
 /* =========================================================
    REAL WEIGHTED ANALYSIS
 ========================================================= */

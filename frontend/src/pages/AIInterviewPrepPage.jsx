@@ -64,10 +64,53 @@ const getToken = () =>
 
 const getStoredUser = () => {
   try {
-    return JSON.parse(localStorage.getItem("user") || "{}");
-  } catch {
+    const localUser =
+      localStorage.getItem("user");
+
+    const sessionUser =
+      sessionStorage.getItem("user");
+
+    return JSON.parse(
+      localUser ||
+        sessionUser ||
+        "{}"
+    );
+  } catch (error) {
+    console.error(
+      "Unable to read stored user:",
+      error
+    );
+
     return {};
   }
+};
+
+const getCandidateId = () => {
+  const user = getStoredUser();
+
+  const candidateId =
+    user?.candidateId ||
+    user?.candidate?._id ||
+    user?.candidate?.id ||
+    user?.profile?.candidateId ||
+    user?.profile?._id ||
+    user?.data?.candidateId ||
+    user?.data?._id ||
+    user?.user?.candidateId ||
+    user?.user?._id ||
+    user?._id ||
+    user?.id ||
+    localStorage.getItem(
+      "candidateId"
+    ) ||
+    sessionStorage.getItem(
+      "candidateId"
+    ) ||
+    "";
+
+  return String(
+    candidateId || ""
+  ).trim();
 };
 
 const clamp = (value, min = 0, max = 100) => {
@@ -77,6 +120,7 @@ const clamp = (value, min = 0, max = 100) => {
 };
 
 export default function AIInterviewPrepPage() {
+  const [activeView, setActiveView] = useState("main");
   const [role, setRole] = useState("Data Engineer");
   const [experienceLevel, setExperienceLevel] = useState("2-5 Years");
   const [interviewType, setInterviewType] = useState("Technical");
@@ -658,6 +702,31 @@ export default function AIInterviewPrepPage() {
     }
   };
 
+  if (activeView === "history") {
+    return (
+      <InterviewHistoryView
+        onBack={() => setActiveView("main")}
+        onOpenReports={() => setActiveView("reports")}
+      />
+    );
+  }
+
+  if (activeView === "questions") {
+    return (
+      <QuestionBankView
+        onBack={() => setActiveView("main")}
+      />
+    );
+  }
+
+  if (activeView === "reports") {
+    return (
+      <InterviewReportsView
+        onBack={() => setActiveView("main")}
+      />
+    );
+  }
+
   return (
     <main className="interview-prep-page">
       <section className="interview-prep-hero">
@@ -725,7 +794,7 @@ export default function AIInterviewPrepPage() {
 
             <button
               type="button"
-              onClick={() => window.location.assign("/interview-history")}
+              onClick={() => setActiveView("history")}
             >
               View History
               <FaArrowRight />
@@ -965,7 +1034,7 @@ export default function AIInterviewPrepPage() {
       <section className="interview-quick-actions">
         <button
           type="button"
-          onClick={() => window.location.assign("/interview-history")}
+          onClick={() => setActiveView("history")}
         >
           <FaHistory />
           <span>
@@ -977,7 +1046,7 @@ export default function AIInterviewPrepPage() {
 
         <button
           type="button"
-          onClick={() => window.location.assign("/question-bank")}
+          onClick={() => setActiveView("questions")}
         >
           <FaFileAlt />
           <span>
@@ -989,7 +1058,7 @@ export default function AIInterviewPrepPage() {
 
         <button
           type="button"
-          onClick={() => window.location.assign("/interview-reports")}
+          onClick={() => setActiveView("reports")}
         >
           <FaChartLine />
           <span>
@@ -998,6 +1067,1356 @@ export default function AIInterviewPrepPage() {
           </span>
           <FaArrowRight />
         </button>
+      </section>
+    </main>
+  );
+}
+
+
+
+/* =========================================================
+   SHARED API HELPER
+========================================================= */
+
+async function interviewApiGet(
+  path,
+  options = {}
+) {
+  const token =
+    localStorage.getItem("token") ||
+    localStorage.getItem(
+      "authToken"
+    ) ||
+    localStorage.getItem(
+      "accessToken"
+    ) ||
+    sessionStorage.getItem(
+      "token"
+    ) ||
+    "";
+
+  const candidateId =
+    getCandidateId();
+
+  if (
+    !candidateId &&
+    options.requireCandidate !== false
+  ) {
+    throw new Error(
+      "Candidate ID is missing from your login session. Please log out and log in again."
+    );
+  }
+
+  const separator =
+    path.includes("?")
+      ? "&"
+      : "?";
+
+  const finalPath =
+    candidateId
+      ? `${path}${separator}candidateId=${encodeURIComponent(
+          candidateId
+        )}`
+      : path;
+
+  console.log(
+    "Interview API request:",
+    `${API_BASE_URL}${finalPath}`
+  );
+
+  const response = await fetch(
+    `${API_BASE_URL}${finalPath}`,
+    {
+      method: "GET",
+
+      headers: {
+        Accept:
+          "application/json",
+
+        "Content-Type":
+          "application/json",
+
+        ...(token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : {}),
+      },
+    }
+  );
+
+  const result =
+    await response
+      .json()
+      .catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      result?.message ||
+        result?.error ||
+        `Request failed with status ${response.status}`
+    );
+  }
+
+  return result?.data ?? result;
+}
+function AIInterviewReportsPage() {
+  const [
+    searchParams,
+  ] = useSearchParams();
+
+  const navigate =
+    useNavigate();
+
+  const sessionId =
+    searchParams.get(
+      "sessionId"
+    );
+
+  const [reports, setReports] =
+    useState([]);
+
+  const [
+    selectedReport,
+    setSelectedReport,
+  ] = useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadReports =
+      async () => {
+        try {
+          setLoading(true);
+          setError("");
+
+          const endpoint =
+            sessionId
+              ? `/api/interview-prep/reports/${encodeURIComponent(
+                  sessionId
+                )}`
+              : "/api/interview-prep/reports";
+
+          const result =
+            await interviewApiGet(
+              endpoint
+            );
+
+          const reportList =
+            Array.isArray(result)
+              ? result
+              : result?.reports
+                ? result.reports
+                : result?.items
+                  ? result.items
+                  : result
+                    ? [result]
+                    : [];
+
+          if (active) {
+            setReports(
+              reportList
+            );
+
+            setSelectedReport(
+              reportList[0] ||
+                null
+            );
+          }
+        } catch (
+          requestError
+        ) {
+          if (active) {
+            setError(
+              requestError.message ||
+                "Unable to load interview reports."
+            );
+          }
+        } finally {
+          if (active) {
+            setLoading(false);
+          }
+        }
+      };
+
+    loadReports();
+
+    return () => {
+      active = false;
+    };
+  }, [sessionId]);
+
+  const averageOverall =
+    reports.length > 0
+      ? Math.round(
+          reports.reduce(
+            (
+              total,
+              report
+            ) =>
+              total +
+              Number(
+                report.overallScore ??
+                  report.averageScore ??
+                  0
+              ),
+            0
+          ) / reports.length
+        )
+      : 0;
+
+  const bestScore =
+    reports.length > 0
+      ? Math.max(
+          ...reports.map(
+            (report) =>
+              Number(
+                report.overallScore ??
+                  report.averageScore ??
+                  0
+              )
+          )
+        )
+      : 0;
+
+  return (
+    <main className="premium-report-page">
+      <section className="premium-report-hero">
+        <div className="premium-report-heading">
+          <button
+            type="button"
+            className="premium-back-button"
+            onClick={() =>
+              navigate(
+                "/ai-interview-prep"
+              )
+            }
+          >
+            <FaArrowLeft />
+            Back to Interview Prep
+          </button>
+
+          <span className="premium-report-eyebrow">
+            <HiOutlineSparkles />
+            AI Interview Intelligence
+          </span>
+
+          <h1>
+            Interview Performance
+            Reports
+          </h1>
+
+          <p>
+            Review genuine interview
+            results, communication
+            performance, technical
+            strength and improvement
+            recommendations.
+          </p>
+        </div>
+
+        <div className="premium-report-summary">
+          <article>
+            <span>
+              Completed Reports
+            </span>
+
+            <strong>
+              {reports.length}
+            </strong>
+
+            <small>
+              Saved interview
+              assessments
+            </small>
+          </article>
+
+          <article>
+            <span>
+              Average Score
+            </span>
+
+            <strong>
+              {averageOverall}%
+            </strong>
+
+            <small>
+              Across all completed
+              sessions
+            </small>
+          </article>
+
+          <article>
+            <span>
+              Best Performance
+            </span>
+
+            <strong>
+              {bestScore}%
+            </strong>
+
+            <small>
+              Highest recorded score
+            </small>
+          </article>
+        </div>
+      </section>
+
+      {loading && (
+        <div className="premium-report-state">
+          <div className="premium-report-loader" />
+
+          <h2>
+            Loading your reports
+          </h2>
+
+          <p>
+            Retrieving real interview
+            results from the backend.
+          </p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="premium-report-state premium-report-error">
+          <FaChartLine />
+
+          <h2>
+            Unable to load reports
+          </h2>
+
+          <p>{error}</p>
+
+          <button
+            type="button"
+            onClick={() =>
+              window.location.reload()
+            }
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {!loading &&
+        !error &&
+        reports.length === 0 && (
+          <div className="premium-report-state premium-report-empty">
+            <div className="premium-empty-icon">
+              <FaFileAlt />
+            </div>
+
+            <h2>
+              No completed reports yet
+            </h2>
+
+            <p>
+              Complete an AI interview
+              to generate your first
+              detailed performance
+              report.
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/ai-interview-prep"
+                )
+              }
+            >
+              Start AI Interview
+              <FaArrowRight />
+            </button>
+          </div>
+        )}
+
+      {!loading &&
+        !error &&
+        reports.length > 0 && (
+          <section className="premium-report-layout">
+            <aside className="premium-report-sidebar">
+              <div className="premium-report-sidebar-heading">
+                <div>
+                  <span>
+                    Interview History
+                  </span>
+
+                  <small>
+                    {
+                      reports.length
+                    }{" "}
+                    completed
+                  </small>
+                </div>
+              </div>
+
+              <div className="premium-report-session-list">
+                {reports.map(
+                  (
+                    report,
+                    index
+                  ) => {
+                    const reportId =
+                      report._id ||
+                      report.sessionId ||
+                      index;
+
+                    const active =
+                      selectedReport ===
+                      report;
+
+                    return (
+                      <button
+                        type="button"
+                        key={
+                          reportId
+                        }
+                        className={
+                          active
+                            ? "active"
+                            : ""
+                        }
+                        onClick={() =>
+                          setSelectedReport(
+                            report
+                          )
+                        }
+                      >
+                        <div className="premium-session-icon">
+                          <FaRobot />
+                        </div>
+
+                        <div className="premium-session-info">
+                          <strong>
+                            {report.role ||
+                              "AI Interview"}
+                          </strong>
+
+                          <span>
+                            {report.interviewType ||
+                              "Mixed"}{" "}
+                            ·{" "}
+                            {formatReportDate(
+                              report.completedAt ||
+                                report.createdAt
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="premium-session-score">
+                          {Math.round(
+                            Number(
+                              report.overallScore ??
+                                report.averageScore ??
+                                0
+                            )
+                          )}
+                          %
+                        </div>
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+            </aside>
+
+            {selectedReport && (
+              <ReportDetails
+                report={
+                  selectedReport
+                }
+              />
+            )}
+          </section>
+        )}
+    </main>
+  );
+}
+function ReportDetails({
+  report,
+}) {
+  const overallScore =
+    Math.round(
+      Number(
+        report.overallScore ??
+          report.averageScore ??
+          0
+      )
+    );
+
+  const technicalScore =
+    report.technicalScore;
+
+  const communicationScore =
+    report.communicationScore;
+
+  const confidenceScore =
+    report.confidenceScore;
+
+  const strongAreas =
+    report.strongAreas || [];
+
+  const improvementAreas =
+    report.improvementAreas ||
+    [];
+
+  const summary =
+    report.reportSummary ||
+    report.feedback ||
+    "Your detailed feedback will appear after the interview evaluation is completed.";
+
+  return (
+    <div className="premium-report-details">
+      <div className="premium-report-main-card">
+        <div className="premium-report-card-heading">
+          <div>
+            <span>
+              Performance Overview
+            </span>
+
+            <h2>
+              {report.role ||
+                "AI Interview Report"}
+            </h2>
+
+            <p>
+              {report.interviewType ||
+                "Mixed"}{" "}
+              Interview ·{" "}
+              {report.experienceLevel ||
+                "Experience level not set"}
+            </p>
+          </div>
+
+          <div className="premium-report-status">
+            <span />
+            Completed
+          </div>
+        </div>
+
+        <div className="premium-score-overview">
+          <div
+            className="premium-score-ring"
+            style={{
+              "--report-score":
+                `${overallScore * 3.6}deg`,
+            }}
+          >
+            <div>
+              <strong>
+                {overallScore}%
+              </strong>
+
+              <span>
+                Overall Score
+              </span>
+            </div>
+          </div>
+
+          <div className="premium-score-message">
+            <span>
+              Performance Level
+            </span>
+
+            <h3>
+              {getPerformanceLabel(
+                overallScore
+              )}
+            </h3>
+
+            <p>
+              {getPerformanceMessage(
+                overallScore
+              )}
+            </p>
+
+            <div className="premium-report-meta">
+              <div>
+                <span>
+                  Questions
+                </span>
+
+                <strong>
+                  {report.questionsAttempted ||
+                    0}
+                  /
+                  {report.questionCount ||
+                    0}
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Completed
+                </span>
+
+                <strong>
+                  {formatReportDate(
+                    report.completedAt
+                  )}
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="premium-metric-grid">
+        <MetricCard
+          title="Technical Knowledge"
+          score={
+            technicalScore
+          }
+          icon={<FaBrain />}
+          description="Role concepts, problem solving and practical knowledge."
+        />
+
+        <MetricCard
+          title="Communication"
+          score={
+            communicationScore
+          }
+          icon={
+            <HiOutlineChatAlt2 />
+          }
+          description="Clarity, structure and completeness of your answers."
+        />
+
+        <MetricCard
+          title="Confidence"
+          score={
+            confidenceScore
+          }
+          icon={<FaMicrophone />}
+          description="Consistency, participation and interview engagement."
+        />
+      </div>
+
+      <div className="premium-report-insights-grid">
+        <article className="premium-insight-card premium-summary-card">
+          <div className="premium-insight-heading">
+            <span>
+              <FaRobot />
+            </span>
+
+            <div>
+              <h3>
+                AI Evaluation
+                Summary
+              </h3>
+
+              <p>
+                Analysis of your
+                interview performance
+              </p>
+            </div>
+          </div>
+
+          <div className="premium-summary-content">
+            {summary}
+          </div>
+        </article>
+
+        <article className="premium-insight-card">
+          <div className="premium-insight-heading">
+            <span className="success">
+              <FaStar />
+            </span>
+
+            <div>
+              <h3>
+                Strong Areas
+              </h3>
+
+              <p>
+                Skills demonstrated
+                during the interview
+              </p>
+            </div>
+          </div>
+
+          <div className="premium-chip-list">
+            {strongAreas.length >
+            0 ? (
+              strongAreas.map(
+                (area) => (
+                  <span
+                    key={area}
+                    className="premium-chip success"
+                  >
+                    {area}
+                  </span>
+                )
+              )
+            ) : (
+              <p className="premium-no-data">
+                More interview evidence
+                is required to identify
+                strong areas.
+              </p>
+            )}
+          </div>
+        </article>
+
+        <article className="premium-insight-card">
+          <div className="premium-insight-heading">
+            <span className="warning">
+              <FaChartLine />
+            </span>
+
+            <div>
+              <h3>
+                Improvement Plan
+              </h3>
+
+              <p>
+                Recommended areas for
+                your next practice
+              </p>
+            </div>
+          </div>
+
+          <div className="premium-improvement-list">
+            {improvementAreas.length >
+            0 ? (
+              improvementAreas.map(
+                (
+                  area,
+                  index
+                ) => (
+                  <div key={area}>
+                    <span>
+                      {index + 1}
+                    </span>
+
+                    <p>{area}</p>
+                  </div>
+                )
+              )
+            ) : (
+              <p className="premium-no-data">
+                No improvement
+                recommendations are
+                available yet.
+              </p>
+            )}
+          </div>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({
+  title,
+  score,
+  icon,
+  description,
+}) {
+  const safeScore =
+    score === null ||
+    score === undefined
+      ? null
+      : Math.round(
+          Number(score)
+        );
+
+  return (
+    <article className="premium-metric-card">
+      <div className="premium-metric-icon">
+        {icon}
+      </div>
+
+      <div className="premium-metric-content">
+        <div>
+          <span>{title}</span>
+
+          <strong>
+            {safeScore === null
+              ? "—"
+              : `${safeScore}%`}
+          </strong>
+        </div>
+
+        <div className="premium-metric-track">
+          <span
+            style={{
+              width:
+                safeScore === null
+                  ? "0%"
+                  : `${safeScore}%`,
+            }}
+          />
+        </div>
+
+        <p>{description}</p>
+      </div>
+    </article>
+  );
+}
+
+function getPerformanceLabel(
+  score
+) {
+  if (score >= 85) {
+    return "Excellent";
+  }
+
+  if (score >= 70) {
+    return "Strong Performance";
+  }
+
+  if (score >= 55) {
+    return "Developing Well";
+  }
+
+  if (score > 0) {
+    return "Needs More Practice";
+  }
+
+  return "Evaluation Pending";
+}
+
+function getPerformanceMessage(
+  score
+) {
+  if (score >= 85) {
+    return "You demonstrated excellent interview readiness with strong communication and role knowledge.";
+  }
+
+  if (score >= 70) {
+    return "You showed good interview preparation. Focus on the improvement plan to reach an excellent level.";
+  }
+
+  if (score >= 55) {
+    return "You have a good foundation, but your answers need more structure, detail and measurable results.";
+  }
+
+  if (score > 0) {
+    return "Continue practicing complete answers and use practical project examples to improve your performance.";
+  }
+
+  return "Complete a longer interview session to receive a reliable performance evaluation.";
+}
+
+function formatReportDate(
+  value
+) {
+  if (!value) {
+    return "Not available";
+  }
+
+  const date = new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "Not available";
+  }
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
+}
+function InterviewSubPageHeader({
+  title,
+  description,
+  onBack,
+}) {
+  return (
+    <div className="interview-subpage-header">
+      <div>
+        <span className="interview-subpage-eyebrow">
+          AI INTERVIEW PREP
+        </span>
+
+        <h1>{title}</h1>
+
+        <p>{description}</p>
+      </div>
+
+      <button
+        type="button"
+        className="interview-back-button"
+        onClick={onBack}
+      >
+        Back to Interview Prep
+      </button>
+    </div>
+  );
+}
+
+/* =========================================================
+   REAL INTERVIEW HISTORY
+========================================================= */
+
+function InterviewHistoryView({
+  onBack,
+  onOpenReports,
+}) {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadHistory() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const result = await interviewApiGet(
+          "/api/interview-prep/sessions"
+        );
+
+        const items = Array.isArray(result)
+          ? result
+          : result?.sessions ||
+            result?.history ||
+            result?.items ||
+            [];
+
+        if (mounted) {
+          setSessions(items);
+        }
+      } catch (requestError) {
+        if (mounted) {
+          setError(
+            requestError.message ||
+              "Unable to load interview history."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return (
+    <main className="interview-prep-page">
+      <section className="interview-subpage-card">
+        <InterviewSubPageHeader
+          title="Interview History"
+          description="Review all completed and active interview sessions."
+          onBack={onBack}
+        />
+
+        {loading && (
+          <div className="interview-page-state">
+            Loading interview history...
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="interview-page-state error">
+            {error}
+          </div>
+        )}
+
+        {!loading &&
+          !error &&
+          sessions.length === 0 && (
+            <div className="interview-page-state">
+              <h2>No interview sessions yet</h2>
+              <p>
+                Complete your first AI interview and it will
+                appear here automatically.
+              </p>
+
+              <button
+                type="button"
+                className="interview-primary-action"
+                onClick={onBack}
+              >
+                Start an Interview
+              </button>
+            </div>
+          )}
+
+        {!loading &&
+          !error &&
+          sessions.length > 0 && (
+            <div className="interview-record-grid">
+              {sessions.map((session, index) => {
+                const sessionId =
+                  session?._id ||
+                  session?.id ||
+                  session?.sessionId ||
+                  index;
+
+                return (
+                  <article
+                    className="interview-record-card"
+                    key={sessionId}
+                  >
+                    <span className="interview-status-badge">
+                      {session?.status || "Completed"}
+                    </span>
+
+                    <h2>
+                      {session?.role ||
+                        "Interview Session"}
+                    </h2>
+
+                    <p>
+                      {session?.interviewType || "Mixed"} ·{" "}
+                      {session?.experienceLevel ||
+                        "Experience not set"}
+                    </p>
+
+                    <strong>
+                      {session?.averageScore == null
+                        ? "Report pending"
+                        : `${Math.round(
+                            Number(
+                              session.averageScore
+                            )
+                          )}%`}
+                    </strong>
+
+                    <button
+                      type="button"
+                      className="interview-primary-action"
+                      onClick={onOpenReports}
+                    >
+                      View Report
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+      </section>
+    </main>
+  );
+}
+
+/* =========================================================
+   REAL QUESTION BANK
+========================================================= */
+
+function QuestionBankView({ onBack }) {
+  const [role, setRole] = useState("Data Engineer");
+  const [type, setType] = useState("Technical");
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadQuestions() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const result = await interviewApiGet(
+          `/api/interview-prep/questions?role=${encodeURIComponent(
+            role
+          )}&type=${encodeURIComponent(type)}`
+        );
+
+        const items = Array.isArray(result)
+          ? result
+          : result?.questions ||
+            result?.items ||
+            [];
+
+        if (mounted) {
+          setQuestions(items);
+        }
+      } catch (requestError) {
+        if (mounted) {
+          setError(
+            requestError.message ||
+              "Unable to load interview questions."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadQuestions();
+
+    return () => {
+      mounted = false;
+    };
+  }, [role, type]);
+
+  return (
+    <main className="interview-prep-page">
+      <section className="interview-subpage-card">
+        <InterviewSubPageHeader
+          title="Question Bank"
+          description="Practice real role-based questions returned by your backend."
+          onBack={onBack}
+        />
+
+        <div className="interview-question-filters">
+          <label>
+            <span>Interview Role</span>
+
+            <select
+              value={role}
+              onChange={(event) =>
+                setRole(event.target.value)
+              }
+            >
+              {ROLE_OPTIONS.map((option) => (
+                <option
+                  value={option}
+                  key={option}
+                >
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Interview Type</span>
+
+            <select
+              value={type}
+              onChange={(event) =>
+                setType(event.target.value)
+              }
+            >
+              <option value="Technical">
+                Technical
+              </option>
+
+              <option value="HR">HR</option>
+
+              <option value="Mixed">Mixed</option>
+            </select>
+          </label>
+        </div>
+
+        {loading && (
+          <div className="interview-page-state">
+            Loading interview questions...
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="interview-page-state error">
+            {error}
+          </div>
+        )}
+
+        {!loading &&
+          !error &&
+          questions.length === 0 && (
+            <div className="interview-page-state">
+              No questions were returned by the backend.
+            </div>
+          )}
+
+        {!loading &&
+          !error &&
+          questions.length > 0 && (
+            <div className="interview-question-list">
+              {questions.map((item, index) => (
+                <article
+                  key={
+                    item?._id ||
+                    item?.id ||
+                    index
+                  }
+                >
+                  <span>
+                    Question {index + 1}
+                  </span>
+
+                  <h2>
+                    {item?.question ||
+                      item?.text ||
+                      item?.title ||
+                      "Interview question"}
+                  </h2>
+
+                  {item?.answerGuide && (
+                    <p>{item.answerGuide}</p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+      </section>
+    </main>
+  );
+}
+
+/* =========================================================
+   REAL REPORTS PAGE
+========================================================= */
+
+function InterviewReportsView({ onBack }) {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadReports() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const result = await interviewApiGet(
+          "/api/interview-prep/reports"
+        );
+
+        const items = Array.isArray(result)
+          ? result
+          : result?.reports ||
+            result?.items ||
+            [];
+
+        if (mounted) {
+          setReports(items);
+        }
+      } catch (requestError) {
+        if (mounted) {
+          setError(
+            requestError.message ||
+              "Unable to load interview reports."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadReports();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return (
+    <main className="interview-prep-page">
+      <section className="interview-subpage-card">
+        <InterviewSubPageHeader
+          title="My Reports"
+          description="Review real interview scores and feedback saved by your backend."
+          onBack={onBack}
+        />
+
+        {loading && (
+          <div className="interview-page-state">
+            Loading interview reports...
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="interview-page-state error">
+            {error}
+          </div>
+        )}
+
+        {!loading &&
+          !error &&
+          reports.length === 0 && (
+            <div className="interview-page-state">
+              No interview reports are available yet.
+            </div>
+          )}
+
+        {!loading &&
+          !error &&
+          reports.length > 0 && (
+            <div className="interview-report-grid">
+              {reports.map((report, index) => (
+                <article
+                  key={
+                    report?._id ||
+                    report?.id ||
+                    index
+                  }
+                >
+                  <h2>
+                    {report?.role ||
+                      report?.title ||
+                      "Interview Report"}
+                  </h2>
+
+                  {[
+                    [
+                      "Overall",
+                      report?.overallScore ??
+                        report?.averageScore ??
+                        0,
+                    ],
+                    [
+                      "Technical",
+                      report?.technicalScore ?? 0,
+                    ],
+                    [
+                      "Communication",
+                      report?.communicationScore ??
+                        0,
+                    ],
+                    [
+                      "Confidence",
+                      report?.confidenceScore ??
+                        0,
+                    ],
+                  ].map(([label, value]) => (
+                    <div
+                      className="interview-score-row"
+                      key={label}
+                    >
+                      <span>{label}</span>
+
+                      <strong>
+                        {Math.round(
+                          Number(value) || 0
+                        )}
+                        %
+                      </strong>
+                    </div>
+                  ))}
+
+                  {report?.feedback && (
+                    <p>{report.feedback}</p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
       </section>
     </main>
   );

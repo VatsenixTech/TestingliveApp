@@ -1,6 +1,7 @@
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const Candidate = require("../models/Candidate");
 
 const router = express.Router();
 
@@ -48,7 +49,7 @@ const PLANS = {
 
     actualPrice: 3499,
 
-    offerPrice: 1,
+    offerPrice: 1999,
   },
 };
 
@@ -64,23 +65,39 @@ const COUPONS = {
   NPJ100: {
     code: "NPJ100",
 
-    discount: 100,
+    discount: 1999,
 
-    allowedPlans: ["pro", "ultimate"],
+    allowedPlans: ["ultimate"],
   },
 
   PRO200: {
     code: "PRO200",
 
-    discount: 200,
+    discount: 1999,
 
-    allowedPlans: ["pro"],
+    allowedPlans: ["ultimate"],
   },
 
   ULTIMATE500: {
     code: "ULTIMATE500",
 
-    discount: 500,
+    discount: 1999,
+
+    allowedPlans: ["ultimate"],
+  },
+
+  ULTIMATE100: {
+    code: "ULTIMATE100",
+
+    discount: 1999,
+
+    allowedPlans: ["ultimate"],
+  },
+
+  FREEULTIMATE: {
+    code: "FREEULTIMATE",
+
+    discount: 1999,
 
     allowedPlans: ["ultimate"],
   },
@@ -137,7 +154,7 @@ const calculateFinalPrice = (planKey, couponCode) => {
 
   const finalPrice = Math.max(
     plan.offerPrice - discount,
-    1
+    0
   );
 
   return {
@@ -435,6 +452,64 @@ router.post("/create-payment-link", async (req, res) => {
       appliedCoupon,
     } = priceResult;
 
+    if (finalPrice <= 0) {
+      const updatedCandidate = await Candidate.findByIdAndUpdate(
+        candidateId,
+        {
+          plan: plan.name,
+          activePlan: plan.name,
+          subscriptionStatus: "active",
+          subscriptionActivatedAt: new Date(),
+          subscriptionSource: "coupon",
+          appliedCoupon: appliedCoupon || "",
+          razorpayPaymentId: "",
+          razorpayPaymentLinkId: "",
+        },
+        {
+          new: true,
+        }
+      ).select("-password");
+
+      if (!updatedCandidate) {
+        return res.status(404).json({
+          success: false,
+
+          message: "Candidate not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+
+        unlocked: true,
+
+        message: `${plan.name} activated using coupon`,
+
+        redirectUrl:
+          priceResult.planKey === "ultimate"
+            ? "/ultimate-dashboard"
+            : "/services",
+
+        candidate: updatedCandidate,
+
+        plan: {
+          key: priceResult.planKey,
+
+          name: plan.name,
+
+          actualPrice,
+
+          offerPrice,
+
+          discount,
+
+          finalPrice,
+
+          couponCode: appliedCoupon,
+        },
+      });
+    }
+
     /* -------------------------------------------------------
        CALLBACK URL
 
@@ -693,33 +768,31 @@ router.post("/verify-payment-link", async (req, res) => {
       });
     }
 
-    /*
-     =========================================================
-     IMPORTANT NEXT STEP
+    const updatedCandidate = await Candidate.findByIdAndUpdate(
+      candidateId,
+      {
+        plan: planName,
+        activePlan: planName,
+        subscriptionStatus: "active",
+        subscriptionActivatedAt: new Date(),
+        subscriptionSource: "razorpay",
+        razorpayPaymentId: razorpay_payment_id,
+        razorpayPaymentLinkId: razorpay_payment_link_id,
+      },
+      {
+        new: true,
+      }
+    ).select("-password");
 
-     UPDATE YOUR CANDIDATE MODEL HERE.
+    if (!updatedCandidate) {
+      return res.status(404).json({
+        success: false,
 
-     Example:
+        verified: false,
 
-     const Candidate = require("../models/Candidate");
-
-     await Candidate.findByIdAndUpdate(
-       candidateId,
-       {
-         plan: planName,
-         subscriptionStatus: "active",
-         razorpayPaymentId: razorpay_payment_id,
-         razorpayPaymentLinkId: razorpay_payment_link_id,
-       },
-       {
-         new: true,
-       }
-     );
-
-     Only after MongoDB update succeeds should you return
-     subscriptionActive: true.
-     =========================================================
-    */
+        message: "Candidate not found",
+      });
+    }
 
     return res.json({
       success: true,
@@ -735,6 +808,8 @@ router.post("/verify-payment-link", async (req, res) => {
       planKey,
 
       planName,
+
+      candidate: updatedCandidate,
 
       paymentId: razorpay_payment_id,
 
@@ -761,3 +836,4 @@ router.post("/verify-payment-link", async (req, res) => {
 });
 
 module.exports = router;
+

@@ -33634,3 +33634,29 @@ body,
     margin-left: auto !important;
   }
 }
+.coupon-suggestions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.coupon-suggestions button {
+  height: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 12px;
+}
+
+.coupon-note,
+.coupon-success {
+  grid-column: 1 / -1;
+}
+
+.coupon-success {
+  color: #86efac;
+  font-weight: 900;
+}

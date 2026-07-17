@@ -261,106 +261,222 @@ autoApplySettingSchema.index(
 /* =========================================================
    DOCUMENT VALIDATION
 ========================================================= */
+/* =========================================================
+   DOCUMENT VALIDATION
+========================================================= */
 
 autoApplySettingSchema.pre(
   "validate",
-  function (next) {
-    this.preferredRoles = normalizeStringArray(
-      this.preferredRoles
-    );
+  function () {
 
-    this.preferredLocations = normalizeStringArray(
-      this.preferredLocations
-    );
+    this.preferredRoles =
+      normalizeStringArray(
+        this.preferredRoles
+      );
 
-    this.excludedCompanies = normalizeStringArray(
-      this.excludedCompanies
-    );
 
-    this.excludedJobTitles = normalizeStringArray(
-      this.excludedJobTitles
-    );
+    this.preferredLocations =
+      normalizeStringArray(
+        this.preferredLocations
+      );
+
+
+    this.excludedCompanies =
+      normalizeStringArray(
+        this.excludedCompanies
+      );
+
+
+    this.excludedJobTitles =
+      normalizeStringArray(
+        this.excludedJobTitles
+      );
+
+
+
+    // Daily application limit validation
+
+    if (
+      typeof this.dailyLimit !== "number"
+    ) {
+      this.dailyLimit = 25;
+    }
+
 
     if (this.dailyLimit < 1) {
       this.dailyLimit = 1;
     }
 
+
     if (this.dailyLimit > 100) {
       this.dailyLimit = 100;
     }
+
+
+
+    // Match score validation
+
+    if (
+      typeof this.minimumMatchScore !== "number"
+    ) {
+      this.minimumMatchScore = 70;
+    }
+
 
     if (this.minimumMatchScore < 0) {
       this.minimumMatchScore = 0;
     }
 
+
     if (this.minimumMatchScore > 100) {
       this.minimumMatchScore = 100;
     }
+
+
+
+    // Application counter validation
+
+    if (
+      typeof this.applicationsToday !== "number"
+    ) {
+      this.applicationsToday = 0;
+    }
+
 
     if (this.applicationsToday < 0) {
       this.applicationsToday = 0;
     }
 
-    next();
+
   }
 );
+
+
+
 
 /* =========================================================
    CONSENT HANDLING
 ========================================================= */
 
+
 autoApplySettingSchema.methods.acceptConsent =
-  async function () {
-    this.consent = true;
-    this.consentAcceptedAt = new Date();
-    this.consentRevokedAt = null;
+async function () {
 
-    await this.save();
 
-    return this;
-  };
+  this.consent = true;
+
+
+  this.consentAcceptedAt =
+    new Date();
+
+
+  this.consentRevokedAt = null;
+
+
+
+  await this.save();
+
+
+  return this;
+
+};
+
+
+
+
 
 autoApplySettingSchema.methods.revokeConsent =
-  async function () {
-    this.consent = false;
-    this.enabled = false;
-    this.consentRevokedAt = new Date();
-    this.lastRunStatus = "paused";
-    this.pausedReason =
-      "Candidate consent was revoked.";
+async function () {
 
-    await this.save();
 
-    return this;
-  };
+  this.consent = false;
+
+
+  this.enabled = false;
+
+
+  this.consentRevokedAt =
+    new Date();
+
+
+
+  this.lastRunStatus =
+    "paused";
+
+
+
+  this.pausedReason =
+    "Candidate consent was revoked.";
+
+
+
+  await this.save();
+
+
+  return this;
+
+};
+
+
+
+
+
 
 /* =========================================================
    DAILY COUNTER
 ========================================================= */
 
+
 autoApplySettingSchema.methods.resetDailyCounterIfNeeded =
-  async function () {
-    const today = getTodayKey();
+async function () {
 
-    if (this.counterDate !== today) {
-      this.counterDate = today;
-      this.applicationsToday = 0;
 
-      await this.save();
-    }
+  const today =
+    getTodayKey();
 
-    return this;
-  };
+
+
+  if (
+    this.counterDate !== today
+  ) {
+
+
+    this.counterDate = today;
+
+
+    this.applicationsToday = 0;
+
+
+
+    await this.save();
+
+  }
+
+
+
+  return this;
+
+};
+
+
+
+
 
 autoApplySettingSchema.methods.getRemainingApplications =
-  function () {
-    return Math.max(
-      this.dailyLimit -
-        (this.applicationsToday || 0),
-      0
-    );
-  };
+function () {
 
+
+  return Math.max(
+
+    this.dailyLimit -
+    (this.applicationsToday || 0),
+
+    0
+
+  );
+
+
+};
 /* =========================================================
    ENGINE PERMISSION CHECK
 ========================================================= */
