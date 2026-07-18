@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { calculateProfileStrength } from "./utils/profileStrength";
 
+
 function CandidateDashboard() {
   const [candidate, setCandidate] = useState(null);
   const [jobs, setJobs] = useState([]);

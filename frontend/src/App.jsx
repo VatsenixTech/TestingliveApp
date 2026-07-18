@@ -112,6 +112,7 @@ import SkillAnalyzerPage from "./pages/SkillAnalyzerPage";
 import HiddenOpportunitiesPage from "./pages/HiddenOpportunitiesPage";
 
 import JobAlertsPage from "./pages/JobAlertsPage";
+import ContactPage from "./pages/ContactPage";
 
 import CareerRoadmapPage from "./pages/CareerRoadmapPage";
 import AIInterviewReportsPage from "./pages/AIInterviewReportsPage";
@@ -4047,7 +4048,9 @@ function App() {
   /* =====================================================
      LEGAL PAGES
   ===================================================== */
-
+ if (path === "/contact") {
+  return <ContactPage />;
+}
   if (path === "/terms") {
     return withChat(<PremiumTermsPage />);
   }
@@ -6264,13 +6267,43 @@ function CandidatePremiumSidebar({
   const getCandidateName = () =>
     candidate?.name || savedUser?.name || savedUser?.fullName || "Candidate";
 
-  const getProfileImage = () =>
+ const API_ORIGIN = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+)
+  .replace(/\/+$/, "")
+  .replace(/\/api$/, "");
+
+const resolveProfileImage = (image) => {
+  if (!image) return "/profile.png";
+
+  // Already a full URL
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://")
+  ) {
+    return image;
+  }
+
+  // Convert /uploads/... to full backend URL
+  return `${API_ORIGIN}${image.startsWith("/") ? "" : "/"}${image}`;
+};
+
+const getProfileImage = () => {
+  const image =
     candidate?.profileImageUrl ||
+    candidate?.profileImage ||
     candidate?.photoUrl ||
     candidate?.profilePhoto ||
+    candidate?.avatar ||
     savedUser?.profileImageUrl ||
-    "/profile.png";
+    savedUser?.profileImage ||
+    savedUser?.photoUrl ||
+    savedUser?.profilePhoto;
 
+  return resolveProfileImage(image);
+};
+console.log("Candidate Data:", candidate);
+console.log("Profile Image:", getProfileImage());
 const profileStrength = calculateProfileStrength(candidate || {});
 
 const unreadCount = notifications.filter(
@@ -6571,11 +6604,24 @@ const unreadCount = notifications.filter(
             ))}
 
             <p className="npj-menu-label">Account</p>
+<button
+  type="button"
+  onClick={() => {
+    if (!candidateId) {
+      window.location.href = "/candidate-login";
+      return;
+    }
 
-            <button onClick={() => goTo("/settings")}>
-              <span>⚙</span>
-              <b>Settings</b>
-            </button>
+    window.open(
+      `/profile/${candidateId}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }}
+>
+  <span>👤</span>
+  <b>Profile</b>
+</button>
 
             <button
               onClick={() => {
