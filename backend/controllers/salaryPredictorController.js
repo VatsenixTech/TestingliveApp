@@ -960,29 +960,41 @@ exports.predictSalary = async (
     }
 
 
-    if (matchedRecords.length < 3) {
-      return res.status(422).json({
-        success: false,
+    /*
+ * If fewer than three strong matches exist,
+ * use the best available role-matching salary records.
+ */
 
-        code:
-          "INSUFFICIENT_MARKET_DATA",
+if (matchedRecords.length < 3) {
+  matchedRecords =
+    marketRecords.slice(0, 5);
+}
 
-        message:
-          `Not enough verified salary records are available for "${targetRole}". Add structured salary information to matching jobs before generating a prediction.`,
+/*
+ * Stop only when absolutely no usable salary
+ * records are available.
+ */
 
-        marketData: {
-          totalJobsAnalyzed,
+if (matchedRecords.length === 0) {
+  return res.status(422).json({
+    success: false,
 
-          salaryRecordsFound:
-            marketRecords.length,
+    code:
+      "INSUFFICIENT_MARKET_DATA",
 
-          matchedSalaryRecords:
-            matchedRecords.length,
-        },
-      });
-    }
+    message:
+      `No usable salary records are available for "${targetRole}". Add salary information to matching jobs.`,
 
+    marketData: {
+      totalJobsAnalyzed,
 
+      salaryRecordsFound:
+        marketRecords.length,
+
+      matchedSalaryRecords: 0,
+    },
+  });
+}
     const salaryValues =
       matchedRecords
         .map(

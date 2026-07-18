@@ -180,13 +180,11 @@ const skillAnalysisSchema =
         careerMatchSchema,
       ],
 
-      roleProfileId: {
-        type:
-          mongoose.Schema.Types.ObjectId,
-        ref: "RoleSkillProfile",
-        required: true,
-      },
-
+   roleProfileId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "RoleSkillProfile",
+  default: null,
+},
       calculationVersion: {
         type: String,
         default: "1.0.0",

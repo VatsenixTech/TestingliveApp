@@ -65,6 +65,10 @@ import "./index.css";
 ========================================================= */
 
 import SalaryPredictor from "./pages/SalaryPredictor";
+import AIInterviewHistoryPage
+  from "./pages/AIInterviewHistoryPage";
+
+import AIInterviewQuestionBankPage from "./pages/AIInterviewQuestionBankPage";
 
 import AIInterviewSessionPage from "./pages/AIInterviewSessionPage";
 
@@ -3934,7 +3938,27 @@ function SavedJobsPage() {
 }
 
 function App() {
-  const path = window.location.pathname;
+  const [path, setPath] = useState(
+    window.location.pathname
+  );
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setPath(window.location.pathname);
+    };
+
+    window.addEventListener(
+      "popstate",
+      handleRouteChange
+    );
+
+    return () => {
+      window.removeEventListener(
+        "popstate",
+        handleRouteChange
+      );
+    };
+  }, []);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -4040,9 +4064,6 @@ function App() {
     return withChat(<PremiumTermsPage />);
   }
 
-  if (path === "/about") {
-  return withChat(<AboutPage />);
-}
   /* =====================================================
      HELP CENTER
   ===================================================== */
@@ -4270,6 +4291,80 @@ function App() {
     );
   }
   /* =====================================================
+     AI INTERVIEW HISTORY
+  ===================================================== */
+
+  if (path === "/ai-interview-history") {
+    return renderUltimatePage(
+      <AIInterviewHistoryPage
+        onBack={() => {
+          window.history.pushState(
+            {},
+            "",
+            "/ai-interview-prep"
+          );
+
+          window.dispatchEvent(
+            new PopStateEvent("popstate")
+          );
+        }}
+      />
+    );
+  }
+
+  /* =====================================================
+     AI INTERVIEW QUESTION BANK
+
+     Keep this before:
+     /ai-interview-session/
+     /interview-report/
+     /ai-interview-prep
+  ===================================================== */
+
+  if (path === "/ai-interview-question-bank") {
+    return renderUltimatePage(
+      <AIInterviewQuestionBankPage
+        onBack={() => {
+          window.history.pushState(
+            {},
+            "",
+            "/ai-interview-prep"
+          );
+
+          window.dispatchEvent(
+            new PopStateEvent("popstate")
+          );
+        }}
+      />
+    );
+  }
+
+  /* =====================================================
+     AI INTERVIEW REPORTS
+
+     This is the premium reports/history page.
+     Keep this before /ai-interview-prep.
+  ===================================================== */
+
+  if (path === "/ai-interview-reports") {
+    return renderUltimatePage(
+      <AIInterviewReportsPage
+        onBack={() => {
+          window.history.pushState(
+            {},
+            "",
+            "/ai-interview-prep"
+          );
+
+          window.dispatchEvent(
+            new PopStateEvent("popstate")
+          );
+        }}
+      />
+    );
+  }
+
+  /* =====================================================
      AI INTERVIEW LIVE SESSION
 
      The preparation page opens this route in a new browser
@@ -4299,10 +4394,9 @@ function App() {
   }
 
   /* =====================================================
-     AI INTERVIEW REPORT
+     INDIVIDUAL AI INTERVIEW REPORT
 
-     After the interview is completed, the same interview
-     tab/window is replaced with this report page.
+     This is the focused report opened after a live session.
   ===================================================== */
 
   if (path.startsWith("/interview-report/")) {
@@ -4316,7 +4410,7 @@ function App() {
 
     if (!sessionId) {
       return renderUltimatePage(
-        <AIInterviewPrepPage />
+        <AIInterviewReportsPage />
       );
     }
 
@@ -4339,8 +4433,8 @@ function App() {
 
   /*
    * Compatibility route for older links.
-   * Redirect the old URL to the preparation page.
    */
+
   if (path === "/ai-interview") {
     window.location.replace(
       "/ai-interview-prep"
@@ -4351,7 +4445,7 @@ function App() {
 
   if (path === "/salary-predictor") {
     return renderUltimatePage(
-      <SalaryPredictor/>
+      <SalaryPredictor />
     );
   }
 
@@ -4512,8 +4606,8 @@ function App() {
      FALLBACK
   ===================================================== */
 
-  return <LandingPage />;}
-function Navbar({
+  return <LandingPage />;
+}function Navbar({
   searchText = "",
   setSearchText = () => {},
   handleSearch = () => {},

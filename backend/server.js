@@ -44,6 +44,11 @@ const hrRoutes =
 const helpRoutes =
   require("./routes/helpRoutes");
 
+  const interviewQuestionBankRoutes =
+  require(
+    "./routes/interviewQuestionBankRoutes"
+  );
+
 
 const aiRoutes =
   require("./routes/aiRoutes");
@@ -323,6 +328,10 @@ app.use(
   }
 );
 
+const salaryPredictorRoutes =
+  require(
+    "./routes/salaryPredictorRoutes"
+  );
 /* =========================================================
    SAFE ROUTE REGISTRATION
 ========================================================= */
@@ -733,21 +742,55 @@ registerRoute(
 /* =========================================================
    INTERVIEW PREP
 
-   Must also remain before 404.
+   Must remain before 404.
 ========================================================= */
+
+/*
+------------------------------------------
+QUESTION BANK ROUTES
+------------------------------------------
+GET /api/interview-prep/question-bank/metadata
+
+GET /api/interview-prep/question-bank/pdf
+------------------------------------------
+*/
+
+registerRoute(
+  "/api/interview-prep",
+  interviewQuestionBankRoutes,
+  "interviewQuestionBankRoutes"
+);
+
+/*
+------------------------------------------
+AI INTERVIEW ROUTES
+------------------------------------------
+History
+
+Reports
+
+Questions
+
+Sessions
+
+Interview
+------------------------------------------
+*/
 
 registerRoute(
   "/api/interview-prep",
   interviewPrepRoutes,
   "interviewPrepRoutes"
 );
-
 /* =========================================================
    404 HANDLER
 
    MUST REMAIN AFTER ALL VALID ROUTES.
 ========================================================= */
-
+app.use(
+  "/api/salary-predictor",
+  salaryPredictorRoutes
+);
 app.use(
   (req, res) => {
     console.error(

@@ -1889,7 +1889,6 @@ async function createFallbackRoleProfile(
     );
   }
 
-
   /*
    * Check DB one more time to avoid duplicates.
    */
@@ -1903,7 +1902,6 @@ async function createFallbackRoleProfile(
     return existingMatch.profile;
   }
 
-
   /*
    * Look for exact fallback template.
    */
@@ -1913,21 +1911,13 @@ async function createFallbackRoleProfile(
       requestedRole
     );
 
-
   let canonicalRole;
-
   let aliases;
-
   let department;
-
   let industry;
-
   let jobFamily;
-
   let description;
-
   let requiredSkills;
-
 
   if (template) {
     canonicalRole =
@@ -1936,7 +1926,6 @@ async function createFallbackRoleProfile(
     aliases =
       normalizeStringArray([
         requestedRole,
-
         ...(template.aliases || []),
       ]);
 
@@ -1963,18 +1952,6 @@ async function createFallbackRoleProfile(
         requestedRole
       );
 
-    /*
-     * Preserve user's requested occupation.
-
-     * Example:
-
-       SAP FICO Consultant
-       Procurement Manager
-       React Native Developer
-
-       should not become "General Professional".
-    */
-
     canonicalRole =
       String(
         requestedRole
@@ -2000,16 +1977,13 @@ async function createFallbackRoleProfile(
       );
   }
 
-
   const normalizedRole =
     normalizeText(
       canonicalRole
     );
 
-
   aliases = [
     normalizedRequestedRole,
-
     ...aliases,
   ]
     .map(normalizeText)
@@ -2019,7 +1993,6 @@ async function createFallbackRoleProfile(
         alias !==
         normalizedRole
     );
-
 
   const profileData = {
     role:
@@ -2044,10 +2017,6 @@ async function createFallbackRoleProfile(
 
     preferredSkills: [],
 
-    /*
-     * NEVER mark fallback benchmark VERIFIED.
-    */
-
     sourceType:
       "FALLBACK_GENERATED",
 
@@ -2063,7 +2032,6 @@ async function createFallbackRoleProfile(
 
     isActive: true,
   };
-
 
   try {
     const existingCanonicalProfile =
@@ -2092,37 +2060,32 @@ async function createFallbackRoleProfile(
           .save();
       }
 
-      return existingCanonicalProfile
-        .toObject();
+      return existingCanonicalProfile.toObject();
     }
-
 
     const profile =
       await RoleSkillProfile.create(
         profileData
       );
 
-
     console.log(
-      `✅ FALLBACK ROLE PROFILE CREATED`,
+      "✅ FALLBACK ROLE PROFILE CREATED",
       {
         requestedRole,
-
         canonicalRole,
-
         department,
-
         skillCount:
           requiredSkills.length,
       }
     );
 
-
     return profile.toObject();
+
   } catch (error) {
+
     /*
      * Handle concurrent duplicate creation.
-    */
+     */
 
     if (error?.code === 11000) {
       const duplicate =
@@ -2135,17 +2098,30 @@ async function createFallbackRoleProfile(
       }
     }
 
-    throw error;
+    /*
+     * IMPORTANT FIX
+     *
+     * Even if MongoDB cannot save the fallback
+     * benchmark (validation, enum, schema mismatch,
+     * index conflict, etc.), continue using the
+     * generated benchmark in memory.
+     */
+
+    console.error(
+      `⚠️ Unable to save fallback benchmark for "${requestedRole}".`,
+      error.message
+    );
+
+    return {
+      ...profileData,
+
+      _id: undefined,
+
+      persistenceWarning:
+        error.message,
+    };
   }
 }
-
-
-/* =========================================================
-   MODIFIED GENERATE ROLE PROFILE
-
-   REPLACE YOUR CURRENT generateRoleProfile()
-   WITH THIS FUNCTION.
-========================================================= */
 
 async function generateRoleProfile(
   requestedRole
@@ -2551,62 +2527,177 @@ async function resolveRoleProfile(
   targetRole
 ) {
   /*
-   * 1. Exact / Alias / Legacy.
+   * 1. Try database role resolution.
    */
 
-  const existingMatch =
-    await findRoleProfile(
-      targetRole
+  try {
+    const existingMatch =
+      await findRoleProfile(
+        targetRole
+      );
+
+    if (existingMatch) {
+      return {
+        profile:
+          existingMatch.profile,
+
+        generated: false,
+
+        matchType:
+          existingMatch.matchType,
+      };
+    }
+  } catch (databaseError) {
+    console.error(
+      `⚠️ Role lookup failed for "${targetRole}". Continuing with fallback:`,
+      databaseError.message
     );
-
-
-  if (existingMatch) {
-    return {
-      profile:
-        existingMatch.profile,
-
-      generated: false,
-
-      matchType:
-        existingMatch.matchType,
-    };
   }
 
-
   /*
-   * 2. AI or fallback generation.
+   * 2. Try AI generation or normal fallback creation.
    */
 
-  const generatedResult =
-    await generateRoleProfile(
+  try {
+    const generatedResult =
+      await generateRoleProfile(
+        targetRole
+      );
+
+    if (
+      generatedResult &&
+      generatedResult.profile &&
+      Array.isArray(
+        generatedResult
+          .profile
+          .requiredSkills
+      ) &&
+      generatedResult
+        .profile
+        .requiredSkills
+        .length > 0
+    ) {
+      return {
+        profile:
+          generatedResult.profile,
+
+        generated: true,
+
+        matchType:
+          generatedResult.source ===
+          "AI_GENERATED"
+            ? "AI_GENERATED"
+            : "FALLBACK_GENERATED",
+      };
+    }
+  } catch (generationError) {
+    console.error(
+      `⚠️ Role generation failed for "${targetRole}". Using emergency fallback:`,
+      generationError.message
+    );
+  }
+
+  /*
+   * 3. Emergency in-memory fallback.
+   *
+   * This prevents roles such as Data Engineer from failing
+   * even when MongoDB persistence and AI generation fail.
+   */
+
+  const template =
+    findFallbackRoleTemplate(
       targetRole
     );
 
+  const inferred =
+    inferFallbackDepartment(
+      targetRole
+    );
+
+  const canonicalRole =
+    template?.role ||
+    String(
+      targetRole || ""
+    ).trim();
+
+  const requiredSkills =
+    template?.requiredSkills ||
+    buildGeneralFallbackSkills(
+      inferred.department
+    );
 
   if (
-    !generatedResult ||
-    !generatedResult.profile
+    !canonicalRole ||
+    !Array.isArray(
+      requiredSkills
+    ) ||
+    requiredSkills.length === 0
   ) {
     throw new Error(
       `Unable to create occupation benchmark for "${targetRole}".`
     );
   }
 
-
   return {
-    profile:
-      generatedResult.profile,
+    profile: {
+      role:
+        canonicalRole,
+
+      normalizedRole:
+        normalizeText(
+          canonicalRole
+        ),
+
+      aliases:
+        normalizeStringArray([
+          targetRole,
+          ...(template?.aliases || []),
+        ]),
+
+      department:
+        template?.department ||
+        inferred.department,
+
+      industry:
+        template?.industry ||
+        "General",
+
+      jobFamily:
+        template?.jobFamily ||
+        inferred.jobFamily,
+
+      seniorityLevels: [],
+
+      description:
+        template?.description ||
+        `Emergency provisional occupation benchmark created for ${canonicalRole}.`,
+
+      requiredSkills,
+
+      preferredSkills: [],
+
+      sourceType:
+        "FALLBACK_GENERATED",
+
+      verificationStatus:
+        "PENDING_REVIEW",
+
+      confidenceScore:
+        template
+          ? 65
+          : 35,
+
+      version: 1,
+
+      isActive: true,
+    },
 
     generated: true,
 
     matchType:
-      generatedResult.source ===
-      "AI_GENERATED"
-        ? "AI_GENERATED"
-        : "FALLBACK_GENERATED",
+      "FALLBACK_GENERATED",
   };
-}
-/* =========================================================
+}/* =========================================================
    RESOLVE ROLE
 
    Exact → Alias → Legacy → AI Generation
@@ -3736,8 +3827,7 @@ exports.analyzeSkills = async (req, res) => {
       careerMatches,
 
       roleProfileId:
-        roleProfile._id ||
-        undefined,
+  roleProfile?._id || null,
 
       calculationVersion:
         String(

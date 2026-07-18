@@ -1774,4 +1774,40 @@ router.get(
   }
 );
 
+router.get("/questions", async (req, res) => {
+  try {
+    const { role, type } = req.query;
+
+    const questions = [
+      {
+        id: 1,
+        question: `Explain your experience as a ${role}.`,
+        category: type || "Technical",
+        difficulty: "Medium",
+      },
+      {
+        id: 2,
+        question: "What are the challenges you faced in your last project?",
+        category: type || "Technical",
+        difficulty: "Medium",
+      },
+      {
+        id: 3,
+        question: "Explain Spark transformations and actions.",
+        category: type || "Technical",
+        difficulty: "Hard",
+      },
+    ];
+
+    return res.json({
+      success: true,
+      questions,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 module.exports = router;

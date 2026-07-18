@@ -594,60 +594,78 @@ export default function SkillAnalyzerPage() {
     }
   }
 
+  
   async function handleGenerateRoadmap() {
-    if (!candidateId) {
-      setError(
-        "Candidate ID is missing. Please log out and log in again."
-      );
-      return;
-    }
-
-    if (
-      analysis.improvementSkills
-        .length === 0
-    ) {
-      setError(
-        "Run a skill analysis first so the roadmap can use your real skill gaps."
-      );
-      return;
-    }
-
-    try {
-      setError("");
-
-      const response =
-        await apiRequest(
-          "/api/skill-analyzer/roadmap",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              candidateId,
-              targetRole: role,
-              skillGaps:
-                analysis.improvementSkills,
-              analysisId:
-                analysis.id,
-            }),
-          }
-        );
-
-      const roadmapId =
-        response.roadmap?._id ||
-        response.data?._id ||
-        response._id;
-
-      window.location.assign(
-        roadmapId
-          ? `/career-roadmap/${roadmapId}`
-          : "/career-roadmap"
-      );
-    } catch (requestError) {
-      setError(
-        requestError.message
-      );
-    }
+  if (!candidateId) {
+    setError(
+      "Candidate ID is missing. Please log out and log in again."
+    );
+    return;
   }
 
+  if (
+    analysis.improvementSkills
+      .length === 0
+  ) {
+    setError(
+      "Run a skill analysis first so the roadmap can use your real skill gaps."
+    );
+    return;
+  }
+
+  try {
+    setError("");
+
+    const response =
+      await apiRequest(
+        "/api/skill-analyzer/roadmap",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            candidateId,
+            targetRole: role,
+            skillGaps:
+              analysis.improvementSkills,
+            analysisId:
+              analysis.id,
+          }),
+        }
+      );
+
+    const roadmapId =
+      response.roadmap?._id ||
+      response.data?._id ||
+      response._id ||
+      "";
+
+    if (roadmapId) {
+      localStorage.setItem(
+        "activeRoadmapId",
+        roadmapId
+      );
+    }
+
+    window.history.pushState(
+      {},
+      "",
+      "/career-roadmap"
+    );
+
+    window.dispatchEvent(
+      new PopStateEvent("popstate")
+    );
+  } catch (requestError) {
+    console.error(
+      "Generate roadmap error:",
+      requestError
+    );
+
+    setError(
+      requestError.message ||
+        "Unable to generate roadmap."
+    );
+  }
+}
   function handleLearnSkill(skill) {
     const skillName =
       typeof skill === "string"
