@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   FiAward,
   FiBriefcase,
-  FiArrowLeft,
   FiCamera,
   FiCheck,
   FiChevronDown,
@@ -11,7 +10,6 @@ import {
   FiEye,
   FiFileText,
   FiFolder,
-  FiGrid,
   FiLink,
   FiLogOut,
   FiMail,
@@ -249,6 +247,28 @@ function CandidateProfilePage() {
   const [mobile, setMobile] = useState("");
   const [selectedExperience, setSelectedExperience] = useState(null);
 
+  const [settingsDraft, setSettingsDraft] = useState(() => {
+    try {
+      const savedSettings = JSON.parse(
+        localStorage.getItem("candidateProfileSettings") || "{}"
+      );
+
+      return {
+        emailNotifications: savedSettings.emailNotifications ?? true,
+        jobAlerts: savedSettings.jobAlerts ?? true,
+        applicationUpdates: savedSettings.applicationUpdates ?? true,
+        profileVisible: savedSettings.profileVisible ?? true,
+      };
+    } catch {
+      return {
+        emailNotifications: true,
+        jobAlerts: true,
+        applicationUpdates: true,
+        profileVisible: true,
+      };
+    }
+  });
+
   const fileInputs = {
     profileImage: useRef(null),
     pan: useRef(null),
@@ -348,9 +368,11 @@ function CandidateProfilePage() {
     }
   }
 
-  useEffect(() => {
-    loadProfile();
-  }, [candidateId]);
+ useEffect(() => {
+  if (!candidateId) return;
+
+  loadProfile();
+}, [candidateId]);
 
   const verification = data?.profile?.verification || {};
 
@@ -892,57 +914,82 @@ function CandidateProfilePage() {
     }
   }
 
-  function handleLogout() {
-    localStorage.removeItem("candidate");
-    localStorage.removeItem("candidateId");
-    localStorage.removeItem("token");
-    localStorage.removeItem("authToken");
-    navigate("/login", { replace: true });
+  function handleSettingToggle(settingName) {
+    setSettingsDraft((current) => ({
+      ...current,
+      [settingName]: !current[settingName],
+    }));
   }
 
-  if (!data) {
-    return (
-      <div className="np-loading">
-        {busy ? "Loading profile..." : error || "Profile unavailable"}
-      </div>
+  function saveSettings(event) {
+    event.preventDefault();
+
+    localStorage.setItem(
+      "candidateProfileSettings",
+      JSON.stringify(settingsDraft)
     );
+
+    setNotice("Settings saved successfully.");
+    setError("");
+    setModal(null);
   }
+
+function handleLogout() {
+  const accepted = window.confirm(
+    "Are you sure you want to log out?"
+  );
+
+  if (!accepted) return;
+
+  [
+    "candidate",
+    "candidateId",
+    "token",
+    "authToken",
+    "accessToken",
+    "refreshToken",
+    "user",
+  ].forEach((key) => localStorage.removeItem(key));
+
+  sessionStorage.clear();
+
+  setData(null);
+  setNotice("");
+  setError("");
+
+  navigate("/login", { replace: true });
+}
+if (!candidateId) {
+  return null;
+}
+
+if (!data) {
+  return (
+    <div className="np-loading">
+      {busy ? "Loading profile..." : error || "Profile unavailable"}
+    </div>
+  );
+}
 
   return (
     <div className="np-page">
       <aside className="np-sidebar">
-<div className="np-brand">
+        <div className="np-brand">
+          <div className="np-brand-clickable">
+            <img
+              className="np-brand-logo"
+              src="/logo.png"
+              alt="NoPrompt Jobs"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+                event.currentTarget.nextElementSibling.style.display = "grid";
+              }}
+            />
 
-  <div
-    className="np-brand-clickable"
-    onClick={() => navigate(`/dashboard/${candidateId}`)}
-    title="Go to Dashboard"
-  >
-    <img
-      className="np-brand-logo"
-      src="/logo.png"
-      alt="Logo"
-      onError={(event) => {
-        event.currentTarget.style.display = "none";
-        event.currentTarget.nextElementSibling.style.display = "grid";
-      }}
-    />
+            <span className="np-brand-logo-fallback">N</span>
+          </div>
+        </div>
 
-    <span className="np-brand-logo-fallback">
-      N
-    </span>
-  </div>
-
-  <button
-    type="button"
-    className="np-dashboard-btn"
-    onClick={() => navigate(`/dashboard/${candidateId}`)}
-    title="Dashboard"
-  >
-    <FiGrid />
-  </button>
-
-</div>
         <p className="np-sidebar-label">EDIT PROFILE</p>
 
         <nav>
@@ -968,7 +1015,7 @@ function CandidateProfilePage() {
         <div className="np-sidebar-footer">
           <button
             type="button"
-            onClick={() => navigate(`/settings/${candidateId}`)}
+            onClick={() => setModal("settings")}
           >
             <FiSettings />
             Settings
@@ -982,21 +1029,7 @@ function CandidateProfilePage() {
 
       <main className="np-main">
         <header className="np-header">
-          <button
-  type="button"
-  className="np-header-back"
-  onClick={() => {
-    if (!candidateId) {
-      setError("Candidate ID is missing.");
-      return;
-    }
-
-    navigate(`/dashboard/${candidateId}`);
-  }}
->
-  <FiArrowLeft />
-  Dashboard
-</button>
+          <div className="np-header-spacer" aria-hidden="true" />
 
           <div className="np-header-actions">
             <button type="button" aria-label="Search">
@@ -2416,6 +2449,82 @@ function CandidateProfilePage() {
               Edit Experience
             </button>
           </div>
+        </Modal>
+      )}
+
+      {modal === "settings" && (
+        <Modal
+          title="Profile Settings"
+          onClose={() => setModal(null)}
+          width="680px"
+        >
+          <form className="np-form np-settings-form" onSubmit={saveSettings}>
+            <p className="np-settings-description">
+              Manage your notifications, job preferences and profile privacy.
+            </p>
+
+            <div className="np-settings-list">
+              {[
+                {
+                  key: "emailNotifications",
+                  title: "Email notifications",
+                  description:
+                    "Receive important account and profile updates by email.",
+                },
+                {
+                  key: "jobAlerts",
+                  title: "Job alerts",
+                  description:
+                    "Receive alerts when new jobs match your profile.",
+                },
+                {
+                  key: "applicationUpdates",
+                  title: "Application updates",
+                  description:
+                    "Receive notifications when an application status changes.",
+                },
+                {
+                  key: "profileVisible",
+                  title: "Profile visibility",
+                  description:
+                    "Allow verified recruiters to discover your profile.",
+                },
+              ].map((setting) => (
+                <div className="np-setting-row" key={setting.key}>
+                  <div>
+                    <strong>{setting.title}</strong>
+                    <p>{setting.description}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={`np-toggle ${
+                      settingsDraft[setting.key] ? "active" : ""
+                    }`}
+                    aria-pressed={settingsDraft[setting.key]}
+                    aria-label={`Toggle ${setting.title}`}
+                    onClick={() => handleSettingToggle(setting.key)}
+                  >
+                    <span />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="np-settings-actions">
+              <button
+                type="button"
+                className="np-outline-button"
+                onClick={() => setModal(null)}
+              >
+                Cancel
+              </button>
+
+              <button type="submit" className="np-primary-button">
+                Save Settings
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
 

@@ -602,7 +602,7 @@ function RecruiterRegister() {
 function JobsPage() {
   /* =========================================================
      STATES
-     ========================================================= */
+  ========================================================= */
 
   const [jobs, setJobs] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -612,22 +612,36 @@ function JobsPage() {
   const [experienceFilter, setExperienceFilter] = useState("");
   const [jobTypeFilter, setJobTypeFilter] = useState("");
   const [salaryFilter, setSalaryFilter] = useState("");
+  const [sortBy, setSortBy] = useState("recent");
 
   const [jobAlertEnabled, setJobAlertEnabled] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const [loadingJobs, setLoadingJobs] = useState(true);
+  const [refreshingJobs, setRefreshingJobs] = useState(false);
+  const [applyingJobId, setApplyingJobId] = useState("");
+  const [savingJobId, setSavingJobId] = useState("");
 
   const sliderRef = useRef(null);
 
   /* =========================================================
      USER DATA
-     ========================================================= */
+  ========================================================= */
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  let user = {};
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "{}");
+  } catch (error) {
+    console.error("USER PARSE ERROR:", error);
+    user = {};
+  }
 
   const candidateId =
     user?.candidateId ||
     user?._id ||
     user?.id ||
+    localStorage.getItem("candidateId") ||
     "";
 
   const unreadCount =
@@ -641,28 +655,180 @@ function JobsPage() {
     90;
 
   /* =========================================================
+     ICONS
+  ========================================================= */
+
+  const SearchIcon = ({ size = 18 }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle
+        cx="11"
+        cy="11"
+        r="7"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+
+      <path
+        d="m16 16 4 4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+
+  const RefreshIcon = ({ size = 18 }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M20 11a8 8 0 1 0-2.34 5.66"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M20 5v6h-6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  const ResetIcon = ({ size = 17 }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M7 7l10 10M17 7 7 17"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+
+  const BriefcaseIcon = ({ size = 17 }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <rect
+        x="3"
+        y="7"
+        width="18"
+        height="13"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+
+      <path
+        d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 12h18"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+
+  const StarIcon = ({ size = 17 }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="m12 3 2.75 5.57 6.15.9-4.45 4.33 1.05 6.12L12 17.03l-5.5 2.89 1.05-6.12L3.1 9.47l6.15-.9L12 3Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  const HeartIcon = ({ size = 17, filled = false }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      aria-hidden="true"
+    >
+      <path
+        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  const CheckIcon = ({ size = 17 }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="m5 12 4 4L19 6"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  const ArrowIcon = ({ size = 16 }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M5 12h14M14 7l5 5-5 5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  /* =========================================================
      GLOBAL NAVIGATION
-     ========================================================= */
+  ========================================================= */
 
   const goTo = (path) => {
     window.location.href = path;
   };
-
-  /* =========================================================
-     FIND JOBS PAGE SIDEBAR NAVIGATION
-
-     IMPORTANT:
-
-     This function is passed to CandidatePremiumSidebar ONLY
-     from the JobsPage.
-
-     Therefore it changes navigation behavior ONLY on
-     the Find Jobs page.
-
-     Applications -> Services
-
-     Every other sidebar item keeps its normal route.
-     ========================================================= */
 
   const handleFindJobsSidebarNavigation = (path) => {
     if (path === "/applications") {
@@ -674,38 +840,49 @@ function JobsPage() {
   };
 
   /* =========================================================
+     AUTH HEADERS
+  ========================================================= */
+
+  const authHeaders = () => {
+    const token = localStorage.getItem("token");
+
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {};
+  };
+
+  /* =========================================================
      SEARCH
-     ========================================================= */
+  ========================================================= */
 
   const handleSearch = () => {
-    const q = searchText.trim();
+    const query = searchText.trim();
 
-    goTo(
-      q
-        ? `/jobs?search=${encodeURIComponent(q)}`
-        : "/jobs"
+    if (!query) {
+      window.history.replaceState({}, "", "/jobs");
+      return;
+    }
+
+    window.history.replaceState(
+      {},
+      "",
+      `/jobs?search=${encodeURIComponent(query)}`
     );
   };
 
   /* =========================================================
-     NOTIFICATIONS
-     ========================================================= */
+     TOPBAR ACTIONS
+  ========================================================= */
 
   const handleNotifications = () => {
     goTo("/notifications");
   };
 
-  /* =========================================================
-     MESSAGES
-     ========================================================= */
-
   const handleMessages = () => {
     goTo("/messages");
   };
-
-  /* =========================================================
-     PROFILE
-     ========================================================= */
 
   const handleProfile = () => {
     goTo(
@@ -717,34 +894,54 @@ function JobsPage() {
 
   /* =========================================================
      LOAD JOBS
-     ========================================================= */
+  ========================================================= */
 
-  const loadJobs = async () => {
+  const loadJobs = async (showRefreshing = false) => {
     try {
-      const res = await axios.get(`${API_URL}/api/jobs`);
+      if (showRefreshing) {
+        setRefreshingJobs(true);
+      } else {
+        setLoadingJobs(true);
+      }
+
+      const response = await axios.get(
+        `${API_URL}/api/jobs`,
+        {
+          headers: authHeaders(),
+        }
+      );
 
       const data =
-        res.data.jobs ||
-        res.data.data ||
-        res.data ||
+        response.data?.jobs ||
+        response.data?.data ||
+        response.data ||
         [];
 
       setJobs(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.log(
+    } catch (error) {
+      console.error(
         "JOBS LOAD ERROR:",
-        err.response?.data || err.message
+        error.response?.data || error.message
       );
 
       setJobs([]);
+    } finally {
+      setLoadingJobs(false);
+      setRefreshingJobs(false);
     }
   };
 
   /* =========================================================
      INITIAL LOAD
-     ========================================================= */
+  ========================================================= */
 
   useEffect(() => {
+    const params = new URLSearchParams(
+      window.location.search
+    );
+
+    setSearchText(params.get("search") || "");
+
     loadJobs();
 
     setJobAlertEnabled(
@@ -753,25 +950,42 @@ function JobsPage() {
   }, []);
 
   /* =========================================================
+     RESET FILTERS
+  ========================================================= */
+
+  const resetFilters = () => {
+    setSearchText("");
+    setLocationFilter("");
+    setExperienceFilter("");
+    setJobTypeFilter("");
+    setSalaryFilter("");
+    setSortBy("recent");
+    setActiveTab("All Jobs");
+
+    window.history.replaceState({}, "", "/jobs");
+  };
+
+  /* =========================================================
      CREATE JOB ALERT
-     ========================================================= */
+  ========================================================= */
 
   const createJobAlert = () => {
-    localStorage.setItem("jobAlertEnabled", "true");
+    if (jobAlertEnabled) {
+      goTo("/job-alerts");
+      return;
+    }
 
-    localStorage.setItem(
-      "lastJobCount",
-      jobs.length
-    );
+    localStorage.setItem("jobAlertEnabled", "true");
+    localStorage.setItem("lastJobCount", `${jobs.length}`);
 
     setJobAlertEnabled(true);
 
-    alert("✅ Job alert created.");
+    alert("Job alert activated successfully.");
   };
 
   /* =========================================================
      APPLY JOB
-     ========================================================= */
+  ========================================================= */
 
   const applyJob = async (jobId) => {
     if (!candidateId) {
@@ -779,25 +993,45 @@ function JobsPage() {
       return;
     }
 
+    if (!jobId || applyingJobId) return;
+
     try {
+      setApplyingJobId(jobId);
+
       await axios.post(
-        `${API_URL}/api/jobs/${jobId}/apply/${candidateId}`
+        `${API_URL}/api/jobs/${jobId}/apply/${candidateId}`,
+        {},
+        {
+          headers: authHeaders(),
+        }
       );
 
-      alert("Applied successfully");
+      setJobs((currentJobs) =>
+        currentJobs.map((job) =>
+          `${job._id || job.id}` === `${jobId}`
+            ? {
+                ...job,
+                applied: true,
+                isApplied: true,
+              }
+            : job
+        )
+      );
 
-      loadJobs();
-    } catch (err) {
+      alert("Applied successfully.");
+    } catch (error) {
       alert(
-        err.response?.data?.message ||
-        "Apply failed"
+        error.response?.data?.message ||
+          "Apply failed."
       );
+    } finally {
+      setApplyingJobId("");
     }
   };
 
   /* =========================================================
      SAVE JOB
-     ========================================================= */
+  ========================================================= */
 
   const saveJob = async (jobId) => {
     if (!candidateId) {
@@ -805,58 +1039,88 @@ function JobsPage() {
       return;
     }
 
+    if (!jobId || savingJobId) return;
+
     try {
+      setSavingJobId(jobId);
+
       await axios.post(
-        `${API_URL}/api/jobs/${jobId}/save/${candidateId}`
+        `${API_URL}/api/jobs/${jobId}/save/${candidateId}`,
+        {},
+        {
+          headers: authHeaders(),
+        }
       );
 
-      alert("Job saved successfully");
-    } catch (err) {
-      alert(
-        err.response?.data?.message ||
-        "Save failed"
+      setJobs((currentJobs) =>
+        currentJobs.map((job) =>
+          `${job._id || job.id}` === `${jobId}`
+            ? {
+                ...job,
+                saved: true,
+                isSaved: true,
+              }
+            : job
+        )
       );
+
+      alert("Job saved successfully.");
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Save failed."
+      );
+    } finally {
+      setSavingJobId("");
     }
   };
 
   /* =========================================================
      FILTER JOBS
-     ========================================================= */
+  ========================================================= */
 
   const filteredJobs = jobs.filter((job) => {
-    const search = searchText.toLowerCase();
+    const search = searchText.trim().toLowerCase();
 
-    const title =
+    const title = `${
       job.title ||
       job.jobTitle ||
       job.role ||
-      "";
+      ""
+    }`;
 
-    const company =
+    const company = `${
       job.company ||
       job.companyName ||
-      "";
+      ""
+    }`;
 
-    const location =
+    const location = `${
       job.location ||
       job.city ||
-      "";
+      ""
+    }`;
 
-    const jobType =
+    const jobType = `${
       job.workMode ||
       job.jobType ||
       job.employmentType ||
-      "";
+      ""
+    }`;
 
-    const experience =
+    const experience = `${
       job.experience ||
       job.experienceLevel ||
-      "";
+      job.requiredExperience ||
+      ""
+    }`;
 
-    const salary =
+    const salary = `${
       job.salary ||
       job.package ||
-      "";
+      job.salaryRange ||
+      ""
+    }`;
 
     const skillsText = Array.isArray(job.skills)
       ? job.skills
@@ -866,81 +1130,155 @@ function JobsPage() {
               : skill?.name || ""
           )
           .join(" ")
-      : job.skills || "";
+      : `${job.skills || ""}`;
+
+    const searchableText = [
+      title,
+      company,
+      location,
+      jobType,
+      experience,
+      salary,
+      skillsText,
+      job.description,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    const matchesSearch =
+      !search || searchableText.includes(search);
+
+    const matchesLocation =
+      !locationFilter ||
+      location
+        .toLowerCase()
+        .includes(locationFilter.toLowerCase());
+
+    const matchesExperience =
+      !experienceFilter ||
+      experience
+        .toLowerCase()
+        .includes(experienceFilter.toLowerCase());
+
+    const matchesJobType =
+      !jobTypeFilter ||
+      jobType
+        .toLowerCase()
+        .includes(jobTypeFilter.toLowerCase());
+
+    const matchesSalary =
+      !salaryFilter ||
+      salary
+        .toLowerCase()
+        .includes(salaryFilter.toLowerCase());
 
     return (
-      (
-        !search ||
-        title.toLowerCase().includes(search) ||
-        company.toLowerCase().includes(search) ||
-        location.toLowerCase().includes(search) ||
-        skillsText.toLowerCase().includes(search)
-      ) &&
-
-      (
-        !locationFilter ||
-        location
-          .toLowerCase()
-          .includes(locationFilter.toLowerCase())
-      ) &&
-
-      (
-        !experienceFilter ||
-        experience
-          .toLowerCase()
-          .includes(experienceFilter.toLowerCase())
-      ) &&
-
-      (
-        !jobTypeFilter ||
-        jobType
-          .toLowerCase()
-          .includes(jobTypeFilter.toLowerCase())
-      ) &&
-
-      (
-        !salaryFilter ||
-        salary
-          .toLowerCase()
-          .includes(salaryFilter.toLowerCase())
-      )
+      matchesSearch &&
+      matchesLocation &&
+      matchesExperience &&
+      matchesJobType &&
+      matchesSalary
     );
   });
 
   /* =========================================================
      JOB GROUPS
-     ========================================================= */
+  ========================================================= */
 
-  const recommendedJobs = filteredJobs.slice(0, 4);
+  const getMatchScore = (job, index = 0) => {
+    const score = Number(
+      job.matchScore ||
+      job.aiMatchScore ||
+      job.profileMatch ||
+      job.matchPercentage
+    );
 
-  const latestJobs = filteredJobs.slice(4, 8);
+    if (Number.isFinite(score) && score > 0) {
+      return Math.min(score, 100);
+    }
+
+    return 65 + (index % 4) * 7;
+  };
+
+  const recommendedJobs = filteredJobs.filter(
+    (job, index) =>
+      job.recommended ||
+      job.isRecommended ||
+      getMatchScore(job, index) >= 65
+  );
+
+  const topMatchJobs = filteredJobs.filter(
+    (job, index) =>
+      getMatchScore(job, index) >= 80
+  );
 
   const savedJobs = filteredJobs.filter(
-    (job) =>
-      job.saved ||
-      job.isSaved
+    (job) => job.saved || job.isSaved
   );
 
   const appliedJobs = filteredJobs.filter(
-    (job) =>
-      job.applied ||
-      job.isApplied
+    (job) => job.applied || job.isApplied
   );
 
-  /* =========================================================
-     ACTIVE SLIDER JOBS
-     ========================================================= */
-
-  const currentSliderJobs =
-    activeTab === "Saved"
+  const tabJobs =
+    activeTab === "Recommended"
+      ? recommendedJobs
+      : activeTab === "Top Match"
+      ? topMatchJobs
+      : activeTab === "Saved"
       ? savedJobs
       : activeTab === "Applied"
       ? appliedJobs
-      : recommendedJobs;
+      : filteredJobs;
+
+  const sortedTabJobs = [...tabJobs].sort(
+    (firstJob, secondJob) => {
+      if (sortBy === "salary") {
+        const firstSalary = Number(
+          firstJob.salaryValue ||
+          firstJob.maxSalary ||
+          firstJob.maximumSalary ||
+          0
+        );
+
+        const secondSalary = Number(
+          secondJob.salaryValue ||
+          secondJob.maxSalary ||
+          secondJob.maximumSalary ||
+          0
+        );
+
+        return secondSalary - firstSalary;
+      }
+
+      if (sortBy === "match") {
+        return (
+          getMatchScore(secondJob) -
+          getMatchScore(firstJob)
+        );
+      }
+
+      return (
+        new Date(secondJob.createdAt || 0) -
+        new Date(firstJob.createdAt || 0)
+      );
+    }
+  );
+
+  const currentSliderJobs = sortedTabJobs.slice(0, 6);
+
+  const latestJobs = [...filteredJobs]
+    .sort(
+      (firstJob, secondJob) =>
+        new Date(secondJob.createdAt || 0) -
+        new Date(firstJob.createdAt || 0)
+    )
+    .slice(0, 6);
 
   /* =========================================================
      TOP COMPANIES
-     ========================================================= */
+  ========================================================= */
 
   const companies = [
     ...new Set(
@@ -954,26 +1292,47 @@ function JobsPage() {
     ),
   ]
     .slice(0, 5)
-    .map((name) => ({
-      name,
-
-      count: jobs.filter(
+    .map((name) => {
+      const companyJobs = jobs.filter(
         (job) =>
-          (
-            job.company ||
-            job.companyName
-          ) === name
-      ).length,
-    }));
+          (job.company || job.companyName) === name
+      );
+
+      const firstCompanyJob = companyJobs[0] || {};
+
+      return {
+        name,
+        count: companyJobs.length,
+        logo:
+          firstCompanyJob.companyLogo ||
+          firstCompanyJob.logo ||
+          "",
+      };
+    });
+
+  /* =========================================================
+     EMPTY STATE
+  ========================================================= */
+
+  const EmptyState = ({ title, description }) => (
+    <div className="fj-premium-empty-state">
+      <div className="fj-premium-empty-icon">
+        <BriefcaseIcon size={27} />
+      </div>
+
+      <div>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
 
   /* =========================================================
      RENDER JOB CARD
-     ========================================================= */
+  ========================================================= */
 
   const renderJobCard = (job, index) => {
-    const jobId =
-      job._id ||
-      job.id;
+    const jobId = job._id || job.id;
 
     const title =
       job.title ||
@@ -989,17 +1348,18 @@ function JobsPage() {
     const location =
       job.location ||
       job.city ||
-      "Location";
+      "Location not specified";
 
     const salary =
       job.salary ||
       job.package ||
+      job.salaryRange ||
       "Salary not disclosed";
 
     const experience =
       job.experience ||
       job.experienceLevel ||
-      "0-2 Yrs";
+      "Experience not specified";
 
     const workMode =
       job.workMode ||
@@ -1007,54 +1367,85 @@ function JobsPage() {
       job.employmentType ||
       "Full-time";
 
-    const skills =
-      Array.isArray(job.skills)
-        ? job.skills
-        : [];
+    const skills = Array.isArray(job.skills)
+      ? job.skills
+      : [];
+
+    const matchScore = getMatchScore(job, index);
+    const isSaved = job.saved || job.isSaved;
+    const isApplied = job.applied || job.isApplied;
 
     return (
       <article
         className="fj-job-card"
         key={`${jobId || "job"}-${index}`}
       >
-        <button
-          type="button"
-          className="fj-save"
-          onClick={() => saveJob(jobId)}
-        >
-          ♡
-        </button>
+        <div className="fj-job-card-top">
+          <div className="fj-company-logo">
+            {job.companyLogo || job.logo ? (
+              <img
+                src={job.companyLogo || job.logo}
+                alt={`${company} logo`}
+              />
+            ) : (
+              company.charAt(0).toUpperCase()
+            )}
+          </div>
 
-        <div className="fj-company-logo">
-          {company.charAt(0).toUpperCase()}
+          <button
+            type="button"
+            className={`fj-save ${
+              isSaved ? "saved" : ""
+            }`}
+            onClick={() => saveJob(jobId)}
+            disabled={savingJobId === jobId}
+            aria-label={
+              isSaved ? "Job saved" : "Save job"
+            }
+          >
+            <HeartIcon filled={isSaved} />
+
+            <span>
+              {savingJobId === jobId
+                ? "Saving"
+                : isSaved
+                ? "Saved"
+                : "Save"}
+            </span>
+          </button>
         </div>
 
-        <h3>{title}</h3>
+        <div className="fj-match-badge">
+          <span>AI Match</span>
+          <strong>{matchScore}%</strong>
+        </div>
 
-        <p>{company}</p>
+        <button
+          type="button"
+          className="fj-job-title-button"
+          onClick={() =>
+            jobId && goTo(`/jobs/${jobId}`)
+          }
+        >
+          <h3>{title}</h3>
+        </button>
+
+        <p className="fj-job-company">{company}</p>
 
         <div className="fj-meta">
           <span>⌖ {location}</span>
-
           <span>▣ {workMode}</span>
-
           <span>◷ {experience}</span>
         </div>
-
-        <h4>{salary}</h4>
-
-        <small>
-          {65 + (index % 4) * 7}% match
-        </small>
 
         <div className="fj-skills">
           {(skills.length
             ? skills
-            : ["React", "Node.js", "AWS"]
+            : ["Skills not added"]
           )
             .slice(0, 3)
-            .map((skill, index) => (
-              <span key={index}>
+            .map((skill, skillIndex) => (
+              <span key={`${jobId}-${skillIndex}`}>
                 {typeof skill === "string"
                   ? skill
                   : skill?.name}
@@ -1062,676 +1453,693 @@ function JobsPage() {
             ))}
         </div>
 
-        <button
-          type="button"
-          className="fj-apply"
-          onClick={() => applyJob(jobId)}
-        >
-          Apply Now →
-        </button>
+        <div className="fj-job-card-footer">
+          <div>
+            <small>Package</small>
+            <h4>{salary}</h4>
+          </div>
+
+          <button
+            type="button"
+            className={`fj-apply ${
+              isApplied ? "applied" : ""
+            }`}
+            onClick={() => applyJob(jobId)}
+            disabled={
+              isApplied || applyingJobId === jobId
+            }
+          >
+            {applyingJobId === jobId ? (
+              "Applying..."
+            ) : isApplied ? (
+              <>
+                <CheckIcon />
+                Applied
+              </>
+            ) : (
+              <>
+                Apply now
+                <ArrowIcon />
+              </>
+            )}
+          </button>
+        </div>
       </article>
     );
   };
 
   /* =========================================================
+     LOADING
+  ========================================================= */
+
+  if (loadingJobs) {
+    return (
+      <main className="fj-loading-page">
+        <div className="fj-loading-spinner" />
+        <h2>Loading jobs</h2>
+        <p>Finding the latest opportunities for you.</p>
+      </main>
+    );
+  }
+
+  /* =========================================================
      RETURN
-     ========================================================= */
+  ========================================================= */
 
   return (
-    <>
-      <main className="fj-page">
+    <main className="fj-page">
+      <CandidatePremiumSidebar
+        candidateId={candidateId}
+        unreadCount={unreadCount}
+        profileStrength={profileStrength}
+        goTo={handleFindJobsSidebarNavigation}
+      />
 
-        {/* ===================================================
-            SIDEBAR
+      <section className="fj-main">
+        {/* TOPBAR */}
 
-            IMPORTANT:
-            Custom navigation is passed ONLY here.
+        <header className="npj-compact-topbar jobs-shared-topbar">
+          <div className="npj-compact-search">
+            <button
+              type="button"
+              className="search-btn"
+              onClick={handleSearch}
+              aria-label="Search jobs"
+            >
+              <SearchIcon />
+            </button>
 
-            Applications -> /services
-
-            Other sidebar links remain unchanged.
-            =================================================== */}
-
-        <CandidatePremiumSidebar
-          candidateId={candidateId}
-          unreadCount={unreadCount}
-          profileStrength={profileStrength}
-          goTo={handleFindJobsSidebarNavigation}
-        />
-
-        <section className="fj-main">
-
-          {/* =================================================
-              TOPBAR
-              ================================================= */}
-
-          <header className="npj-compact-topbar jobs-shared-topbar">
-
-            <div className="npj-compact-search">
-
-              <button
-                type="button"
-                className="search-btn"
-                onClick={handleSearch}
-              >
-                ⌕
-              </button>
-
-              <input
-                value={searchText}
-                placeholder="Search jobs, companies, skills..."
-                onChange={(e) =>
-                  setSearchText(e.target.value)
+            <input
+              value={searchText}
+              placeholder="Search jobs, companies, skills..."
+              onChange={(event) =>
+                setSearchText(event.target.value)
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleSearch();
                 }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch();
-                  }
-                }}
-              />
+              }}
+            />
+          </div>
 
-            </div>
+          <div className="npj-compact-userarea">
+            <button
+              type="button"
+              onClick={handleNotifications}
+              aria-label="Notifications"
+            >
+              🔔
 
-            <div className="npj-compact-userarea">
+              <b>
+                {jobAlertEnabled ? "✓" : unreadCount}
+              </b>
+            </button>
 
-              <button
-                type="button"
-                onClick={handleNotifications}
+            <button
+              type="button"
+              onClick={handleMessages}
+              aria-label="Messages"
+            >
+              ✉
+            </button>
+
+            <div className="profile-dropdown-wrap">
+              <div
+                className="npj-compact-user"
+                onClick={() =>
+                  setShowProfileMenu(
+                    (currentValue) => !currentValue
+                  )
+                }
               >
-                🔔
-                <b>
-                  {jobAlertEnabled
-                    ? "✓"
-                    : unreadCount}
-                </b>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleMessages}
-              >
-                ✉
-              </button>
-
-              <div className="profile-dropdown-wrap">
-
-                <div
-                  className="npj-compact-user"
-                  onClick={() =>
-                    setShowProfileMenu(
-                      !showProfileMenu
-                    )
+                <img
+                  src={
+                    user?.profileImageUrl ||
+                    user?.profileImage ||
+                    "/profile.png"
                   }
-                >
+                  alt={user?.name || "Candidate"}
+                />
 
-                  <img
-                    src={
-                      user?.profileImageUrl ||
-                      "/profile.png"
-                    }
-                    alt="Candidate"
-                  />
+                <div>
+                  <b>
+                    {user?.name ||
+                      user?.fullName ||
+                      "Candidate"}
+                  </b>
 
-                  <div>
-                    <b>
-                      {user?.name ||
-                        "VENKATESHA A"}
-                    </b>
-
-                    <span>Candidate</span>
-                  </div>
-
-                  <small>⌄</small>
-
+                  <span>Candidate</span>
                 </div>
 
-                {showProfileMenu && (
-
-                  <div className="profile-dropdown-menu">
-
-                    <button
-                      type="button"
-                      onClick={handleProfile}
-                    >
-                      <span>♙</span>
-                      My Profile
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        goTo(
-                          candidateId
-                            ? `/profile/${candidateId}?edit=true`
-                            : "/candidate-login"
-                        )
-                      }
-                    >
-                      <span>✎</span>
-                      Edit Profile
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        goTo("/settings")
-                      }
-                    >
-                      <span>⚙</span>
-                      Settings
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.preventDefault();
-
-                        event.stopPropagation();
-
-                        setShowProfileMenu(false);
-
-                        window.location.assign(
-                          "/help-center?openChat=true"
-                        );
-                      }}
-                    >
-                      <span>?</span>
-                      Help Center
-                    </button>
-
-                    <hr />
-
-                    <button
-                      type="button"
-                      className="logout-menu-btn"
-                      onClick={() => {
-                        localStorage.clear();
-
-                        goTo(
-                          "/candidate-login"
-                        );
-                      }}
-                    >
-                      <span>↳</span>
-                      Logout
-                    </button>
-
-                  </div>
-
-                )}
-
+                <small>⌄</small>
               </div>
 
-            </div>
-
-          </header>
-
-          {/* =================================================
-              PAGE TITLE
-              ================================================= */}
-
-          <section className="fj-title">
-
-            <div>
-              <h1>Find Jobs</h1>
-
-              <p>
-                Discover roles that match your skills and preferences
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="fj-refresh-btn"
-              onClick={loadJobs}
-            >
-              Refresh jobs ↻
-            </button>
-
-          </section>
-
-          {/* =================================================
-              FILTERS
-              ================================================= */}
-
-          <section className="fj-filter">
-
-            <div>
-              <span>⌕</span>
-
-              <input
-                value={searchText}
-                placeholder="Search job title, skills or company"
-                onChange={(e) =>
-                  setSearchText(e.target.value)
-                }
-              />
-            </div>
-
-            <select
-              value={locationFilter}
-              onChange={(e) =>
-                setLocationFilter(
-                  e.target.value
-                )
-              }
-            >
-              <option value="">
-                Location
-              </option>
-
-              <option value="bangalore">
-                Bangalore
-              </option>
-
-              <option value="hyderabad">
-                Hyderabad
-              </option>
-
-              <option value="chennai">
-                Chennai
-              </option>
-
-              <option value="remote">
-                Remote
-              </option>
-            </select>
-
-            <select
-              value={experienceFilter}
-              onChange={(e) =>
-                setExperienceFilter(
-                  e.target.value
-                )
-              }
-            >
-              <option value="">
-                Experience
-              </option>
-
-              <option value="0">
-                0 Years
-              </option>
-
-              <option value="1">
-                1 Year
-              </option>
-
-              <option value="2">
-                2 Years
-              </option>
-            </select>
-
-            <select
-              value={jobTypeFilter}
-              onChange={(e) =>
-                setJobTypeFilter(
-                  e.target.value
-                )
-              }
-            >
-              <option value="">
-                Job Type
-              </option>
-
-              <option value="remote">
-                Remote
-              </option>
-
-              <option value="hybrid">
-                Hybrid
-              </option>
-
-              <option value="full">
-                Full-time
-              </option>
-            </select>
-
-            <select
-              value={salaryFilter}
-              onChange={(e) =>
-                setSalaryFilter(
-                  e.target.value
-                )
-              }
-            >
-              <option value="">
-                Salary
-              </option>
-
-              <option value="5">
-                5 LPA+
-              </option>
-
-              <option value="10">
-                10 LPA+
-              </option>
-            </select>
-
-            <button
-              type="button"
-              className="fj-reset-btn"
-              onClick={() => {
-                setSearchText("");
-
-                setLocationFilter("");
-
-                setExperienceFilter("");
-
-                setJobTypeFilter("");
-
-                setSalaryFilter("");
-              }}
-            >
-              Reset
-            </button>
-
-          </section>
-
-          {/* =================================================
-              CONTENT
-              ================================================= */}
-
-          <section className="fj-content">
-
-            <section className="fj-left">
-
-              {/* ===============================================
-                  TABS
-                  =============================================== */}
-
-              <div className="fj-tabs">
-
-                {[
-                  [
-                    "All Jobs",
-                    filteredJobs.length,
-                  ],
-
-                  [
-                    "Recommended",
-                    recommendedJobs.length,
-                  ],
-
-                  [
-                    "Top Match",
-                    recommendedJobs.length,
-                  ],
-
-                  [
-                    "Saved",
-                    savedJobs.length,
-                  ],
-
-                  [
-                    "Applied",
-                    appliedJobs.length,
-                  ],
-                ].map((tab) => (
+              {showProfileMenu && (
+                <div className="profile-dropdown-menu">
+                  <button
+                    type="button"
+                    onClick={handleProfile}
+                  >
+                    <span>♙</span>
+                    My Profile
+                  </button>
 
                   <button
-                    key={tab[0]}
+                    type="button"
+                    onClick={() =>
+                      goTo(
+                        candidateId
+                          ? `/profile/${candidateId}?edit=true`
+                          : "/candidate-login"
+                      )
+                    }
+                  >
+                    <span>✎</span>
+                    Edit Profile
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => goTo("/settings")}
+                  >
+                    <span>⚙</span>
+                    Settings
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+
+                      setShowProfileMenu(false);
+
+                      window.location.assign(
+                        "/help-center?openChat=true"
+                      );
+                    }}
+                  >
+                    <span>?</span>
+                    Help Center
+                  </button>
+
+                  <hr />
+
+                  <button
+                    type="button"
+                    className="logout-menu-btn"
+                    onClick={() => {
+                      localStorage.clear();
+                      goTo("/candidate-login");
+                    }}
+                  >
+                    <span>↳</span>
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* PAGE TITLE */}
+
+        <section className="fj-title">
+          <div>
+            <span className="fj-page-eyebrow">
+              Career opportunities
+            </span>
+
+            <h1>Find Jobs</h1>
+
+            <p>
+              Discover verified roles that match your skills
+              and preferences.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="fj-refresh-btn"
+            onClick={() => loadJobs(true)}
+            disabled={refreshingJobs}
+          >
+            <RefreshIcon />
+
+            <span>
+              {refreshingJobs
+                ? "Refreshing..."
+                : "Refresh jobs"}
+            </span>
+          </button>
+        </section>
+
+        {/* FILTERS */}
+
+        <section className="fj-filter">
+          <label className="fj-filter-search">
+            <SearchIcon />
+
+            <input
+              value={searchText}
+              placeholder="Search job title, skills or company"
+              onChange={(event) =>
+                setSearchText(event.target.value)
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleSearch();
+                }
+              }}
+            />
+          </label>
+
+          <select
+            value={locationFilter}
+            onChange={(event) =>
+              setLocationFilter(event.target.value)
+            }
+            aria-label="Filter by location"
+          >
+            <option value="">Location</option>
+            <option value="bangalore">Bangalore</option>
+            <option value="bengaluru">Bengaluru</option>
+            <option value="hyderabad">Hyderabad</option>
+            <option value="chennai">Chennai</option>
+            <option value="pune">Pune</option>
+            <option value="mumbai">Mumbai</option>
+            <option value="remote">Remote</option>
+          </select>
+
+          <select
+            value={experienceFilter}
+            onChange={(event) =>
+              setExperienceFilter(event.target.value)
+            }
+            aria-label="Filter by experience"
+          >
+            <option value="">Experience</option>
+            <option value="fresher">Fresher</option>
+            <option value="0">0 Years</option>
+            <option value="1">1 Year</option>
+            <option value="2">2 Years</option>
+            <option value="3">3 Years</option>
+            <option value="5">5+ Years</option>
+          </select>
+
+          <select
+            value={jobTypeFilter}
+            onChange={(event) =>
+              setJobTypeFilter(event.target.value)
+            }
+            aria-label="Filter by job type"
+          >
+            <option value="">Job Type</option>
+            <option value="remote">Remote</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="full">Full-time</option>
+            <option value="part">Part-time</option>
+            <option value="contract">Contract</option>
+            <option value="internship">Internship</option>
+          </select>
+
+          <select
+            value={salaryFilter}
+            onChange={(event) =>
+              setSalaryFilter(event.target.value)
+            }
+            aria-label="Filter by salary"
+          >
+            <option value="">Salary</option>
+            <option value="5">5 LPA+</option>
+            <option value="10">10 LPA+</option>
+            <option value="15">15 LPA+</option>
+            <option value="20">20 LPA+</option>
+          </select>
+
+          <button
+            type="button"
+            className="fj-reset-btn"
+            onClick={resetFilters}
+          >
+            <ResetIcon />
+            <span>Reset</span>
+          </button>
+        </section>
+
+        {/* CONTENT */}
+
+        <section className="fj-content">
+          <section className="fj-left">
+            {/* TABS */}
+
+            <div className="fj-tabs">
+              <div className="fj-tab-list">
+                {[
+                  {
+                    name: "All Jobs",
+                    count: filteredJobs.length,
+                    icon: <BriefcaseIcon />,
+                  },
+                  {
+                    name: "Recommended",
+                    count: recommendedJobs.length,
+                    icon: <StarIcon />,
+                  },
+                  {
+                    name: "Top Match",
+                    count: topMatchJobs.length,
+                    icon: <StarIcon />,
+                  },
+                  {
+                    name: "Saved",
+                    count: savedJobs.length,
+                    icon: <HeartIcon />,
+                  },
+                  {
+                    name: "Applied",
+                    count: appliedJobs.length,
+                    icon: <CheckIcon />,
+                  },
+                ].map((tab) => (
+                  <button
+                    key={tab.name}
                     type="button"
                     className={`fj-tab-btn ${
-                      activeTab === tab[0]
+                      activeTab === tab.name
                         ? "active"
                         : ""
                     }`}
                     onClick={() =>
-                      setActiveTab(tab[0])
+                      setActiveTab(tab.name)
                     }
                   >
-                    <span>
-                      {tab[0]}
-                    </span>
+                    {tab.icon}
 
-                    <b>
-                      {tab[1]}
-                    </b>
+                    <span>{tab.name}</span>
 
+                    <b>{tab.count}</b>
                   </button>
-
                 ))}
-
-                <select>
-                  <option>
-                    Sort by: Most Recent
-                  </option>
-
-                  <option>
-                    Sort by: Salary
-                  </option>
-
-                  <option>
-                    Sort by: Match
-                  </option>
-                </select>
-
               </div>
 
-              {/* ===============================================
-                  RECOMMENDED JOBS
-                  =============================================== */}
-
-              <div className="fj-section-head">
-
-                <h3>
-                  Recommended for you
-                </h3>
-
-                <button
-                  type="button"
-                  className="fj-view-btn"
-                >
-                  View all
-                </button>
-
-              </div>
-
-              <div
-                className="fj-auto-scroll"
-                ref={sliderRef}
+              <select
+                value={sortBy}
+                onChange={(event) =>
+                  setSortBy(event.target.value)
+                }
+                aria-label="Sort jobs"
               >
+                <option value="recent">
+                  Sort by: Most Recent
+                </option>
 
-                <div className="fj-scroll-track">
+                <option value="salary">
+                  Sort by: Salary
+                </option>
 
-                  {currentSliderJobs.length > 0 ? (
+                <option value="match">
+                  Sort by: Match
+                </option>
+              </select>
+            </div>
 
-                    [
-                      ...currentSliderJobs,
-                      ...currentSliderJobs,
-                      ...currentSliderJobs,
-                    ].map(renderJobCard)
+            {/* MATCHED JOBS */}
 
-                  ) : (
-
-                    <div className="empty-premium-box">
-                      No recommended jobs found.
-                    </div>
-
-                  )}
-
-                </div>
-
-              </div>
-
-              {/* ===============================================
-                  LATEST JOBS
-                  =============================================== */}
-
-              <div className="fj-section-head">
+            <div className="fj-section-head">
+              <div>
+                <span className="fj-section-kicker">
+                  Personalised matches
+                </span>
 
                 <h3>
-                  Latest Jobs
+                  {activeTab === "All Jobs"
+                    ? "Available opportunities"
+                    : activeTab === "Recommended"
+                    ? "Recommended for you"
+                    : activeTab === "Top Match"
+                    ? "Your top matches"
+                    : activeTab === "Saved"
+                    ? "Saved jobs"
+                    : "Applied jobs"}
                 </h3>
-
-                <button
-                  type="button"
-                  className="fj-view-btn"
-                >
-                  View all
-                </button>
-
               </div>
 
-              <div className="fj-horizontal">
+              <button
+                type="button"
+                className="fj-view-btn"
+                onClick={() => setActiveTab("All Jobs")}
+              >
+                <span>View all</span>
+                <ArrowIcon />
+              </button>
+            </div>
 
-                {latestJobs.length > 0 ? (
-
-                  latestJobs.map(
-                    renderJobCard
-                  )
-
+            <div
+              className="fj-auto-scroll"
+              ref={sliderRef}
+            >
+              <div className="fj-scroll-track">
+                {currentSliderJobs.length > 0 ? (
+                  currentSliderJobs.map(renderJobCard)
                 ) : (
+                  <EmptyState
+                    title={`No ${activeTab.toLowerCase()} found`}
+                    description="New matching opportunities will appear here."
+                  />
+                )}
+              </div>
+            </div>
 
-                  <div className="empty-premium-box">
-                    No jobs found.
-                  </div>
+            {/* LATEST JOBS */}
 
+            <div className="fj-section-head">
+              <div>
+                <span className="fj-section-kicker">
+                  Recently published
+                </span>
+
+                <h3>Latest Jobs</h3>
+              </div>
+
+              <button
+                type="button"
+                className="fj-view-btn"
+                onClick={() => {
+                  setActiveTab("All Jobs");
+                  setSortBy("recent");
+
+                  window.scrollTo({
+                    top: 0,
+                    behavior: "smooth",
+                  });
+                }}
+              >
+                <span>View all</span>
+                <ArrowIcon />
+              </button>
+            </div>
+
+            <div className="fj-horizontal">
+              {latestJobs.length > 0 ? (
+                latestJobs.map(renderJobCard)
+              ) : (
+                <EmptyState
+                  title="No jobs found"
+                  description="New opportunities will appear when recruiters publish jobs."
+                />
+              )}
+            </div>
+          </section>
+
+          {/* RIGHT SIDEBAR */}
+
+          <aside className="fj-right">
+            {/* JOB ALERT */}
+
+            <div className="fj-side-card fj-alert-card">
+              <div className="fj-alert-heading">
+                <span className="fj-alert-icon">🔔</span>
+
+                <div>
+                  <small>Stay updated</small>
+                  <h3>Job Alerts</h3>
+                </div>
+              </div>
+
+              <p>
+                Get notified about new jobs that match your
+                preferences.
+              </p>
+
+              <button
+                type="button"
+                className={`fj-alert-btn ${
+                  jobAlertEnabled ? "active" : ""
+                }`}
+                onClick={createJobAlert}
+              >
+                {jobAlertEnabled && (
+                  <span className="fj-alert-check">
+                    <CheckIcon />
+                  </span>
                 )}
 
-              </div>
+                <span>
+                  {jobAlertEnabled
+                    ? "Alerts Active"
+                    : "Create Alert"}
+                </span>
+              </button>
+            </div>
 
-            </section>
+            {/* TOP COMPANIES */}
 
-            {/* =================================================
-                RIGHT SIDEBAR
-                ================================================= */}
-
-            <aside className="fj-right">
-
-              {/* JOB ALERT */}
-
-              <div className="fj-side-card">
-
-                <h3>
-                  🔔 Job Alerts
-                </h3>
-
-                <p>
-                  Get notified about new jobs that match your preferences.
-                </p>
+            <div className="fj-side-card">
+              <div className="fj-side-head">
+                <div>
+                  <small>Popular employers</small>
+                  <h3>Top Companies</h3>
+                </div>
 
                 <button
                   type="button"
-                  className="fj-alert-btn"
-                  onClick={createJobAlert}
+                  className="fj-mini-view-btn"
+                  onClick={() => goTo("/companies")}
                 >
-                  {jobAlertEnabled
-                    ? "Alert Active ✓"
-                    : "Create Alert"}
+                  <span>View all</span>
+                  <ArrowIcon />
                 </button>
-
               </div>
 
-              {/* TOP COMPANIES */}
-
-              <div className="fj-side-card">
-
-                <div className="fj-side-head">
-
-                  <h3>
-                    Top Companies
-                  </h3>
-
-                  <button
-                    type="button"
-                    className="fj-mini-view-btn"
-                    onClick={() =>
-                      goTo("/companies")
-                    }
-                  >
-                    View all
-                  </button>
-
-                </div>
-
-                {companies.map(
-                  (company) => (
-
-                    <div
+              <div className="fj-company-list">
+                {companies.length > 0 ? (
+                  companies.map((company) => (
+                    <button
+                      type="button"
                       className="fj-company-line"
                       key={company.name}
+                      onClick={() =>
+                        goTo(
+                          `/companies?search=${encodeURIComponent(
+                            company.name
+                          )}`
+                        )
+                      }
                     >
-
                       <span>
-                        {company.name
-                          .charAt(0)
-                          .toUpperCase()}
+                        {company.logo ? (
+                          <img
+                            src={company.logo}
+                            alt={company.name}
+                          />
+                        ) : (
+                          company.name
+                            .charAt(0)
+                            .toUpperCase()
+                        )}
                       </span>
 
                       <div>
-
-                        <b>
-                          {company.name}
-                        </b>
+                        <b>{company.name}</b>
 
                         <p>
-                          {company.count} open jobs
+                          {company.count} open{" "}
+                          {company.count === 1
+                            ? "job"
+                            : "jobs"}
                         </p>
-
                       </div>
 
-                    </div>
-
-                  )
+                      <small>›</small>
+                    </button>
+                  ))
+                ) : (
+                  <p className="fj-side-empty">
+                    Companies will appear when jobs are
+                    available.
+                  </p>
                 )}
-
               </div>
+            </div>
 
-              {/* SALARY INSIGHTS */}
+            {/* SALARY INSIGHTS */}
 
-              <div className="fj-side-card">
-
-                <div className="fj-side-head">
-
-                  <h3>
-                    Salary Insights
-                  </h3>
-
-                  <button
-                    type="button"
-                    className="fj-mini-view-btn"
-                    onClick={() =>
-                      goTo("/services")
-                    }
-                  >
-                    View all
-                  </button>
-
+            <div className="fj-side-card fj-salary-card">
+              <div className="fj-side-head">
+                <div>
+                  <small>Market overview</small>
+                  <h3>Salary Insights</h3>
                 </div>
 
-                <p>
-                  Average salary based on available jobs.
-                </p>
-
-                <h2>
-                  ₹ 8.5 LPA
-                </h2>
-
-                <small>
-                  Market estimate
-                </small>
-
+                <button
+                  type="button"
+                  className="fj-mini-view-btn"
+                  onClick={() =>
+                    goTo("/salary-predictor")
+                  }
+                >
+                  <span>View all</span>
+                  <ArrowIcon />
+                </button>
               </div>
 
-            </aside>
+              <p>
+                Average salary based on available jobs.
+              </p>
 
-          </section>
+              <div className="fj-salary-value">
+                <h2>₹ 8.5 LPA</h2>
+                <span>Market estimate</span>
+              </div>
 
+              <div className="fj-salary-chart">
+                {[36, 48, 43, 67, 57, 81, 72, 92].map(
+                  (height, index) => (
+                    <span
+                      key={index}
+                      style={{ height: `${height}%` }}
+                    />
+                  )
+                )}
+              </div>
+            </div>
+          </aside>
         </section>
 
-      </main>
+        {/* 
+          IMPORTANT:
+          Footer is now inside fj-main.
+          This prevents it from starting under the sidebar.
+        */}
 
-      <PremiumFooter />
-
-    </>
+        <PremiumFooter />
+      </section>
+    </main>
   );
-}function ServicesPage() {
+}
+function ServicesPage() {
   const scrollRef = useRef(null);
   const [search, setSearch] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [temporaryAccessEndsAt, setTemporaryAccessEndsAt] = useState(
+    localStorage.getItem("temporaryAccessEndsAt") || ""
+  );
+  const [referralData, setReferralData] = useState({
+    referralCode: "",
+    referralUrl: "",
+    totalReferrals: 0,
+    successfulReferrals: 0,
+    couponsEarned: 0,
+    premiumMinutesEarned: 0,
+  });
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [copyMessage, setCopyMessage] = useState("");
 
   const goTo = (path) => {
     window.location.href = path;
@@ -1777,13 +2185,6 @@ function JobsPage() {
   const dashboardPath = candidateId ? `/dashboard/${candidateId}` : "/dashboard";
   const profilePath = candidateId ? `/profile/${candidateId}` : "/profile";
 
-  const COUPONS = {
-    NPJ100: { code: "NPJ100", label: "Testing coupon - Ultimate unlock", discount: 1999 },
-    PRO200: { code: "PRO200", label: "Testing coupon - Ultimate unlock", discount: 1999 },
-    ULTIMATE500: { code: "ULTIMATE500", label: "Testing coupon - Ultimate unlock", discount: 1999 },
-    ULTIMATE100: { code: "ULTIMATE100", label: "Testing coupon - Ultimate unlock", discount: 1999 },
-    FREEULTIMATE: { code: "FREEULTIMATE", label: "Testing coupon - Ultimate unlock", discount: 1999 },
-  };
 
   const plans = {
     basic: {
@@ -1822,85 +2223,87 @@ function JobsPage() {
 
   const isUltimateUser = () => isPlanActive("Ultimate");
 
+  const hasTemporaryAccess = () => {
+    if (!temporaryAccessEndsAt) return false;
+    return new Date(temporaryAccessEndsAt).getTime() > Date.now();
+  };
+
+  const hasPremiumAccess = () => isUltimateUser() || hasTemporaryAccess();
+
   const getFinalPrice = (planKey) => {
     const plan = plans[planKey];
     if (!plan || plan.offerPrice === 0) return 0;
 
-    const discount = planKey === "ultimate" ? appliedCoupon?.discount || 0 : 0;
+    const discount =
+      planKey === "ultimate" ? Number(appliedCoupon?.discount || 0) : 0;
+
     return Math.max(plan.offerPrice - discount, 0);
   };
 
   const applyCoupon = async () => {
-    const code = couponCode.trim().toUpperCase();
 
-    if (!code) {
-      alert("Please enter coupon code");
-      return;
-    }
+    try {
 
-    if (!COUPONS[code]) {
-      setAppliedCoupon(null);
-      alert("Invalid coupon code");
-      return;
-    }
+        if (!couponCode.trim()) {
 
-    const coupon = COUPONS[code];
-    setAppliedCoupon(coupon);
-    alert(`${coupon.label} coupon applied successfully`);
+            alert("Please enter coupon code.");
 
-    if (coupon.discount >= plans.ultimate.offerPrice) {
-      const resolvedCandidateId = getCandidateId();
+            return;
 
-      if (!resolvedCandidateId) {
-        alert("Please login before applying this Ultimate coupon");
-        goTo("/candidate-login");
-        return;
-      }
-
-      try {
-        const response = await axios.post(
-          `${API_URL}/api/payments/create-payment-link`,
-          {
-            planKey: "ultimate",
-            couponCode: coupon.code,
-            candidateId: resolvedCandidateId,
-            planName: plans.ultimate.name,
-            name: user?.name || user?.fullName || "NoPromptJobs User",
-            email: user?.email || "customer@example.com",
-            contact: user?.mobile || user?.phone || "9999999999",
-          }
-        );
-
-        if (response.data?.unlocked) {
-          if (response.data?.candidate) {
-            localStorage.setItem("user", JSON.stringify(response.data.candidate));
-            localStorage.setItem("plan", response.data.candidate.plan || "Ultimate");
-            localStorage.setItem(
-              "activePlan",
-              response.data.candidate.activePlan || "Ultimate"
-            );
-            localStorage.setItem(
-              "subscriptionStatus",
-              response.data.candidate.subscriptionStatus || "active"
-            );
-            localStorage.setItem("candidateId", resolvedCandidateId);
-          }
-
-          goTo(response.data?.redirectUrl || "/ultimate-dashboard");
-          return;
         }
 
-        alert(response.data?.message || "Unable to activate coupon");
-      } catch (error) {
-        console.log("COUPON ACTIVATION ERROR:", error);
-        alert(error.response?.data?.message || "Coupon activation failed");
-      }
-    }
-  };
+        const response = await axios.post(
 
+            `${API_URL}/api/coupons/redeem`,
+
+            {
+
+                couponCode: couponCode.trim(),
+
+                candidateId,
+
+            }
+
+        );
+
+        if (!response.data.success) {
+
+            alert(response.data.message);
+
+            return;
+
+        }
+
+        setAppliedCoupon({
+
+            code: couponCode,
+
+            accessMinutes: response.data.accessMinutes,
+
+        });
+
+        alert(response.data.message);
+
+    } catch (error) {
+
+        console.log(error);
+
+        alert(
+
+            error.response?.data?.message ||
+
+            "Unable to verify coupon."
+
+        );
+
+    }
+
+};
   const removeCoupon = () => {
     setCouponCode("");
     setAppliedCoupon(null);
+    setCouponMessage("");
+    setCouponError("");
   };
 
   const startPayment = async (planKey) => {
@@ -1913,18 +2316,8 @@ function JobsPage() {
       return;
     }
 
-    if (planKey === "ultimate" && isUltimateUser()) {
+    if (planKey === "ultimate" && hasPremiumAccess()) {
       goTo("/ultimate-dashboard");
-      return;
-    }
-
-    if (planKey === "ultimate" && !appliedCoupon) {
-      setCouponCode("FREEULTIMATE");
-      document.querySelector(".coupon-box")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-      alert("For testing, apply any coupon code first. FREEULTIMATE is filled for you.");
       return;
     }
 
@@ -1937,7 +2330,7 @@ function JobsPage() {
       localStorage.setItem("selectedPlanActualPrice", plan.actualPrice);
       localStorage.setItem("selectedPlanOfferPrice", plan.offerPrice);
 
-      if (appliedCoupon) {
+      if (appliedCoupon?.discount > 0) {
         localStorage.setItem("appliedCoupon", appliedCoupon.code);
         localStorage.setItem("couponDiscount", appliedCoupon.discount);
       } else {
@@ -1949,7 +2342,7 @@ function JobsPage() {
         `${API_URL}/api/payments/create-payment-link`,
         {
           planKey,
-          couponCode: appliedCoupon?.code || "",
+          couponCode: appliedCoupon?.discount > 0 ? appliedCoupon.code : "",
           candidateId: resolvedCandidateId,
           planName: plan.name,
           name: user?.name || user?.fullName || "NoPromptJobs User",
@@ -2061,6 +2454,101 @@ function JobsPage() {
     });
   };
 
+
+  const handleFeatureClick = (feature) => {
+    if (hasPremiumAccess()) {
+      goTo(feature.route);
+      return;
+    }
+
+    document.getElementById("pricing")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const loadReferralData = async () => {
+    const resolvedCandidateId = getCandidateId();
+    if (!resolvedCandidateId) return;
+
+    try {
+      setReferralLoading(true);
+
+      const response = await axios.get(
+        `${API_URL}/api/referrals/candidate/${resolvedCandidateId}`
+      );
+
+      if (response.data?.success && response.data?.referral) {
+        setReferralData(response.data.referral);
+      }
+    } catch (error) {
+      console.log("REFERRAL LOAD ERROR:", error);
+    } finally {
+      setReferralLoading(false);
+    }
+  };
+
+  const copyReferralLink = async () => {
+    if (!referralData.referralUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(referralData.referralUrl);
+      setCopyMessage("Copied");
+      window.setTimeout(() => setCopyMessage(""), 1800);
+    } catch (error) {
+      console.log("COPY REFERRAL LINK ERROR:", error);
+      setCopyMessage("Copy failed");
+    }
+  };
+
+  useEffect(() => {
+    const loadAccessStatus = async () => {
+      const resolvedCandidateId = getCandidateId();
+      if (!resolvedCandidateId) return;
+
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/access/status/${resolvedCandidateId}`
+        );
+
+        const accessEndsAt = response.data?.accessEndsAt || "";
+
+        if (
+          response.data?.hasTemporaryAccess &&
+          accessEndsAt &&
+          new Date(accessEndsAt).getTime() > Date.now()
+        ) {
+          setTemporaryAccessEndsAt(accessEndsAt);
+          localStorage.setItem("temporaryAccessEndsAt", accessEndsAt);
+        } else {
+          setTemporaryAccessEndsAt("");
+          localStorage.removeItem("temporaryAccessEndsAt");
+        }
+      } catch (error) {
+        console.log("ACCESS STATUS ERROR:", error);
+      }
+    };
+
+    loadAccessStatus();
+  }, [candidateId]);
+
+  useEffect(() => {
+    loadReferralData();
+  }, [candidateId]);
+
+  useEffect(() => {
+    if (!temporaryAccessEndsAt) return undefined;
+
+    const timer = window.setInterval(() => {
+      if (new Date(temporaryAccessEndsAt).getTime() <= Date.now()) {
+        localStorage.removeItem("temporaryAccessEndsAt");
+        setTemporaryAccessEndsAt("");
+      }
+    }, 30000);
+
+    return () => window.clearInterval(timer);
+  }, [temporaryAccessEndsAt]);
+
   const searchNow = (e) => {
     if (e.key !== "Enter") return;
 
@@ -2143,7 +2631,7 @@ function JobsPage() {
 
           <div className="hero-btns">
             <button onClick={() => startPayment("ultimate")}>
-              {isUltimateUser() ? "👑 Ultimate Dashboard" : "🚀 Upgrade to Ultimate"}
+              {hasPremiumAccess() ? "👑 Ultimate Dashboard" : "🚀 Upgrade to Ultimate"}
             </button>
 
             <button
@@ -2270,7 +2758,7 @@ function JobsPage() {
                 }}
               />
               <h3>{f.title}</h3>
-              <button onClick={() => goTo(f.route)}>Explore →</button>
+              <button onClick={() => handleFeatureClick(f)}>Explore →</button>
             </div>
           ))}
         </div>
@@ -2304,45 +2792,7 @@ function JobsPage() {
         </div>
       </section>
 
-      <section className="coupon-box">
-        <div>
-          <h3>Testing coupons</h3>
-          <p>Use any listed coupon to activate Ultimate and open the dashboard.</p>
-        </div>
-
-        <div className="coupon-actions">
-          <input
-            placeholder="Enter coupon code"
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
-          />
-
-          {!appliedCoupon ? (
-            <button onClick={applyCoupon}>Apply Coupon</button>
-          ) : (
-            <button onClick={removeCoupon}>Remove Coupon</button>
-          )}
-        </div>
-
-        <div className="coupon-suggestions">
-          {Object.keys(COUPONS).map((code) => (
-            <button key={code} type="button" onClick={() => setCouponCode(code)}>
-              {code}
-            </button>
-          ))}
-        </div>
-
-        <p className="coupon-note">
-          Testing mode: payment link integration can be enabled later.
-        </p>
-
-        {appliedCoupon && (
-          <strong className="coupon-success">
-            Coupon applied: {appliedCoupon.code} - {appliedCoupon.label}
-          </strong>
-        )}
-      </section>
-      <section className="pricing-section">
+<section id="pricing" className="pricing-section">
         <div className="price-card">
           <h3>Basic</h3>
           <h2>₹0</h2>
@@ -2396,7 +2846,7 @@ function JobsPage() {
           <span>✓ Ultimate Dashboard Access</span>
 
           <button onClick={() => startPayment("ultimate")}>
-            {isUltimateUser() ? "👑 Open Ultimate Dashboard" : "👑 Upgrade Ultimate"}
+            {hasPremiumAccess() ? "👑 Open Ultimate Dashboard" : "👑 Upgrade Ultimate"}
           </button>
         </div>
 
@@ -2405,7 +2855,7 @@ function JobsPage() {
           <p>Use premium AI tools based on your real profile and live job data.</p>
 
           <button onClick={() => startPayment("ultimate")}>
-            {isUltimateUser() ? "👑 Ultimate Dashboard" : "🚀 Upgrade Plan"}
+            {hasPremiumAccess() ? "👑 Ultimate Dashboard" : "🚀 Upgrade Plan"}
           </button>
 
           <span>✅ Real-time career insights</span>
@@ -2414,7 +2864,199 @@ function JobsPage() {
         </div>
       </section>
 
-      <footer className="services-footer-v2">
+            <section className="services-offers-grid">
+        <article className="coupon-box">
+          <div className="offer-card-heading">
+            <div className="offer-card-icon" aria-hidden="true">🎟️</div>
+
+            <div>
+              <span className="offer-eyebrow">EXCLUSIVE ACCESS</span>
+              <h2>Have a Coupon Code?</h2>
+              <p>
+                Enter a valid coupon code to unlock a limited premium experience.
+                Codes are verified securely by our server.
+              </p>
+            </div>
+          </div>
+
+          <label className="coupon-field-label" htmlFor="service-coupon-code">
+            Coupon code
+          </label>
+
+          <div className="coupon-input-wrapper">
+            <input
+              id="service-coupon-code"
+              type="text"
+              placeholder="Enter coupon code"
+              value={couponCode}
+              onChange={(event) => {
+                setCouponCode(event.target.value);
+                setCouponError("");
+                setCouponMessage("");
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !couponLoading) {
+                  applyCoupon();
+                }
+              }}
+              autoComplete="off"
+              spellCheck="false"
+            />
+
+            {!appliedCoupon ? (
+              <button
+                type="button"
+                className="coupon-apply-btn"
+                onClick={applyCoupon}
+                disabled={couponLoading}
+              >
+                {couponLoading ? "Verifying..." : "Apply Coupon"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="coupon-remove-btn"
+                onClick={removeCoupon}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {couponError && (
+            <div className="coupon-status coupon-status-error" role="alert">
+              <span aria-hidden="true">!</span>
+              <p>{couponError}</p>
+            </div>
+          )}
+
+          {couponMessage && (
+            <div className="coupon-status coupon-status-success" role="status">
+              <span aria-hidden="true">✓</span>
+              <div>
+                <strong>Access activated</strong>
+                <p>{couponMessage}</p>
+                {temporaryAccessEndsAt && (
+                  <small>
+                    Available until{" "}
+                    {new Date(temporaryAccessEndsAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </small>
+                )}
+              </div>
+            </div>
+          )}
+
+          {!couponMessage && !couponError && (
+            <div className="coupon-status coupon-status-info">
+              <span aria-hidden="true">i</span>
+              <p>Your coupon will be validated before access is activated.</p>
+            </div>
+          )}
+
+          <div className="coupon-benefits">
+            <div>
+              <span className="coupon-benefit-icon" aria-hidden="true">◷</span>
+              <div>
+                <strong>Limited-time access</strong>
+                <p>Eligible coupons can unlock premium services for 30 minutes.</p>
+              </div>
+            </div>
+
+            <div>
+              <span className="coupon-benefit-icon" aria-hidden="true">◇</span>
+              <div>
+                <strong>Premium experience</strong>
+                <p>Explore eligible Ultimate tools during the access window.</p>
+              </div>
+            </div>
+          </div>
+
+          <p className="coupon-security-note">
+            Coupon codes are case-sensitive and can be subject to account limits.
+          </p>
+        </article>
+
+        <article className="referral-card">
+          <div className="offer-card-heading">
+            <div className="offer-card-icon referral-icon" aria-hidden="true">🎁</div>
+
+            <div>
+              <span className="offer-eyebrow">REFER &amp; EARN</span>
+              <h2>Invite friends. Earn rewards.</h2>
+              <p>
+                Share your personal referral link. Rewards are credited only after
+                a referral completes the required signup or subscription action.
+              </p>
+            </div>
+          </div>
+
+          <div className="referral-flow">
+            <div>
+              <span aria-hidden="true">👥</span>
+              <strong>Invite friends</strong>
+              <p>Share your secure referral link.</p>
+            </div>
+
+            <b aria-hidden="true">→</b>
+
+            <div>
+              <span aria-hidden="true">🎫</span>
+              <strong>Earn rewards</strong>
+              <p>Receive coupons or premium minutes.</p>
+            </div>
+          </div>
+
+          <div className="referral-link-panel">
+            <div>
+              <span>Your referral link</span>
+              <strong>
+                {referralLoading
+                  ? "Loading your referral link..."
+                  : referralData.referralUrl || "Sign in to generate your referral link"}
+              </strong>
+            </div>
+
+            <button
+              type="button"
+              onClick={copyReferralLink}
+              disabled={!referralData.referralUrl}
+            >
+              {copyMessage || "Copy"}
+            </button>
+          </div>
+
+          <div className="referral-stats">
+            <div>
+              <span>Total referrals</span>
+              <strong>{referralData.totalReferrals}</strong>
+            </div>
+
+            <div>
+              <span>Successful</span>
+              <strong>{referralData.successfulReferrals}</strong>
+            </div>
+
+            <div>
+              <span>Coupons earned</span>
+              <strong>{referralData.couponsEarned}</strong>
+            </div>
+
+            <div>
+              <span>Premium time</span>
+              <strong>{referralData.premiumMinutesEarned} mins</strong>
+            </div>
+          </div>
+
+          <p className="referral-note">
+            More successful referrals unlock more rewards.
+          </p>
+        </article>
+      </section>
+
+<footer className="services-footer-v2">
         <div>
           <img
             src="/logo.png"
@@ -2454,18 +3096,71 @@ function JobsPage() {
         <div>
           <h4>Connect With Us</h4>
           <div className="footer-socials">
-            <button onClick={() => window.open("https://facebook.com", "_blank")}>f</button>
-            <button onClick={() => window.open("https://linkedin.com", "_blank")}>in</button>
-            <button onClick={() => window.open("https://twitter.com", "_blank")}>x</button>
-            <button onClick={() => window.open("https://instagram.com", "_blank")}>ig</button>
-            <button onClick={() => window.open("https://youtube.com", "_blank")}>▶</button>
+            <button
+              type="button"
+              className="social-instagram"
+              aria-label="Open NoPromptJobs on Instagram"
+              onClick={() => window.open("https://instagram.com", "_blank", "noopener,noreferrer")}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <defs>
+                  <linearGradient id="servicesInstagramGradient" x1="3" y1="21" x2="21" y2="3">
+                    <stop offset="0%" stopColor="#ffdc80" />
+                    <stop offset="24%" stopColor="#fcaf45" />
+                    <stop offset="48%" stopColor="#f77737" />
+                    <stop offset="72%" stopColor="#e1306c" />
+                    <stop offset="100%" stopColor="#833ab4" />
+                  </linearGradient>
+                </defs>
+                <rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="url(#servicesInstagramGradient)" strokeWidth="2.2" />
+                <circle cx="12" cy="12" r="4.1" fill="none" stroke="url(#servicesInstagramGradient)" strokeWidth="2.2" />
+                <circle cx="17.4" cy="6.7" r="1.2" fill="#e1306c" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="social-facebook"
+              aria-label="Open NoPromptJobs on Facebook"
+              onClick={() => window.open("https://facebook.com", "_blank", "noopener,noreferrer")}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5" fill="#1877f2" />
+                <path d="M14.2 8.2h2.6V4.7c-.45-.06-1.95-.2-3.4-.2-3.35 0-5.65 2.05-5.65 5.85V13H4.2v4h3.55v7h4.6v-7h3.65l.58-4h-4.23v-2.25c0-1.15.32-2.55 1.85-2.55Z" fill="#fff" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="social-youtube"
+              aria-label="Open NoPromptJobs on YouTube"
+              onClick={() => window.open("https://youtube.com", "_blank", "noopener,noreferrer")}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="5" fill="#ff0000" />
+                <path d="m10 8.5 6 3.5-6 3.5v-7Z" fill="#fff" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="social-linkedin"
+              aria-label="Open NoPromptJobs on LinkedIn"
+              onClick={() => window.open("https://linkedin.com", "_blank", "noopener,noreferrer")}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5" fill="#0a66c2" />
+                <circle cx="7.1" cy="8" r="1.7" fill="#fff" />
+                <rect x="5.7" y="10.2" width="2.9" height="8" rx=".7" fill="#fff" />
+                <path d="M10.4 10.2h2.8v1.1c.7-.9 1.7-1.45 3.15-1.45 2.65 0 3.95 1.65 3.95 4.7v3.65h-2.95v-3.4c0-1.6-.5-2.45-1.65-2.45-1.3 0-2.15.9-2.15 2.75v3.1h-3.15v-8Z" fill="#fff" />
+              </svg>
+            </button>
           </div>
         </div>
       </footer>
     </div>
   );
-}
-function PaymentSuccessPage() {
+}function PaymentSuccessPage() {
   const [message, setMessage] = useState("Activating your plan...");
 
   useEffect(() => {
@@ -5933,7 +6628,8 @@ function CandidatePremiumSidebar({
       </nav>
     </aside>
   );
-}function CandidateDashboard() {
+}
+function CandidateDashboard() {
   const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const [candidate, setCandidate] = useState(savedUser || null);
   const [jobs, setJobs] = useState([]);
@@ -6987,7 +7683,17 @@ const unreadCount = notifications.filter(
   );
 }function PremiumFooter() {
   const goTo = (path) => {
-    if (window.location.pathname === path) return;
+    if (!path) return;
+
+    if (window.location.pathname === path) {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+
+      return;
+    }
+
     window.location.href = path;
   };
 
@@ -6996,64 +7702,348 @@ const unreadCount = notifications.filter(
   };
 
   const openExternal = (url) => {
-    if (!url || url.startsWith("YOUR_")) {
-      console.warn("Social media URL is not configured.");
+    if (!url || url.includes("YOUR_")) {
+      alert("Please add your official social media URL.");
       return;
     }
+
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <footer className="npj-dashboard-footer">
-      <div className="npj-dashboard-footer-brand">
-        <button
-          type="button"
-          className="npj-footer-logo-button"
-          aria-label="Go to dashboard"
-          onClick={() => goTo("/ultimate-dashboard")}
-        >
-          <img className="npj-footer-logo" src="/logo.png" alt="NoPromptJobs" />
-        </button>
+    <footer className="npj-premium-footer">
+      <div className="npj-footer-glow npj-footer-glow-one" />
+      <div className="npj-footer-glow npj-footer-glow-two" />
 
-        <span className="npj-footer-copyright">
-          © 2026 NoPromptJobs. All rights reserved.
-        </span>
+      <div className="npj-premium-footer-main">
+        {/* Brand */}
+        <section className="npj-premium-footer-brand">
+          <button
+            type="button"
+            className="npj-premium-footer-logo-button"
+            aria-label="Open dashboard"
+            onClick={() =>
+              goTo(
+                localStorage.getItem("candidateId")
+                  ? `/dashboard/${localStorage.getItem("candidateId")}`
+                  : "/"
+              )
+            }
+          >
+            <img
+              className="npj-premium-footer-logo"
+              src="/logo.png"
+              alt="NoPrompt Jobs"
+            />
+          </button>
+
+          <p>
+            Your AI-powered career platform for discovering verified
+            opportunities and building a stronger professional future.
+          </p>
+
+          <div className="npj-footer-status">
+            <span />
+            Platform operational
+          </div>
+        </section>
+
+        {/* Product */}
+        <nav
+          className="npj-premium-footer-column"
+          aria-label="Product links"
+        >
+          <h3>Product</h3>
+
+          <button type="button" onClick={() => goTo("/jobs")}>
+            <span>Find Jobs</span>
+            <b>›</b>
+          </button>
+
+          <button type="button" onClick={() => goTo("/companies")}>
+            <span>Companies</span>
+            <b>›</b>
+          </button>
+
+          <button type="button" onClick={() => goTo("/services")}>
+            <span>Applications</span>
+            <b>›</b>
+          </button>
+
+          <button type="button" onClick={() => goTo("/services")}>
+            <span>Career Tools</span>
+            <b>›</b>
+          </button>
+        </nav>
+
+        {/* Resources */}
+        <nav
+          className="npj-premium-footer-column"
+          aria-label="Resource links"
+        >
+          <h3>Resources</h3>
+
+          <button
+            type="button"
+            onClick={() => goTo("/resume-studio")}
+          >
+            <span>Resume Studio</span>
+            <b>›</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => goTo("/ai-interview-prep")}
+          >
+            <span>Interview Preparation</span>
+            <b>›</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => goTo("/career-roadmap")}
+          >
+            <span>Career Roadmap</span>
+            <b>›</b>
+          </button>
+
+          <button type="button" onClick={openHelpCenter}>
+            <span>Help Center</span>
+            <b>›</b>
+          </button>
+        </nav>
+
+        {/* Company */}
+        <nav
+          className="npj-premium-footer-column"
+          aria-label="Company links"
+        >
+          <h3>Company</h3>
+
+          <button type="button" onClick={() => goTo("/about")}>
+            <span>About Us</span>
+            <b>›</b>
+          </button>
+
+          <button type="button" onClick={() => goTo("/contact")}>
+            <span>Contact</span>
+            <b>›</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => goTo("/privacy-policy")}
+          >
+            <span>Privacy Policy</span>
+            <b>›</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => goTo("/terms-and-conditions")}
+          >
+            <span>Terms of Service</span>
+            <b>›</b>
+          </button>
+        </nav>
+
+        {/* Socials */}
+        <section className="npj-premium-footer-socials">
+          <h3>Follow Us</h3>
+
+          <p>Connect with NoPrompt Jobs</p>
+
+          <div className="npj-premium-social-buttons">
+            {/* Instagram */}
+            <button
+              type="button"
+              className="npj-social-button instagram"
+              aria-label="Open Instagram"
+              title="Instagram"
+              onClick={() =>
+                openExternal(
+                  "https://www.instagram.com/YOUR_INSTAGRAM_USERNAME"
+                )
+              }
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <defs>
+                  <linearGradient
+                    id="instagramGradient"
+                    x1="2"
+                    y1="22"
+                    x2="22"
+                    y2="2"
+                  >
+                    <stop offset="0%" stopColor="#ffdc80" />
+                    <stop offset="25%" stopColor="#fcaf45" />
+                    <stop offset="50%" stopColor="#f77737" />
+                    <stop offset="75%" stopColor="#e1306c" />
+                    <stop offset="100%" stopColor="#833ab4" />
+                  </linearGradient>
+                </defs>
+
+                <rect
+                  x="3"
+                  y="3"
+                  width="18"
+                  height="18"
+                  rx="5"
+                  fill="none"
+                  stroke="url(#instagramGradient)"
+                  strokeWidth="2.4"
+                />
+
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="4"
+                  fill="none"
+                  stroke="url(#instagramGradient)"
+                  strokeWidth="2.4"
+                />
+
+                <circle
+                  cx="17.3"
+                  cy="6.7"
+                  r="1.25"
+                  fill="#e1306c"
+                />
+              </svg>
+            </button>
+
+            {/* Facebook */}
+            <button
+              type="button"
+              className="npj-social-button facebook"
+              aria-label="Open Facebook"
+              title="Facebook"
+              onClick={() =>
+                openExternal(
+                  "https://www.facebook.com/YOUR_FACEBOOK_PAGE"
+                )
+              }
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect
+                  x="2"
+                  y="2"
+                  width="20"
+                  height="20"
+                  rx="5"
+                  fill="#1877f2"
+                />
+
+                <path
+                  d="M14.2 8.2h2.6V4.7c-.45-.06-1.95-.2-3.4-.2-3.35 0-5.65 2.05-5.65 5.85V13H4.2v4h3.55v7h4.6v-7h3.65l.58-4h-4.23v-2.25c0-1.15.32-2.55 1.85-2.55Z"
+                  fill="#ffffff"
+                />
+              </svg>
+            </button>
+
+            {/* YouTube */}
+            <button
+              type="button"
+              className="npj-social-button youtube"
+              aria-label="Open YouTube"
+              title="YouTube"
+              onClick={() =>
+                openExternal(
+                  "https://www.youtube.com/@YOUR_YOUTUBE_CHANNEL"
+                )
+              }
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect
+                  x="2"
+                  y="4"
+                  width="20"
+                  height="16"
+                  rx="5"
+                  fill="#ff0000"
+                />
+
+                <path
+                  d="m10 8.5 6 3.5-6 3.5v-7Z"
+                  fill="#ffffff"
+                />
+              </svg>
+            </button>
+
+            {/* LinkedIn */}
+            <button
+              type="button"
+              className="npj-social-button linkedin"
+              aria-label="Open LinkedIn"
+              title="LinkedIn"
+              onClick={() =>
+                openExternal(
+                  "https://www.linkedin.com/company/YOUR_LINKEDIN_COMPANY"
+                )
+              }
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect
+                  x="2"
+                  y="2"
+                  width="20"
+                  height="20"
+                  rx="5"
+                  fill="#0a66c2"
+                />
+
+                <circle
+                  cx="7.1"
+                  cy="8"
+                  r="1.7"
+                  fill="#ffffff"
+                />
+
+                <rect
+                  x="5.7"
+                  y="10.2"
+                  width="2.9"
+                  height="8"
+                  rx="0.7"
+                  fill="#ffffff"
+                />
+
+                <path
+                  d="M10.4 10.2h2.8v1.1c.7-.9 1.7-1.45 3.15-1.45 2.65 0 3.95 1.65 3.95 4.7v3.65h-2.95v-3.4c0-1.6-.5-2.45-1.65-2.45-1.3 0-2.15.9-2.15 2.75v3.1h-3.15v-8Z"
+                  fill="#ffffff"
+                />
+              </svg>
+            </button>
+          </div>
+        </section>
       </div>
 
-      <nav className="npj-dashboard-footer-links" aria-label="Footer navigation">
-        <button type="button" onClick={() => goTo("/privacy-policy")}>
-          Privacy Policy
-        </button>
+      <div className="npj-premium-footer-bottom">
+        <p>© 2026 NoPrompt Jobs. All rights reserved.</p>
 
-        <span className="npj-footer-divider" />
+        <div>
+          <button
+            type="button"
+            onClick={() => goTo("/privacy-policy")}
+          >
+            Privacy
+          </button>
 
-        <button type="button" onClick={() => goTo("/terms-and-conditions")}>
-          Terms of Service
-        </button>
+          <span />
 
-        <span className="npj-footer-divider" />
+          <button
+            type="button"
+            onClick={() => goTo("/terms-and-conditions")}
+          >
+            Terms
+          </button>
 
-        <button type="button" onClick={openHelpCenter}>
-          ? Help Center
-        </button>
-      </nav>
+          <span />
 
-      <div className="npj-dashboard-footer-socials">
-        <button type="button" onClick={() => openExternal("YOUR_LINKEDIN_URL")}>
-          in
-        </button>
-
-        <button type="button" onClick={() => openExternal("YOUR_X_URL")}>
-          X
-        </button>
-
-        <button type="button" onClick={() => openExternal("YOUR_INSTAGRAM_URL")}>
-          ◎
-        </button>
-
-        <button type="button" onClick={() => openExternal("YOUR_YOUTUBE_URL")}>
-          ▶
-        </button>
+          <button type="button" onClick={openHelpCenter}>
+            Support
+          </button>
+        </div>
       </div>
     </footer>
   );
@@ -10279,14 +11269,20 @@ const handleSidebarNavigation = (path) => {
                     </div>
                   ))}
               </div>
-            </aside>
-          </section>
-        </section>
-      </main>
+                       </aside>
 
-      <PremiumFooter />
-    </>
-  );
+          </section>
+
+          {/* ==========================
+              PREMIUM FOOTER
+          =========================== */}
+
+          <PremiumFooter />
+
+        </section>
+
+      </main>
+    </>)
 }function RecruiterSearch() {
   const [filters, setFilters] = useState({
     keyword: "",

@@ -1430,3 +1430,93 @@ button {
   width: 20px;
   height: 20px;
 }
+
+.np-header-spacer { flex: 1; }
+
+.np-settings-description {
+  margin: 0;
+  color: #667085;
+  line-height: 1.6;
+}
+
+.np-settings-list {
+  overflow: hidden;
+  border: 1px solid #e4eaf4;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.np-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.np-setting-row:last-child { border-bottom: 0; }
+
+.np-setting-row strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #10234b;
+  font-size: 15px;
+}
+
+.np-setting-row p {
+  margin: 0;
+  color: #71809b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.np-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.np-toggle span {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.24);
+  transition: transform 0.2s ease;
+}
+
+.np-toggle.active {
+  background: linear-gradient(135deg, #2166f3, #a927e9);
+}
+
+.np-toggle.active span { transform: translateX(21px); }
+
+.np-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .np-setting-row {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .np-settings-actions {
+    flex-direction: column-reverse;
+  }
+
+  .np-settings-actions button { width: 100%; }
+}
