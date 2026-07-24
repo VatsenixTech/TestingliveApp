@@ -4,10 +4,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
-
-/* =========================================================
-   OPTIONAL FIREBASE ADMIN
-========================================================= */
+const couponRoutes = require("./routes/couponRoutes");
+const referralRoutes = require("./routes/referralRoutes");
+const couponAdminRoutes = require("./routes/couponAdminRoutes");
 
 try {
   require("./config/firebaseAdmin");
@@ -64,6 +63,9 @@ const jobRoutes =
 
 const paymentRoutes =
   require("./routes/payments");
+
+const manualUpiRoutes =
+  require("./routes/manualUpiRoutes");
 
 const autoApplyRoutes =
   require("./routes/autoApplyRoutes");
@@ -261,10 +263,6 @@ app.use(
    BODY PARSERS
 ========================================================= */
 app.use(
-"/api/jobs",
-jobRoutes
-);
-app.use(
  "/api/applications",
  applicationRoutes
 );
@@ -272,14 +270,6 @@ app.use(
   express.json({
     limit: "20mb",
   })
-);
-app.use(
-  "/api/job-alerts",
-  jobAlertsRoutes
-);
-
-console.log(
-  "✅ Route loaded: /api/job-alerts"
 );
 
 app.use(
@@ -606,7 +596,17 @@ app.get(
 
    EVERY VALID ROUTE MUST BE REGISTERED BEFORE 404.
 ========================================================= */
+registerRoute(
+  "/api/coupons",
+  couponRoutes,
+  "couponRoutes"
+);
 
+registerRoute(
+  "/api/admin/coupons",
+  couponAdminRoutes,
+  "couponAdminRoutes"
+);
 registerRoute(
   "/api/help",
   helpRoutes,
@@ -647,6 +647,19 @@ registerRoute(
   "/api/payments",
   paymentRoutes,
   "paymentRoutes"
+);
+
+registerRoute(
+  "/api/manual-upi",
+  manualUpiRoutes,
+  "manualUpiRoutes"
+);
+
+
+registerRoute(
+  "/api/referrals",
+  referralRoutes,
+  "referralRoutes"
 );
 
 registerRoute(

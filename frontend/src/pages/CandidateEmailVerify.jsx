@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
 import { signInWithPopup } from "firebase/auth";
@@ -15,6 +15,17 @@ function CandidateEmailVerify() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const referralCode = params.get("ref")?.trim().toUpperCase() || "";
+
+    if (referralCode) {
+      localStorage.setItem("candidateReferralCode", referralCode);
+    } else {
+      localStorage.removeItem("candidateReferralCode");
+    }
+  }, []);
 
   const googleLogin = async () => {
     try {
@@ -58,8 +69,16 @@ function CandidateEmailVerify() {
           candidate?.email || ""
         );
 
-        window.location.href =
-          "/candidate-set-password?mode=google";
+        const savedReferralCode =
+          localStorage.getItem("candidateReferralCode") || "";
+
+        const googlePasswordUrl = savedReferralCode
+          ? `/candidate-set-password?mode=google&ref=${encodeURIComponent(
+              savedReferralCode
+            )}`
+          : "/candidate-set-password?mode=google";
+
+        window.location.href = googlePasswordUrl;
       } else {
         window.location.href = `/dashboard/${candidateId}`;
       }
@@ -193,7 +212,16 @@ function CandidateEmailVerify() {
           "Email verified successfully"
       );
 
-      window.location.href = "/candidate-set-password";
+      const savedReferralCode =
+        localStorage.getItem("candidateReferralCode") || "";
+
+      const passwordUrl = savedReferralCode
+        ? `/candidate-set-password?ref=${encodeURIComponent(
+            savedReferralCode
+          )}`
+        : "/candidate-set-password";
+
+      window.location.href = passwordUrl;
     } catch (error) {
       alert(
         error.response?.data?.message ||

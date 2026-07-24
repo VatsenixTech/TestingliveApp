@@ -367,22 +367,50 @@ function CandidateSetPassword() {
   const [loading, setLoading] = useState(false);
 
   const params = new URLSearchParams(window.location.search);
+
   const mode = params.get("mode");
 
-  const email = localStorage.getItem("candidateSignupEmail") || localStorage.getItem("candidateSetPasswordEmail");
-  const candidateId = localStorage.getItem("candidateSetPasswordId");
+  // Get referral code from URL first.
+  // Fall back to localStorage if it was saved on the email verification page.
+  const referralCode =
+    params.get("ref") ||
+    localStorage.getItem("candidateReferralCode") ||
+    "";
+
+  const email =
+    localStorage.getItem("candidateSignupEmail") ||
+    localStorage.getItem("candidateSetPasswordEmail") ||
+    "";
+
+  const candidateId =
+    localStorage.getItem("candidateSetPasswordId") || "";
 
   const setLoginPassword = async () => {
     if (!password || !confirmPassword) {
-      return alert("Please enter password and confirm password");
+      alert("Please enter password and confirm password");
+      return;
     }
 
-    if (password.length < 6) {
-      return alert("Password must be at least 6 characters");
+    if (password.length < 8) {
+      alert("Password must be at least 8 characters");
+      return;
     }
 
     if (password !== confirmPassword) {
-      return alert("Passwords do not match");
+      alert("Passwords do not match");
+      return;
+    }
+
+    if (mode === "google" && !candidateId) {
+      alert("Candidate account information is missing. Please sign in again.");
+      window.location.href = "/candidate-email-verify";
+      return;
+    }
+
+    if (mode !== "google" && !email) {
+      alert("Verified email is missing. Please verify your email again.");
+      window.location.href = "/candidate-email-verify";
+      return;
     }
 
     try {
@@ -390,8 +418,16 @@ function CandidateSetPassword() {
 
       const payload =
         mode === "google"
-          ? { candidateId, password }
-          : { email, password };
+          ? {
+              candidateId,
+              password,
+              referralCode: referralCode || undefined,
+            }
+          : {
+              email,
+              password,
+              referralCode: referralCode || undefined,
+            };
 
       const response = await axios.post(
         `${API_URL}/api/candidates/set-password`,
@@ -399,25 +435,74 @@ function CandidateSetPassword() {
       );
 
       if (!response.data?.success) {
-        alert(response.data?.message || "Failed to set password");
+        alert(
+          response.data?.message ||
+            "Failed to set password"
+        );
         return;
       }
 
-      const candidate = response.data.candidate;
+      const candidate =
+        response.data?.candidate ||
+        response.data?.user;
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(candidate));
+      const token = response.data?.token;
 
+      if (!candidate) {
+        throw new Error(
+          "Candidate information was not returned by the backend"
+        );
+      }
+
+      if (!token) {
+        throw new Error(
+          "Authentication token was not returned by the backend"
+        );
+      }
+
+      const savedCandidateId =
+        candidate._id ||
+        candidate.id ||
+        candidate.candidateId;
+
+      if (!savedCandidateId) {
+        throw new Error(
+          "Candidate ID was not returned by the backend"
+        );
+      }
+
+      localStorage.setItem("token", token);
+      localStorage.setItem(
+        "user",
+        JSON.stringify(candidate)
+      );
+
+      // Remove temporary registration data.
       localStorage.removeItem("candidateSignupEmail");
       localStorage.removeItem("candidateSignupMobile");
       localStorage.removeItem("candidateOtpVerified");
       localStorage.removeItem("candidateSetPasswordId");
       localStorage.removeItem("candidateSetPasswordEmail");
+      localStorage.removeItem("candidateReferralCode");
 
-      alert("Password set successfully");
-      window.location.href = `/dashboard/${candidate._id || candidate.id}`;
+      alert(
+        response.data?.message ||
+          "Password set successfully"
+      );
+
+      window.location.href =
+        `/dashboard/${savedCandidateId}`;
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to set password");
+      console.error(
+        "SET PASSWORD ERROR:",
+        error.response?.data || error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to set password"
+      );
     } finally {
       setLoading(false);
     }
@@ -427,38 +512,60 @@ function CandidateSetPassword() {
     <main className="np-register-page">
       <section className="np-register-right">
         <div className="np-register-card">
-          <span className="np-register-badge">Secure Account</span>
+          <span className="np-register-badge">
+            Secure Account
+          </span>
 
           <h1>Set your password</h1>
 
           <p className="np-register-sub">
-            Create a password so you can login using email and password also.
+            Create a secure password so you can also sign in
+            using your email and password.
           </p>
+
+          {referralCode && (
+            <div className="np-referral-notice">
+              🎁 Referral code applied:{" "}
+              <strong>{referralCode}</strong>
+            </div>
+          )}
 
           <label className="np-register-field">
             New Password
+
             <div>
               <span>🔐</span>
+
               <input
                 type="password"
                 placeholder="Enter password"
                 value={password}
                 disabled={loading}
-                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
               />
             </div>
           </label>
 
           <label className="np-register-field">
             Confirm Password
+
             <div>
               <span>🔐</span>
+
               <input
                 type="password"
                 placeholder="Confirm password"
                 value={confirmPassword}
                 disabled={loading}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                onChange={(event) =>
+                  setConfirmPassword(
+                    event.target.value
+                  )
+                }
               />
             </div>
           </label>
@@ -469,136 +576,15 @@ function CandidateSetPassword() {
             onClick={setLoginPassword}
             disabled={loading}
           >
-            {loading ? "Saving..." : "Set Password & Open Dashboard →"}
+            {loading
+              ? "Saving..."
+              : "Set Password & Open Dashboard →"}
           </button>
         </div>
       </section>
     </main>
   );
 }
-function RecruiterLogin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const loginRecruiter = () => {
-    const loginEmail = email.trim().toLowerCase();
-
-    if (!loginEmail || !password) {
-      alert("Please enter recruiter email and password");
-      return;
-    }
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        email: loginEmail,
-        role: "recruiter",
-      })
-    );
-
-    window.location.href = "/recruiter-dashboard";
-  };
-
-  return (
-    <div className="auth-page">
-      <div className="auth-card recruiter-auth">
-        <h1>Recruiter Login</h1>
-        <p>Login to search verified candidates and manage hiring.</p>
-
-        <input
-          placeholder="Work Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button onClick={loginRecruiter}>Login as Recruiter</button>
-
-        <a href="/recruiter-register">Create Recruiter Account</a>
-        <a href="/">Back to Home</a>
-      </div>
-    </div>
-  );
-}
-
-function CandidateRegister() {
-  const email = localStorage.getItem("candidateSignupEmail");
-  const otpVerified = localStorage.getItem("candidateOtpVerified") === "true";
-  const passwordSet = localStorage.getItem("candidatePasswordSet") === "true";
-
-  useEffect(() => {
-    if (!email || !otpVerified || !passwordSet) {
-      alert("Please verify your email and set password first");
-      window.location.href = "/candidate-email-verify";
-    }
-  }, [email, otpVerified, passwordSet]);
-
-  if (!email || !otpVerified || !passwordSet) {
-    return <div className="loading">Checking verification...</div>;
-  }
-
-  return <CandidateUpload />;
-}
-
-function RecruiterRegister() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    company: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const registerRecruiter = () => {
-    if (!form.name || !form.email || !form.company || !form.password) {
-      alert("Please fill all details");
-      return;
-    }
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        email: form.email,
-        role: "recruiter",
-        company: form.company,
-      })
-    );
-
-    alert("Recruiter registered successfully");
-    window.location.href = "/recruiter-dashboard";
-  };
-
-  return (
-    <div className="auth-page">
-      <div className="auth-card recruiter-auth">
-        <h1>Create Recruiter Account</h1>
-
-        <input name="name" placeholder="Recruiter Name" onChange={handleChange} />
-        <input name="email" placeholder="Work Email" onChange={handleChange} />
-        <input name="company" placeholder="Company Name" onChange={handleChange} />
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          onChange={handleChange}
-        />
-
-        <button onClick={registerRecruiter}>Create Recruiter Account</button>
-        <a href="/recruiter-login">Already have account? Login</a>
-      </div>
-    </div>
-  );
-}
-
 function JobsPage() {
   /* =========================================================
      STATES
@@ -2130,16 +2116,39 @@ function ServicesPage() {
   const [temporaryAccessEndsAt, setTemporaryAccessEndsAt] = useState(
     localStorage.getItem("temporaryAccessEndsAt") || ""
   );
-  const [referralData, setReferralData] = useState({
+const [referralData, setReferralData] =
+  useState({
     referralCode: "",
-    referralUrl: "",
-    totalReferrals: 0,
-    successfulReferrals: 0,
-    couponsEarned: 0,
-    premiumMinutesEarned: 0,
+    referralLink: "",
+    stats: {
+      totalReferrals: 0,
+      successfulReferrals: 0,
+      couponsEarned: 0,
+      premiumMinutesEarned: 0,
+    },
   });
-  const [referralLoading, setReferralLoading] = useState(false);
-  const [copyMessage, setCopyMessage] = useState("");
+
+const [referralLoading, setReferralLoading] =
+  useState(false);
+
+const [referralMessage, setReferralMessage] =
+  useState("");
+
+const [copyMessage, setCopyMessage] = useState("");
+
+  const [upiCheckout, setUpiCheckout] = useState(null);
+  const [upiReference, setUpiReference] = useState("");
+  const [upiPayerName, setUpiPayerName] = useState("");
+  const [upiPayerId, setUpiPayerId] = useState("");
+  const [upiPaymentDate, setUpiPaymentDate] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [upiSubmitting, setUpiSubmitting] = useState(false);
+  const [upiMessage, setUpiMessage] = useState("");
+  const [upiError, setUpiError] = useState("");
+  const [paymentStatusLoading, setPaymentStatusLoading] = useState(false);
+  const [upiCreating, setUpiCreating] = useState(false);
+
 
   const goTo = (path) => {
     window.location.href = path;
@@ -2241,64 +2250,82 @@ function ServicesPage() {
   };
 
   const applyCoupon = async () => {
+    const cleanCouponCode = couponCode.trim();
 
-    try {
-
-        if (!couponCode.trim()) {
-
-            alert("Please enter coupon code.");
-
-            return;
-
-        }
-
-        const response = await axios.post(
-
-            `${API_URL}/api/coupons/redeem`,
-
-            {
-
-                couponCode: couponCode.trim(),
-
-                candidateId,
-
-            }
-
-        );
-
-        if (!response.data.success) {
-
-            alert(response.data.message);
-
-            return;
-
-        }
-
-        setAppliedCoupon({
-
-            code: couponCode,
-
-            accessMinutes: response.data.accessMinutes,
-
-        });
-
-        alert(response.data.message);
-
-    } catch (error) {
-
-        console.log(error);
-
-        alert(
-
-            error.response?.data?.message ||
-
-            "Unable to verify coupon."
-
-        );
-
+    if (!cleanCouponCode) {
+      setCouponError("Please enter a coupon code.");
+      setCouponMessage("");
+      return;
     }
 
-};
+    if (!candidateId) {
+      setCouponError("Please sign in before applying a coupon.");
+      setCouponMessage("");
+      return;
+    }
+
+    try {
+      setCouponLoading(true);
+      setCouponError("");
+      setCouponMessage("");
+
+      const response = await axios.post(
+        `${API_URL}/api/coupons/apply`,
+        {
+          code: cleanCouponCode,
+          candidateId,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const couponResult = response.data?.data || response.data || {};
+
+      const accessEndsAt =
+        couponResult?.premiumAccessUntil ||
+        couponResult?.accessExpires ||
+        couponResult?.accessEndsAt ||
+        "";
+
+      setAppliedCoupon({
+        code: cleanCouponCode,
+        accessMinutes: Number(
+          couponResult?.premiumMinutes ||
+            couponResult?.accessMinutes ||
+            30
+        ),
+        accessEndsAt,
+      });
+
+      setCouponMessage(
+        response.data?.message ||
+          "Coupon applied successfully. Premium access is active."
+      );
+
+      if (accessEndsAt) {
+        setTemporaryAccessEndsAt(accessEndsAt);
+        localStorage.setItem("temporaryAccessEndsAt", accessEndsAt);
+      }
+    } catch (error) {
+      console.error(
+        "COUPON REDEEM ERROR:",
+        error.response?.data || error.message
+      );
+
+      setAppliedCoupon(null);
+      setCouponMessage("");
+      setCouponError(
+        error.response?.data?.message ||
+          "Unable to verify the coupon right now."
+      );
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
   const removeCoupon = () => {
     setCouponCode("");
     setAppliedCoupon(null);
@@ -2311,8 +2338,13 @@ function ServicesPage() {
     const resolvedCandidateId = getCandidateId();
 
     if (!resolvedCandidateId) {
-      alert("Please login before upgrading your plan");
+      alert("Please log in before upgrading your plan.");
       goTo("/candidate-login");
+      return;
+    }
+
+    if (!plan || !["pro", "ultimate"].includes(planKey)) {
+      alert("Please select a valid subscription plan.");
       return;
     }
 
@@ -2321,65 +2353,247 @@ function ServicesPage() {
       return;
     }
 
+    const finalPrice = getFinalPrice(planKey);
+
+    localStorage.setItem("selectedPlan", plan.name);
+    localStorage.setItem("selectedPlanKey", planKey);
+    localStorage.setItem("selectedPlanPrice", String(finalPrice));
+
+    // Open the checkout immediately so a backend error never looks like
+    // an unresponsive button.
+    setUpiCheckout({
+      planKey,
+      planName: plan.name,
+      amount: finalPrice,
+      currency: "INR",
+      businessName: "Loading payment details...",
+      upiId: "",
+      intentUrl: "",
+    });
+    setUpiCreating(true);
+    setUpiError("");
+    setUpiMessage("");
+
     try {
-      const finalPrice = getFinalPrice(planKey);
-
-      localStorage.setItem("selectedPlan", plan.name);
-      localStorage.setItem("selectedPlanKey", planKey);
-      localStorage.setItem("selectedPlanPrice", finalPrice);
-      localStorage.setItem("selectedPlanActualPrice", plan.actualPrice);
-      localStorage.setItem("selectedPlanOfferPrice", plan.offerPrice);
-
-      if (appliedCoupon?.discount > 0) {
-        localStorage.setItem("appliedCoupon", appliedCoupon.code);
-        localStorage.setItem("couponDiscount", appliedCoupon.discount);
-      } else {
-        localStorage.removeItem("appliedCoupon");
-        localStorage.removeItem("couponDiscount");
-      }
-
       const response = await axios.post(
-        `${API_URL}/api/payments/create-payment-link`,
+        `${API_URL}/api/manual-upi/create`,
         {
-          planKey,
-          couponCode: appliedCoupon?.discount > 0 ? appliedCoupon.code : "",
           candidateId: resolvedCandidateId,
-          planName: plan.name,
-          name: user?.name || user?.fullName || "NoPromptJobs User",
-          email: user?.email || "customer@example.com",
-          contact: user?.mobile || user?.phone || "9999999999",
+          planKey,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
       );
 
-      if (response.data?.unlocked) {
-        if (response.data?.candidate) {
-          localStorage.setItem("user", JSON.stringify(response.data.candidate));
-          localStorage.setItem("plan", response.data.candidate.plan || plan.name);
-          localStorage.setItem(
-            "activePlan",
-            response.data.candidate.activePlan || plan.name
-          );
-          localStorage.setItem(
-            "subscriptionStatus",
-            response.data.candidate.subscriptionStatus || "active"
-          );
-          localStorage.setItem("candidateId", resolvedCandidateId);
-        }
-
-        alert(response.data?.message || "Plan activated successfully");
-        goTo(response.data?.redirectUrl || "/ultimate-dashboard");
+      if (response.data?.alreadyActive) {
+        setUpiCheckout(null);
+        goTo(
+          response.data?.redirectUrl ||
+            (planKey === "ultimate"
+              ? "/ultimate-dashboard"
+              : dashboardPath)
+        );
         return;
       }
 
-      if (!response.data?.success || !response.data?.paymentLink) {
-        alert(response.data?.message || "Unable to create payment link");
-        return;
+      if (!response.data?.success || !response.data?.order || !response.data?.upi) {
+        throw new Error(
+          response.data?.message || "Unable to create the UPI payment request."
+        );
       }
 
-      window.location.href = response.data.paymentLink;
+      setUpiCheckout({
+        ...response.data.order,
+        ...response.data.upi,
+      });
     } catch (error) {
-      console.log("PAYMENT LINK ERROR:", error);
-      alert(error.response?.data?.message || "Payment link creation failed");
+      console.error(
+        "CREATE UPI PAYMENT ERROR:",
+        error.response?.data || error.message
+      );
+
+      setUpiError(
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to start the UPI payment. Confirm that /api/manual-upi/create is running."
+      );
+    } finally {
+      setUpiCreating(false);
+    }
+  };
+
+  const openUpiApplication = () => {
+    if (upiCreating) return;
+
+    if (!upiCheckout?.intentUrl) {
+      setUpiError(
+        "UPI payment link is unavailable. Check whether the backend manual UPI route is running."
+      );
+      return;
+    }
+
+    window.location.href = upiCheckout.intentUrl;
+  };
+
+  const copyBusinessUpiId = async () => {
+    if (!upiCheckout?.upiId) return;
+
+    try {
+      await navigator.clipboard.writeText(upiCheckout.upiId);
+      setUpiMessage("Business UPI ID copied successfully.");
+    } catch (error) {
+      console.error("COPY UPI ID ERROR:", error);
+      setUpiError("Unable to copy the UPI ID.");
+    }
+  };
+
+  const closeUpiCheckout = () => {
+    if (upiSubmitting) return;
+
+    setUpiCheckout(null);
+    setUpiReference("");
+    setUpiPayerName("");
+    setUpiPayerId("");
+    setUpiMessage("");
+    setUpiError("");
+  };
+
+  const submitUpiPayment = async () => {
+    const resolvedCandidateId = getCandidateId();
+
+    if (!resolvedCandidateId || !upiCheckout) {
+      setUpiError("Please select a subscription plan again.");
+      return;
+    }
+
+    if (upiReference.trim().length < 8) {
+      setUpiError("Enter a valid UPI transaction reference or UTR.");
+      return;
+    }
+
+    try {
+      setUpiSubmitting(true);
+      setUpiError("");
+      setUpiMessage("");
+
+      const response = await axios.post(
+        `${API_URL}/api/manual-upi/submit`,
+        {
+          candidateId: resolvedCandidateId,
+          planKey: upiCheckout.planKey,
+          paymentReference: upiReference.trim(),
+          payerName: upiPayerName.trim(),
+          payerUpiId: upiPayerId.trim(),
+          paymentDate: upiPaymentDate,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setUpiMessage(
+        response.data?.message ||
+          "Payment submitted. Your subscription will be activated after verification."
+      );
+
+      localStorage.setItem("subscriptionStatus", "payment_pending");
+      localStorage.setItem("pendingPaymentPlan", upiCheckout.planName || "");
+      localStorage.setItem("pendingPaymentId", response.data?.paymentId || "");
+    } catch (error) {
+      console.error(
+        "SUBMIT UPI PAYMENT ERROR:",
+        error.response?.data || error.message
+      );
+
+      setUpiError(
+        error.response?.data?.message ||
+          "Unable to submit the payment details."
+      );
+    } finally {
+      setUpiSubmitting(false);
+    }
+  };
+
+  const checkUpiPaymentStatus = async () => {
+    const resolvedCandidateId = getCandidateId();
+
+    if (!resolvedCandidateId) {
+      setUpiError("Candidate account information is missing.");
+      return;
+    }
+
+    try {
+      setPaymentStatusLoading(true);
+      setUpiError("");
+
+      const response = await axios.get(
+        `${API_URL}/api/manual-upi/status/${resolvedCandidateId}`
+      );
+
+      const subscription = response.data?.subscription;
+      const payment = response.data?.payment;
+
+      if (
+        subscription?.status === "active" &&
+        ["Pro", "Ultimate"].includes(subscription?.plan)
+      ) {
+        const updatedUser = {
+          ...user,
+          plan: subscription.plan,
+          activePlan: subscription.plan,
+          subscriptionStatus: "active",
+          subscriptionStartedAt: subscription.startsAt || null,
+          subscriptionExpiresAt: subscription.expiresAt || null,
+        };
+
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        localStorage.setItem("plan", subscription.plan);
+        localStorage.setItem("activePlan", subscription.plan);
+        localStorage.setItem("subscriptionStatus", "active");
+
+        setUpiMessage(`${subscription.plan} subscription is active.`);
+
+        window.setTimeout(() => {
+          goTo(
+            subscription.plan === "Ultimate"
+              ? "/ultimate-dashboard"
+              : dashboardPath
+          );
+        }, 800);
+
+        return;
+      }
+
+      if (payment?.status === "rejected") {
+        setUpiError(
+          payment.rejectionReason ||
+            "Your payment could not be verified. Please contact support."
+        );
+        return;
+      }
+
+      setUpiMessage(
+        payment?.status === "pending"
+          ? "Payment verification is still pending. Please check again after the admin reviews it."
+          : "No approved payment was found yet."
+      );
+    } catch (error) {
+      console.error(
+        "CHECK UPI PAYMENT STATUS ERROR:",
+        error.response?.data || error.message
+      );
+
+      setUpiError(
+        error.response?.data?.message ||
+          "Unable to check payment status."
+      );
+    } finally {
+      setPaymentStatusLoading(false);
     }
   };
 
@@ -2467,40 +2681,6 @@ function ServicesPage() {
     });
   };
 
-  const loadReferralData = async () => {
-    const resolvedCandidateId = getCandidateId();
-    if (!resolvedCandidateId) return;
-
-    try {
-      setReferralLoading(true);
-
-      const response = await axios.get(
-        `${API_URL}/api/referrals/candidate/${resolvedCandidateId}`
-      );
-
-      if (response.data?.success && response.data?.referral) {
-        setReferralData(response.data.referral);
-      }
-    } catch (error) {
-      console.log("REFERRAL LOAD ERROR:", error);
-    } finally {
-      setReferralLoading(false);
-    }
-  };
-
-  const copyReferralLink = async () => {
-    if (!referralData.referralUrl) return;
-
-    try {
-      await navigator.clipboard.writeText(referralData.referralUrl);
-      setCopyMessage("Copied");
-      window.setTimeout(() => setCopyMessage(""), 1800);
-    } catch (error) {
-      console.log("COPY REFERRAL LINK ERROR:", error);
-      setCopyMessage("Copy failed");
-    }
-  };
-
   useEffect(() => {
     const loadAccessStatus = async () => {
       const resolvedCandidateId = getCandidateId();
@@ -2577,8 +2757,181 @@ function ServicesPage() {
 
     goTo(`/jobs?search=${encodeURIComponent(q)}`);
   };
+  const loadReferralData = async () => {
+  if (!candidateId) {
+    setReferralData({
+      referralCode: "",
+      referralLink: "",
+      stats: {
+        totalReferrals: 0,
+        successfulReferrals: 0,
+        couponsEarned: 0,
+        premiumMinutesEarned: 0,
+      },
+    });
 
-  return (
+    return;
+  }
+
+  try {
+    setReferralLoading(true);
+    setReferralMessage("");
+
+    const response = await axios.get(
+      `${API_URL}/api/referrals/me`,
+      {
+        params: {
+          candidateId,
+        },
+      }
+    );
+
+    const referralResult =
+      response.data?.data || response.data || {};
+
+    const referralStats =
+      referralResult?.stats || referralResult;
+
+    setReferralData({
+      referralCode:
+        referralResult?.referralCode || "",
+      referralLink:
+        referralResult?.referralLink || "",
+      stats: {
+        totalReferrals:
+          Number(referralStats?.totalReferrals) || 0,
+
+        successfulReferrals:
+          Number(referralStats?.successfulReferrals) || 0,
+
+        couponsEarned:
+          Number(referralStats?.couponsEarned) || 0,
+
+        premiumMinutesEarned:
+          Number(
+            referralStats?.premiumMinutesEarned ??
+              referralStats?.premiumMinutes
+          ) || 0,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "REFERRAL LOAD ERROR:",
+      error.response?.data || error.message
+    );
+
+    setReferralMessage(
+      error.response?.data?.message ||
+        "Unable to load your referral link."
+    );
+  } finally {
+    setReferralLoading(false);
+  }
+};
+
+const copyReferralLink = async () => {
+  if (!candidateId) {
+    alert(
+      "Please sign in to generate your referral link."
+    );
+
+    goTo("/candidate-login");
+    return;
+  }
+
+  if (!referralData.referralLink) {
+    await loadReferralData();
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(
+      referralData.referralLink
+    );
+
+    setCopyMessage("Copied!");
+    setReferralMessage(
+      "Referral link copied successfully."
+    );
+
+    setTimeout(() => {
+      setCopyMessage("");
+      setReferralMessage("");
+    }, 2500);
+  } catch (error) {
+    console.error(
+      "COPY REFERRAL ERROR:",
+      error
+    );
+
+    const temporaryInput =
+      document.createElement("input");
+
+    temporaryInput.value =
+      referralData.referralLink;
+
+    document.body.appendChild(
+      temporaryInput
+    );
+
+    temporaryInput.select();
+
+    document.execCommand("copy");
+
+    document.body.removeChild(
+      temporaryInput
+    );
+
+    setReferralMessage(
+      "Referral link copied successfully."
+    );
+  }
+};
+
+const shareReferralLink = async () => {
+  if (!candidateId) {
+    alert(
+      "Please sign in to invite friends."
+    );
+
+    goTo("/candidate-login");
+    return;
+  }
+
+  if (!referralData.referralLink) {
+    await loadReferralData();
+    return;
+  }
+
+  const shareData = {
+    title: "Join NoPrompt Jobs",
+    text:
+      "Join NoPrompt Jobs using my referral link and build your career with AI-powered tools.",
+    url: referralData.referralLink,
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+
+    await copyReferralLink();
+
+    alert(
+      "Your referral link was copied. Share it with your friends."
+    );
+  } catch (error) {
+    if (error?.name !== "AbortError") {
+      console.error(
+        "SHARE REFERRAL ERROR:",
+        error
+      );
+    }
+  }
+};
+
+return (
     <div className="services-page-v2">
       <header className="services-top-header">
         <img
@@ -2994,11 +3347,16 @@ function ServicesPage() {
           </div>
 
           <div className="referral-flow">
-            <div>
+            <button
+              type="button"
+              className="referral-flow-action"
+              onClick={shareReferralLink}
+              disabled={referralLoading || !candidateId}
+            >
               <span aria-hidden="true">👥</span>
               <strong>Invite friends</strong>
               <p>Share your secure referral link.</p>
-            </div>
+            </button>
 
             <b aria-hidden="true">→</b>
 
@@ -3015,38 +3373,54 @@ function ServicesPage() {
               <strong>
                 {referralLoading
                   ? "Loading your referral link..."
-                  : referralData.referralUrl || "Sign in to generate your referral link"}
+                  : referralData.referralLink || "Sign in to generate your referral link"}
               </strong>
             </div>
 
-            <button
-              type="button"
-              onClick={copyReferralLink}
-              disabled={!referralData.referralUrl}
-            >
-              {copyMessage || "Copy"}
-            </button>
+            <div className="referral-link-actions">
+              <button
+                type="button"
+                onClick={shareReferralLink}
+                disabled={referralLoading || !referralData.referralLink}
+              >
+                Share
+              </button>
+
+              <button
+                type="button"
+                onClick={copyReferralLink}
+                disabled={referralLoading || !referralData.referralLink}
+              >
+                {copyMessage || "Copy"}
+              </button>
+            </div>
           </div>
+
+          {referralMessage && (
+            <div className="referral-message" role="status">
+              {referralMessage}
+            </div>
+          )}
 
           <div className="referral-stats">
             <div>
               <span>Total referrals</span>
-              <strong>{referralData.totalReferrals}</strong>
+              <strong>{referralData.stats.totalReferrals}</strong>
             </div>
 
             <div>
               <span>Successful</span>
-              <strong>{referralData.successfulReferrals}</strong>
+              <strong>{referralData.stats.successfulReferrals}</strong>
             </div>
 
             <div>
               <span>Coupons earned</span>
-              <strong>{referralData.couponsEarned}</strong>
+              <strong>{referralData.stats.couponsEarned}</strong>
             </div>
 
             <div>
               <span>Premium time</span>
-              <strong>{referralData.premiumMinutesEarned} mins</strong>
+              <strong>{referralData.stats.premiumMinutesEarned} mins</strong>
             </div>
           </div>
 
@@ -3055,6 +3429,212 @@ function ServicesPage() {
           </p>
         </article>
       </section>
+
+      {upiCheckout && (
+        <div
+          className="upi-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeUpiCheckout();
+            }
+          }}
+        >
+          <section
+            className="upi-checkout-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upi-checkout-title"
+          >
+            <button
+              type="button"
+              className="upi-modal-close"
+              aria-label="Close payment window"
+              onClick={closeUpiCheckout}
+              disabled={upiSubmitting}
+            >
+              ×
+            </button>
+
+            <div className="upi-modal-heading">
+              <span>UPI</span>
+              <div>
+                <small>SECURE MANUAL PAYMENT</small>
+                <h2 id="upi-checkout-title">Complete your payment</h2>
+                <p>
+                  Pay using your preferred UPI application. NoPrompt Jobs never
+                  asks for or stores your UPI PIN.
+                </p>
+              </div>
+            </div>
+
+            <div className="upi-order-summary">
+              <div>
+                <span>Selected plan</span>
+                <strong>{upiCheckout.planName}</strong>
+              </div>
+              <div>
+                <span>Amount to pay</span>
+                <strong>₹{upiCheckout.amount}</strong>
+              </div>
+            </div>
+
+            <div className="upi-merchant-box">
+              <span>Pay to</span>
+              <strong>{upiCheckout.businessName}</strong>
+              <code>
+                {upiCreating
+                  ? "Preparing secure UPI request..."
+                  : upiCheckout.upiId || "UPI ID unavailable"}
+              </code>
+
+              <div className="upi-payment-actions">
+                <button
+                  type="button"
+                  onClick={openUpiApplication}
+                  disabled={upiCreating || !upiCheckout.intentUrl}
+                >
+                  {upiCreating ? "Preparing..." : "Open UPI App"}
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={copyBusinessUpiId}
+                  disabled={upiCreating || !upiCheckout.upiId}
+                >
+                  Copy UPI ID
+                </button>
+              </div>
+            </div>
+
+            <div className="upi-divider">
+              <span>After completing the payment</span>
+            </div>
+
+            <div className="upi-form-grid">
+              <label>
+                UPI transaction reference / UTR *
+                <input
+                  type="text"
+                  placeholder="Enter the transaction reference"
+                  value={upiReference}
+                  onChange={(event) => {
+                    setUpiReference(event.target.value);
+                    setUpiError("");
+                  }}
+                  autoComplete="off"
+                />
+              </label>
+
+              <label>
+                Payer name
+                <input
+                  type="text"
+                  placeholder="Name used for payment"
+                  value={upiPayerName}
+                  onChange={(event) => setUpiPayerName(event.target.value)}
+                />
+              </label>
+
+              <label>
+                Payer UPI ID (optional)
+                <input
+                  type="text"
+                  placeholder="example@bank"
+                  value={upiPayerId}
+                  onChange={(event) => setUpiPayerId(event.target.value)}
+                  autoComplete="off"
+                />
+              </label>
+
+              <label>
+                Payment date *
+                <input
+                  type="date"
+                  value={upiPaymentDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(event) => setUpiPaymentDate(event.target.value)}
+                />
+              </label>
+            </div>
+
+            {upiError && (
+              <div className="upi-message error" role="alert">
+                {upiError}
+              </div>
+            )}
+
+            {upiMessage && (
+              <div className="upi-message success" role="status">
+                {upiMessage}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="upi-submit-button"
+              onClick={submitUpiPayment}
+              disabled={upiSubmitting || upiCreating || !upiCheckout.upiId}
+            >
+              {upiSubmitting
+                ? "Submitting payment..."
+                : "Submit Payment for Verification"}
+            </button>
+
+            <button
+              type="button"
+              className="upi-check-status-button"
+              onClick={checkUpiPaymentStatus}
+              disabled={paymentStatusLoading}
+            >
+              {paymentStatusLoading
+                ? "Checking status..."
+                : "I already submitted — Check Status"}
+            </button>
+
+            <p className="upi-security-note">
+              Never share your UPI PIN, OTP or bank password with NoPrompt Jobs
+              or anyone else. Access opens only after your payment is verified.
+            </p>
+          </section>
+        </div>
+      )}
+
+      <style>{`
+        .upi-modal-backdrop { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 24px; background: rgba(5, 12, 35, .7); backdrop-filter: blur(12px); }
+        .upi-checkout-modal { position: relative; width: min(640px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; padding: 32px; border: 1px solid rgba(117, 93, 255, .18); border-radius: 28px; background: #fff; box-shadow: 0 34px 90px rgba(5, 13, 42, .28); box-sizing: border-box; }
+        .upi-modal-close { position: absolute; top: 18px; right: 18px; width: 38px; height: 38px; border: 0; border-radius: 12px; background: #f1f3fa; color: #17213d; font-size: 25px; cursor: pointer; }
+        .upi-modal-heading { display: flex; gap: 17px; padding-right: 42px; }
+        .upi-modal-heading > span { display: grid; place-items: center; flex: 0 0 60px; height: 60px; border-radius: 18px; background: linear-gradient(135deg, #2d6df6, #852de9); color: white; font-size: 15px; font-weight: 850; }
+        .upi-modal-heading small { color: #6450dc; font-size: 11px; font-weight: 850; letter-spacing: .12em; }
+        .upi-modal-heading h2 { margin: 6px 0 8px; color: #0e193b; font-size: 27px; }
+        .upi-modal-heading p { margin: 0; color: #69738d; line-height: 1.6; }
+        .upi-order-summary { display: grid; grid-template-columns: 1fr 1fr; margin-top: 25px; border: 1px solid #e5e8f3; border-radius: 17px; overflow: hidden; }
+        .upi-order-summary > div { padding: 17px 20px; }
+        .upi-order-summary > div + div { border-left: 1px solid #e5e8f3; }
+        .upi-order-summary span, .upi-merchant-box > span { display: block; margin-bottom: 5px; color: #838ca4; font-size: 11px; }
+        .upi-order-summary strong { color: #101a3c; font-size: 17px; }
+        .upi-merchant-box { margin-top: 18px; padding: 21px; border-radius: 19px; background: linear-gradient(135deg, #f4f7ff, #f8f2ff); }
+        .upi-merchant-box strong { color: #101a3c; font-size: 17px; }
+        .upi-merchant-box code { display: block; margin-top: 6px; color: #4c45d1; font-family: inherit; font-size: 14px; font-weight: 800; }
+        .upi-payment-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 17px; }
+        .upi-payment-actions button, .upi-submit-button, .upi-check-status-button { min-height: 49px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #2e6df6, #822de8); color: white; font: inherit; font-weight: 800; cursor: pointer; }
+        .upi-payment-actions .secondary, .upi-check-status-button { border: 1px solid #d7dcf0; background: white; color: #423ac8; }
+        .upi-divider { display: flex; align-items: center; gap: 14px; margin: 24px 0; color: #838ca3; font-size: 11px; }
+        .upi-divider::before, .upi-divider::after { content: ""; flex: 1; height: 1px; background: #e5e8f2; }
+        .upi-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .upi-form-grid label { color: #1a2341; font-size: 12px; font-weight: 750; }
+        .upi-form-grid input { width: 100%; height: 49px; margin-top: 8px; padding: 0 14px; border: 1px solid #dfe4f1; border-radius: 13px; outline: none; color: #121c3d; font: inherit; box-sizing: border-box; }
+        .upi-form-grid input:focus { border-color: #6d5bec; box-shadow: 0 0 0 4px rgba(109, 91, 236, .1); }
+        .upi-message { margin-top: 16px; padding: 13px 15px; border-radius: 12px; font-size: 13px; font-weight: 700; }
+        .upi-message.error { border: 1px solid #ffcaca; background: #fff3f3; color: #b62e3b; }
+        .upi-message.success { border: 1px solid #bcebd0; background: #effcf5; color: #13744c; }
+        .upi-submit-button, .upi-check-status-button { width: 100%; margin-top: 18px; }
+        .upi-check-status-button { margin-top: 10px; }
+        .upi-submit-button:disabled, .upi-check-status-button:disabled, .upi-modal-close:disabled { cursor: not-allowed; opacity: .62; }
+        .upi-security-note { margin: 14px 0 0; color: #7f889f; font-size: 11px; line-height: 1.5; text-align: center; }
+        @media (max-width: 620px) { .upi-modal-backdrop { padding: 12px; } .upi-checkout-modal { padding: 24px 18px; border-radius: 22px; } .upi-form-grid, .upi-order-summary, .upi-payment-actions { grid-template-columns: 1fr; } .upi-order-summary > div + div { border-top: 1px solid #e5e8f3; border-left: 0; } .upi-modal-heading > span { flex-basis: 50px; height: 50px; } .upi-modal-heading h2 { font-size: 23px; } }
+      `}</style>
 
 <footer className="services-footer-v2">
         <div>
@@ -3160,61 +3740,8 @@ function ServicesPage() {
       </footer>
     </div>
   );
-}function PaymentSuccessPage() {
-  const [message, setMessage] = useState("Activating your plan...");
-
-  useEffect(() => {
-    const activatePlan = () => {
-      try {
-        const selectedPlan =
-          localStorage.getItem("selectedPlan") || "Ultimate";
-
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-        const updatedUser = {
-          ...user,
-          plan: selectedPlan,
-          subscriptionStatus: "active",
-        };
-
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        localStorage.setItem("plan", selectedPlan);
-        localStorage.setItem("activePlan", selectedPlan);
-        localStorage.setItem("subscriptionStatus", "active");
-
-        setMessage(`${selectedPlan} plan activated successfully.`);
-
-        setTimeout(() => {
-          if (selectedPlan.toLowerCase() === "ultimate") {
-            window.location.replace("/ultimate-dashboard");
-          } else {
-            window.location.replace("/services");
-          }
-        }, 1500);
-      } catch (error) {
-        console.error("PLAN ACTIVATION ERROR:", error);
-
-        setMessage("Unable to activate your plan.");
-      }
-    };
-
-    activatePlan();
-  }, []);
-
-  return (
-    <main className="payment-success-page">
-      <div className="payment-success-card">
-        <div className="payment-success-icon">✓</div>
-
-        <h1>Payment Successful</h1>
-
-        <p>{message}</p>
-
-        <span>Please wait. Redirecting to your dashboard...</span>
-      </div>
-    </main>
-  );
 }
+
 function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState("All");
