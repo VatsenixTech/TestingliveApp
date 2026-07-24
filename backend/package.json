@@ -1,25 +1,36 @@
 {
-  "name": "backend",
+  "name": "nopromptjobs-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "NoPromptJobs production backend API",
   "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+  "private": true,
+  "engines": {
+    "node": "22.x",
+    "npm": ">=10"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed:coupons": "node scripts/seedCoupons.js",
+    "test": "node -e \"console.log('No tests configured')\""
+  },
+  "keywords": [
+    "nopromptjobs",
+    "recruitment",
+    "saas",
+    "nodejs",
+    "express"
+  ],
+  "author": "Vatsenix Software Private Limited",
+  "license": "UNLICENSED",
   "dependencies": {
     "axios": "^1.18.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "firebase-admin": "^14.2.0",
+    "firebase-admin": "^10.3.0",
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.12.0",
     "mongoose": "^9.6.2",
@@ -34,8 +45,7 @@
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.19.1",
     "puppeteer": "^25.3.0",
-    "qrcode": "^1.5.4",
-    "razorpay": "^2.9.6"
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
